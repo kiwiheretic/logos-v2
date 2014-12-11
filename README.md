@@ -27,7 +27,43 @@ Version 0.90
 
 ### Summary of set up for Linux ###
 
-To be written
+#### Centos ####
+```bash
+# yum groupinstall "Development Tools"
+# yum install python-devel
+# yum install python-pip
+```
+
+As normal user ...
+
+```bash
+$ git clone https://github.com/kiwiheretic/logos-v2.git ~/logos2
+$ cd ~/logos2
+$ virtualenv ~\venvs\logos2
+$ source ~\venvs\logos2\Scripts\activate
+
+$ pip install -r requirements.txt
+$ python manage.py syncdb
+$ python manage.py syncdb --database=bibles
+$ python manage.py syncdb --database=settings
+$ python manage.py import
+```
+
+#### Ubuntu ####
+```bash
+$ sudo apt-get install python-dev python-pip build-essentials
+$ sudo pip install virtualenv
+$ virtualenv ~\venvs\logos2
+$ source ~\venvs\logos2\Scripts\activate
+
+$ git clone https://github.com/kiwiheretic/logos-v2.git ~/logos2
+$ cd ~/logos2
+$ pip install -r requirements.txt
+$ python manage.py syncdb
+$ python manage.py syncdb --database=bibles
+$ python manage.py syncdb --database=settings
+$ python manage.py import
+```
 
 ### Summary of set up for Microsoft Windows ###
 
@@ -53,18 +89,41 @@ MemoryError results.  Import automatically continues where left off.
 Haven't yet tracked down what causes this.
 
 * Configuration
+
+To be written
+
 * Dependencies
+
+  * Twisted 14.0
+  * Django 1.7
+  * Python 2.7
+  * django-registration-redux 1.1
+  * psutil 2.1.3
+  * zope.interface 4.1.1
+  
 * Database configuration
+
+Very little.  Uses sqlite3.
+
 * How to run tests
+
+Still to come
+
 * Deployment instructions
 
 ### Contribution guidelines ###
 
 * Writing tests
+
+Open to suggestions
+
 * Code review
 * Other guidelines
 
 ### Who do I talk to? ###
 
 * Repo owner or admin
+
+kiwiheretic (at) myself (dot) com
+
 * Other community or team contact
