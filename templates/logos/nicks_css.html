@@ -1,0 +1,188 @@
+{% extends "base_nav.html" %}
+
+{% block javascripts %}
+
+myTextArea = document.getElementById("code");
+var myCodeMirror = CodeMirror.fromTextArea(myTextArea, {
+    theme: 'ambiance',
+    lineNumbers: true
+});
+
+{% endblock %}
+
+{% block style %}
+
+#lower-btn-bar {
+    margin-left: 10px;
+    clear: left;
+}
+.CodeMirror { border: 1px solid #ddd; margin:10px; width: 500px; float:left; }
+#div-nicks-css .CodeMirror-linenumber { color: #CCC;}
+
+#nick-list-outer {
+    margin: 10px;
+    float:left;
+}
+#nick-list {
+    font-family: "Times New Roman";
+    border: 2px solid grey;
+    padding: 10px;
+    border-radius: 10px;
+    width: 200px;
+    margin-top: 5px;
+    line-height: 200%;
+    float: left;
+
+}
+
+.chatter {
+    vertical-align: middle;
+    float: left;
+    clear: left;
+}
+.chatter-image {
+    /* border: 1px solid grey; */
+    height: 25px;
+    width: 25px;
+    float: left;
+    clear: left;
+    margin: 0px 5px 5px 0;
+}
+
+.founder-image {
+    background-image: url("http://pt.clubpenguinwiki.info/static/images/cpwpt/0/09/AdminBadge.png");  
+    background-size: 25px 25px;
+}
+
+.super-op-image {
+    background-image: url("http://img2.wikia.nocookie.net/__cb20120723155212/clubpenguin/images/c/c7/Moderator_badge.png");
+    background-size: 25px 25px;
+}
+
+.auto-op-image {
+    background-image: url("http://img3.wikia.nocookie.net/__cb20130109050548/clubpenguin/images/0/0e/Chatmod.png");
+    background-size: 25px 25px;
+}
+
+.half-op-image {
+    background-image: url("http://thumb7.shutterstock.com/display_pic_with_logo/608860/131861585/stock-vector-security-guard-on-a-white-background-vector-illustration-131861585.jpg");
+    background-size: 25px 25px;
+}
+
+.bot-image {
+    background-image: url("http://thumbs.dreamstime.com/z/waving-robot-22623701.jpg");
+    background-size: 25px 25px;
+}
+
+.normal-chatter {
+    background-image: url("http://cf.ltkcdn.net/socialnetworking/images/std/168796-281x281-girl-swear-icon.png");
+    background-size: 25px 25px;
+}
+    
+{% endblock %}
+
+{% block content %}
+
+{% if errors %}
+<div class="messages">{{errors}}</div>
+
+{% else %}
+
+<div id="div-nicks-css">
+<form>
+<textarea id="code" name="code" cols="80" rows="30">
+#nick-list {
+    font-family: "Times New Roman";
+    padding: 10px;
+    border-radius: 10px;
+    width: 200px;
+    margin-top: 5px;
+    line-height: 200%;
+    float: left;
+
+}
+
+.chatter {
+    vertical-align: middle;
+    float: left;
+    clear: left;
+}
+.chatter-image {
+    border: 1px solid grey;
+    height: 25px;
+    width: 25px;
+    float: left;
+    clear: left;
+    margin: 0px 5px 5px 0;
+}
+
+.founder-image {
+    background-image: url("http://pt.clubpenguinwiki.info/static/images/cpwpt/0/09/AdminBadge.png");  
+    background-size: 25px 25px;
+}
+
+.super-op-image {
+    background-image: url("http://img2.wikia.nocookie.net/__cb20120723155212/clubpenguin/images/c/c7/Moderator_badge.png");
+    background-size: 25px 25px;
+}
+
+.auto-op-image {
+    background-image: url("http://img3.wikia.nocookie.net/__cb20130109050548/clubpenguin/images/0/0e/Chatmod.png");
+    background-size: 25px 25px;
+}
+
+.half-op-image {
+    background-image: url("http://thumb7.shutterstock.com/display_pic_with_logo/608860/131861585/stock-vector-security-guard-on-a-white-background-vector-illustration-131861585.jpg");
+    background-size: 25px 25px;
+}
+
+.bot-image {
+    background-image: url("http://thumbs.dreamstime.com/z/waving-robot-22623701.jpg");
+    background-size: 25px 25px;
+}
+
+.normal-chatter {
+    background-image: url("http://cf.ltkcdn.net/socialnetworking/images/std/168796-281x281-girl-swear-icon.png");
+    background-size: 25px 25px;
+}
+
+</textarea>
+
+</form>
+
+
+<div id="nick-list-outer">
+<p>Chatters Widget Preview</p>
+    <div id="nick-list">
+<div class="chatter">
+    <div class="founder-image chatter-image">&nbsp;</div>
+~FounderFrank</div>
+<br/>
+<div class="chatter"><div class="super-op-image chatter-image">&nbsp;</div>
+&amp;Jake</div>
+<br/>
+<div class="chatter"><div class="auto-op-image chatter-image">&nbsp;</div>
+@Fred</div>
+<br/>
+<div class="chatter"><div class="half-op-image chatter-image">&nbsp;</div>
+%HalfOppedHarry</div>
+<br/>
+<div class="chatter"><div class="bot-image chatter-image">&nbsp;</div>
+BradTheBot</div>
+<br/>
+<div class="chatter"><div class="normal-chatter chatter-image">&nbsp;</div>
+Mary</div>
+<br/>
+    </div>
+</div>
+
+<div id="lower-btn-bar">
+<button>Test Script</button>
+<button>Revert to Original</button>
+<button>Save Changes</button>
+</div>
+
+</div>
+{% endif %}
+
+{% endblock content %}

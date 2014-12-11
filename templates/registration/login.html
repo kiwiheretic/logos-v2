@@ -1,0 +1,29 @@
+{% extends "base_nav.html" %}
+
+{% block style %}
+
+#register-link {
+    display: inline-block;
+}
+{% endblock %}
+
+{% block content %}
+
+{% if form.errors %}
+<p class="messages">Your username and password didn't match. Please try again.</p>
+{% endif %}
+<div  class="fieldset-wrapper">
+<fieldset id="login-fieldset">
+    <legend id="login-legend">Login Form</legend>
+<form method="post" action="{% url 'django.contrib.auth.views.login' %}">{% csrf_token %}
+
+{% include "partials/form_fields.html" %}
+
+<input type="submit" value="login" />
+<input type="hidden" name="next" value="{{ next }}" />
+</form>
+<p id="register-link">If you don't have an account you will need to 
+<a href='/accounts/register/'>register</a> first.</p>
+</fieldset>
+</div>
+{% endblock content %}

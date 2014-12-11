@@ -1,0 +1,41 @@
+{% extends "base_nav.html" %}
+
+
+{% block content %}
+<h1>Dashboard</h1>
+{% if request.user.is_superuser %}
+Superuser II
+{% endif %}
+{% if form.errors %}
+<p class="messages">{{form.errors}}</p>
+{% endif %}
+<div id="dashboard">
+
+
+
+{% if model_data %}
+<table class="data-collection-table">
+   <th>Network</th>
+   <th>Room</th>
+   <th>Username</th>
+   <th>Email</th>
+   <th>Action</th>
+
+    {% for rec in model_data %}
+        <tr>
+        <td>{{rec.network}}</td>
+        <td>{{rec.room}}</td>
+        <td>{{rec.user.username}}</td>
+        <td>{{rec.user.email}}</td>
+        <td>
+        <a href="{{rec.get_approval_url}}">Approve</a>
+        <a href="{{rec.get_deny_url}}">Deny</a>
+        </td>
+        </tr>
+    {% endfor %}
+       
+</table>
+{% endif %}
+
+</div>
+{% endblock content %}

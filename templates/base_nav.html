@@ -1,0 +1,42 @@
+{% extends "base_generic.html" %}
+{% load static from staticfiles %}
+{% block assets %}
+
+<script type="text/javascript" src="{% static 'codemirror/lib/codemirror.js' %}"></script>
+<script type="text/javascript" src="{% static 'codemirror/mode/css/css.js' %}"></script>
+
+<link rel="stylesheet" type="text/css" href="{% static 'codemirror/lib/codemirror.css' %}">
+<link rel="stylesheet" type="text/css" href="{% static 'codemirror/theme/ambiance.css' %}">
+
+<link rel="stylesheet" type="text/css" href="{% static 'base_style.css' %}">
+<script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/2.1.1/jquery.js">
+</script>    
+{% endblock assets %}
+
+
+
+{% block style %}{% endblock %}
+        
+{% block nav %}
+<img id="logos-logo" alt="logo" src="{% static 'logos-logo.png' %}" />
+
+{% if request.user.is_authenticated %}
+<div id="nav-div">
+<ul id="main-nav">
+<li><a href="/">Dashboard</a></li>    
+<li><a href="/web-views/nicks-css">CSS Nicks Iframe</a></li>
+<li><a href="/bots/colours">Logos Colours</a></li>    
+<li id="nav-logout"><a href="/accounts/logout">Logout</a></li> 
+</ul>
+</div>
+{% endif %}
+
+{% if messages %}
+
+<ul class="messages">
+    {% for message in messages %}
+    <li{% if message.tags %} class="{{ message.tags }}"{% endif %}>{{ message }}</li>
+    {% endfor %}
+</ul>
+{% endif %}
+{% endblock nav %}      

@@ -1,0 +1,308 @@
+{% extends "base_nav.html" %}
+
+{% block style %}
+#div-logos-colours {
+   margin: 10px;
+}
+
+#room-buttons {
+   float: left;
+
+}
+#colour-tables {
+   float: left;
+   clear: left;
+}
+
+#foreground-table {
+    margin: 5px;
+    float: left;
+}
+#background-table {
+    margin: 5px;
+    float: left;
+}
+
+#samples {
+   float: left;
+   clear: left;
+}
+
+#submit-buttons {
+    float: left;
+    clear: left;
+}
+
+.sample-verse {
+   float: left;
+   margin: 10px;
+   width: 150px;
+   border-style: dotted;
+   border-width: 1px;
+   border-color: green;
+   padding: 5px;
+   border-radius: 10px;
+    
+}
+
+.translation {
+   border-style: dotted;
+   border-width: 1px;
+   border-color: green;
+   cursor: pointer;
+}
+
+
+.verse-ref {
+   border-style: dotted;
+   border-width: 1px;
+   border-color: green;
+   cursor: pointer;
+}
+.verse-text {
+   padding: 5px;
+   border-style: dotted;
+   border-width: 1px;
+   border-color: green;
+   cursor: pointer;   
+}
+
+.colour-tab {
+   border-style: dotted;
+   border-width: 1px;
+   border-color: grey;
+   /* 
+   border-spacing, border-collapse based on advice from
+   http://stackoverflow.com/questions/339923/set-cellpadding-and-cellspacing-in-css
+   */
+   border-spacing: 4px;
+   border-collapse: separate;
+   background: #666;
+}
+
+.mirc-colour {
+   width: 15px;
+   height: 10px;
+   cursor: pointer;
+}
+
+.mirc-col1 { background: white; }
+.mirc-col2 { background: black; }
+.mirc-col3 { background: blue; }
+.mirc-col4 { background: green; }
+
+.mirc-col5 { background: red; }
+.mirc-col6 { background: brown; }
+.mirc-col7 { background: purple; }
+.mirc-col8 { background: orange; }
+
+.mirc-col9 { background: yellow; }
+.mirc-col10 { background: lime; }
+.mirc-col11 { background: teal; }
+.mirc-col12 { background: aqua; }
+
+.mirc-col13 { background: lightblue; }
+.mirc-col14 { background: pink; }
+.mirc-col15 { background: grey; }
+.mirc-col16 { background: silver; }
+
+.colour-selected {
+   border-style: solid;
+   border-width: 1px;
+   border-color: yellow;
+}
+
+.selected-rm-btn {
+    background-color: yellow;
+}
+
+{% endblock %}
+
+{% block javascripts %}
+
+
+
+$( document ).ready(function() {
+
+  function getColourCode(colour_str) {
+  
+    var re = /mirc-col(\d+)/g;
+    var text = re.exec(colour_str);
+    if (text) {
+      var colour_code = text[1];
+      return colour_code;
+    } else {
+      return null;
+    }; 
+     
+  };
+  
+  var currRoom = "{{rooms.0|slice:'1:'}}";
+  btn = "#btn-" + currRoom;
+  $(btn).addClass("selected-rm-btn");
+  
+  $("#room-buttons").find("button").click(function(evt) {
+    $("#room-buttons").find("button").removeClass('selected-rm-btn');
+    $(evt.target).addClass('selected-rm-btn');
+  });
+  
+  // Change the default selected colour
+  $( ".mirc-colour" ).click(function(evt) {
+    tab = $(evt.target).parents('.colour-tab');
+    $(tab).find("td").removeClass('colour-selected');
+    $(evt.target).addClass('colour-selected');
+  });
+
+  $( ".translation,.verse-ref,.verse-text" ).click(function(evt) {
+    fg = $("#foreground-table").find('.colour-selected').css('background-color');
+    bg = $("#background-table").find('.colour-selected').css('background-color');
+    if (typeof bg != 'undefined' && typeof fg != 'undefined') {
+       $(evt.target).css('background-color', bg);
+       $(evt.target).css('color', fg);
+       var class_str;
+       class_str = $("#foreground-table").find('.colour-selected').attr('class');
+       var clr1 = getColourCode(class_str);
+       class_str = $("#background-table").find('.colour-selected').attr('class');
+       var clr2 = getColourCode(class_str);
+       $(evt.target).data("colour", clr1+","+clr2);
+    } else {
+       alert('colour not valid');
+    }
+  });
+  
+  $( "#apply" ).click(function() {
+      var clr_str = "";
+      $("#verse-example").children().each( function (idx, elmt) {
+        if ($(elmt).is("span") || $(elmt).is("div")) {
+          clr = $(elmt).data("colour");
+          if (clr) {
+            clr_str += "normal-" + $(elmt).attr('class') + ' = ' + clr + ";";
+          }
+        };
+        
+      });
+      $("#search-example").children().each( function (idx, elmt) {
+        if ($(elmt).is("span") || $(elmt).is("div")) {
+          clr = $(elmt).data("colour");
+          if (clr) {
+            clr_str += "search-" + $(elmt).attr('class') + ' = ' + clr + ";";
+          }
+        };
+        
+      }); 
+      // Now the search word
+      clr = $("#search-example u").data("colour");
+      if (clr) {
+         clr_str += "search-words" + ' = ' + clr + ";";
+      };
+      
+      
+      alert(clr_str); 
+  });  
+});
+
+{% endblock %}
+
+{% block content %}
+
+{% if errors %}
+<div class="messages">{{errors}}</div>
+
+{% else %}
+
+<div id="div-logos-colours">
+
+<div id="room-buttons">
+{% for rm in rooms %}
+<button id='btn-{{rm|slice:"1:"}}'>{{rm}}</button>
+{% endfor %}
+</div>
+
+<div id="colour-tables" style="float:left;">
+<div id="foreground-table">
+<p>mIRC Foreground<br/>Colour Table</p>
+<table class="colour-tab">
+<tr>
+<td class="mirc-colour mirc-col1">&nbsp;</td>
+<td class="mirc-colour mirc-col2">&nbsp;</td>
+<td class="mirc-colour mirc-col3">&nbsp;</td>
+<td class="mirc-colour mirc-col4">&nbsp;</td>
+</tr>
+<tr>
+<td class="mirc-colour mirc-col5">&nbsp;</td>
+<td class="mirc-colour mirc-col6">&nbsp;</td>
+<td class="mirc-colour mirc-col7">&nbsp;</td>
+<td class="mirc-colour mirc-col8">&nbsp;</td>
+</tr>
+<tr>
+<td class="mirc-colour mirc-col9">&nbsp;</td>
+<td class="mirc-colour mirc-col10">&nbsp;</td>
+<td class="mirc-colour mirc-col11">&nbsp;</td>
+<td class="mirc-colour mirc-col12">&nbsp;</td>
+</tr>
+<tr>
+<td class="mirc-colour mirc-col13">&nbsp;</td>
+<td class="mirc-colour mirc-col14">&nbsp;</td>
+<td class="mirc-colour mirc-col15">&nbsp;</td>
+<td class="mirc-colour mirc-col16">&nbsp;</td>
+</tr>
+
+</table>
+</div> <!-- foreground table -->
+<div id="background-table">
+<p>mIRC Background<br/>Colour Table</p>
+<table class="colour-tab">
+<tr>
+<td class="mirc-colour mirc-col1">&nbsp;</td>
+<td class="mirc-colour mirc-col2">&nbsp;</td>
+<td class="mirc-colour mirc-col3">&nbsp;</td>
+<td class="mirc-colour mirc-col4">&nbsp;</td>
+</tr>
+<tr>
+<td class="mirc-colour mirc-col5">&nbsp;</td>
+<td class="mirc-colour mirc-col6">&nbsp;</td>
+<td class="mirc-colour mirc-col7">&nbsp;</td>
+<td class="mirc-colour mirc-col8">&nbsp;</td>
+</tr>
+<tr>
+<td class="mirc-colour mirc-col9">&nbsp;</td>
+<td class="mirc-colour mirc-col10">&nbsp;</td>
+<td class="mirc-colour mirc-col11">&nbsp;</td>
+<td class="mirc-colour mirc-col12">&nbsp;</td>
+</tr>
+<tr>
+<td class="mirc-colour mirc-col13">&nbsp;</td>
+<td class="mirc-colour mirc-col14">&nbsp;</td>
+<td class="mirc-colour mirc-col15">&nbsp;</td>
+<td class="mirc-colour mirc-col16">&nbsp;</td>
+</tr>
+
+</table>
+</div> <!-- background-table -->
+</div> <!-- colour-tables -->
+
+<div id="samples">
+<div id="verse-example" class="sample-verse">
+<p>Normal Verse Display</p>
+<span class="translation">&nbsp;KJV&nbsp;</span>
+<span class="verse-ref">&nbsp;John 3:16&nbsp;</span>
+<div class="verse-text">For God so loved the world that he gave his only begotten son,
+that whosoever believeth in Him shall not perish but have everlasting life.</div>
+</div>
+
+<div id="search-example" class="sample-verse">
+<p>Search Results Display</p>
+<span class="translation">&nbsp;KJV&nbsp;</span>
+<span class="verse-ref">&nbsp;John 3:16&nbsp;</span>
+<div class="verse-text">For God so loved the world that he gave his only begotten son,
+that whosoever <u>believeth</u> in Him shall not perish but have everlasting life.</div>
+</div>
+</div> <!-- samples -->
+<div id='submit-buttons'>
+<button id='apply'>Apply</button>
+<button id='revert'>Revert</button>
+</div>           
+</div>
+{% endif %}
+
+{% endblock content %}

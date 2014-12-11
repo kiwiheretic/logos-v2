@@ -1,0 +1,8 @@
+#registration-fieldset {
+      
+    width: 400px;
+}
+
+#registration-fieldset form label {
+    width: 150px;
+}
