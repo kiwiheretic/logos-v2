@@ -5,7 +5,24 @@ This README would normally document whatever steps are necessary to get your app
 ### What is this repository for? ###
 
 * Quick summary
+
+Project is loosely based on the [CancelBot Project](http://cancelbot.sourceforge.net/home.html)
+Has been in private development since at least mid 2014 and only in Dec 2014 
+released publicly on GitHub.  Is compatible with CancelBot bible translations.
+
+Features include:
+  * Simple bible verse lookups
+  * Fast concordance searches
+  * Strongs number lookups
+  * Optional Django webserver for setup (in progress)
+  * Plugin architecture for extending bot
+  * Written in Python using Twisted and Django frameworks
+
+
 * Version
+
+Version 0.90
+
 * [Learn Markdown](https://bitbucket.org/tutorials/markdowndemo)
 
 ### Summary of set up for Linux ###
