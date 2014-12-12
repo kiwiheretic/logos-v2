@@ -40,7 +40,7 @@ As normal user ...
 $ git clone https://github.com/kiwiheretic/logos-v2.git ~/logos2
 $ cd ~/logos2
 $ virtualenv ~\venvs\logos2
-$ source ~\venvs\logos2\Scripts\activate
+$ source ~\venvs\logos2\bin\activate
 
 $ pip install -r requirements.txt
 $ python manage.py syncdb
@@ -54,7 +54,7 @@ $ python manage.py import
 $ sudo apt-get install python-dev python-pip build-essentials
 $ sudo pip install virtualenv
 $ virtualenv ~\venvs\logos2
-$ source ~\venvs\logos2\Scripts\activate
+$ source ~\venvs\logos2\bin\activate
 
 $ git clone https://github.com/kiwiheretic/logos-v2.git ~/logos2
 $ cd ~/logos2
