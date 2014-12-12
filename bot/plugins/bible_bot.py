@@ -133,21 +133,6 @@ class BibleBot(Plugin):
         book = self._get_book(bookwork)
         if not book:
             raise CommandException(user, chan, "Could not find book %s" % (bookwork,))
-#        book = re.sub("\s+", "", bookwork)
-
-#        bl = len(book)
-
-#        book_found = None
-#        for smallbk, bigbk in book_table:
-#            if smallbk == book:
-#                book_found = smallbk
-#                break
-#            if bigbk[0:bl] == book:
-#                book_found = smallbk
-#                break
-
-#        if not book_found:
-#            raise CommandException(user, chan, "Could not find book %s" % (bookwork,))
 
         passage = re.sub("\s+","", versework)
 
@@ -179,43 +164,45 @@ class BibleBot(Plugin):
                 firstverse = int(firstverse)
                 passage = chapter + ':' + str(firstverse)
 
-
-            
-
-            book_db = BibleBooks.objects.get(trans_id = trans_id,
-                                             canonical = book)
-            book_id = book_db.pk
-            long_book_name = book_db.long_book_name
-
-            # get qualifying verses
-            qual_verses = BibleVerses.objects.filter(trans_id = trans_id,
-                                       book = book_id,
-                                       chapter = int(chapter),
-                                       verse__gte = firstverse,
-                                       verse__lt = firstverse+versecount)
-
-            for v in qual_verses:
-                pk = v.pk
-            qual_verses_next_pk = pk + 1
-
-            resp = []
-            for q in qual_verses:
-                resp.append((version.upper(),
-                            long_book_name.capitalize() + " " + str(q.chapter) \
-                                + ":" + str(q.verse),
-                            q.verse_text))
-            timestamp = datetime.datetime.now()
-
-            self.reading_progress[nick.lower()] = \
-                {'verses_pk':qual_verses_next_pk,
-                 'timestamp': timestamp}
-
-
-            return resp
-
         else:
-            raise CommandException(nick, user, "Missing : in chapter & verse reference ")
+            try:
+                chapter = int(passage)
+                firstverse = 1
+                versecount = verselimit
+            except ValueError:
+                raise CommandException(nick, user, "Invalid chapter & verse reference ")
 
+        book_db = BibleBooks.objects.get(trans_id = trans_id,
+                                         canonical = book)
+        book_id = book_db.pk
+        long_book_name = book_db.long_book_name
+
+        # get qualifying verses
+        qual_verses = BibleVerses.objects.filter(trans_id = trans_id,
+                                   book = book_id,
+                                   chapter = int(chapter),
+                                   verse__gte = firstverse,
+                                   verse__lt = firstverse+versecount)
+
+        for v in qual_verses:
+            pk = v.pk
+        qual_verses_next_pk = pk + 1
+
+        resp = []
+        for q in qual_verses:
+            resp.append((version.upper(),
+                        long_book_name.capitalize() + " " + str(q.chapter) \
+                            + ":" + str(q.verse),
+                        q.verse_text))
+        timestamp = datetime.datetime.now()
+
+        self.reading_progress[nick.lower()] = \
+            {'verses_pk':qual_verses_next_pk,
+             'timestamp': timestamp}
+
+
+        return resp
+    
     def _next_reading(self, chan, user):
         if user.lower() not in self.reading_progress:
             self.say(chan, "No previous verse to read from")
