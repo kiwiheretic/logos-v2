@@ -508,7 +508,6 @@ class BibleBot(Plugin):
             words = [x.lower() for x  in search_mch.group(1).strip().split(' ')]
 
             def_trans = self._get_defaulttranslation(chan)
-            
             parse_res = self._parse_trans_book_range(def_trans, words)            
 
             if len(words) == 0:
@@ -522,7 +521,7 @@ class BibleBot(Plugin):
                                parse_res['book_end'] )
                 self.msg(chan,  "searching for " + str(words) + " in " + trans.upper() + " ....")
                                     
-                trans = BibleTranslations.objects.get(name=def_trans)
+                trans = BibleTranslations.objects.get(name=trans)
 
                 gen = self._concordance_generator(chan, nick, trans, book_range, 
                                     words, mode="simple")
