@@ -46,12 +46,12 @@ class SystemCommandsClass(Plugin):
         # If a version command is issued return the version number
         # of the bot along with credits
         if version_mch:
-	    dj_ver = ".".join(map(lambda x: str(x), django.VERSION[0:3]))
-	    pyver = (sys.version_info.major, sys.version_info.minor)
-	    py_ver = ".".join(map(lambda x: str(x), pyver))
-	    twstver = (twisted.version.major, twisted.version.minor)
-	    twst_ver = ".".join(map(lambda x: str(x), twstver))
-            self.msg(chan, "\x033Logos Super Bot -- Version 0.90 \x03")
+            dj_ver = ".".join(map(lambda x: str(x), django.VERSION[0:3]))
+            pyver = (sys.version_info.major, sys.version_info.minor)
+            py_ver = ".".join(map(lambda x: str(x), pyver))
+            twstver = (twisted.version.major, twisted.version.minor)
+            twst_ver = ".".join(map(lambda x: str(x), twstver))
+            self.msg(chan, "\x033Logos Super Bot -- Version 0.91 \x03")
             self.msg(chan, "\x0310--- Courtesy of\x03\x0312 SplatsCreations\x03")        
             self.msg(chan, "\x0310--- Built with Django %s\\Python %s\\Twisted %s  \x03" % (dj_ver, py_ver, twst_ver))        
 
@@ -136,7 +136,7 @@ class SystemCommandsClass(Plugin):
                     # Have the bot issue any IRC command
                     
                     line = cmd_mch.group(1)
-                    logger.info("%s issued command '%s' to bot" % (user, msg))
+                    logger.info("%s issued command '%s' to bot" % (user, line))
                     self.sendLine(line)
                     return
                 elif eval_mch:

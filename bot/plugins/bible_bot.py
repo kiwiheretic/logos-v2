@@ -25,10 +25,22 @@ logging.config.dictConfig(LOGGING)
 def contains_sublist(lst, sublst):
     n = len(sublst)
     return any((sublst == lst[i:i+n]) for i in xrange(len(lst)-n+1))
+
+def get_wildcard_list(words):
+    resp = []
+    for w in words:
+        mch = re.match("([a-zA-Z]+)\*$", w)
+        if mch:
+            wrd = mch.group(1)
+            resp.append(wrd)
+    return resp
+            
     
 def strip_fluff_to_list(text):
     words = []
     for w in re.split('\s+', text):
+        if re.match("([a-zA-Z]+)\*$", w):
+            continue
         w1 = re.sub("[^a-zA-Z0-9']", "", w)
         if not re.match("[a-zA-Z0-9']+", w1):
             continue
@@ -232,7 +244,7 @@ class BibleBot(Plugin):
             del self.reading_progress[user.lower()]
         return resp
     
-    def _concordance_generator(self, trans, book_range, words, mode="simple"):
+    def _concordance_generator(self, chan, nick, trans, book_range, words, mode="simple"):
 
         if book_range[0]:
             bk = self._get_book(book_range[0])
@@ -249,7 +261,10 @@ class BibleBot(Plugin):
              
         # strip out punctuation from word list 
         word_list = strip_fluff_to_list(' '.join(words))            
-
+        wildcard_list = get_wildcard_list(words)
+        logger.debug("word_list = " + str(word_list))
+        logger.debug("wildcard_list = " + str(wildcard_list))
+        
         # remove commonly occurring stop words from word list
         # (being careful not to iterate over list we are removing from)
         # word_list2 will contain the original list
@@ -260,7 +275,11 @@ class BibleBot(Plugin):
                 word_list.remove(wrd)
      
         
-        if len(word_list) > 1:
+        if len(word_list) == 0:
+            raise CommandException(nick, chan, \
+                        "Need at least one non wildcard word in search ")
+            
+        elif len(word_list) > 1:
             # To save ourselves some work find the word 
             # with the lowest number of occurences in concordance
             lowest = None
@@ -324,6 +343,9 @@ class BibleBot(Plugin):
                                                  verse = wrd_rec.verse ).exists():
                         found = False
                         break
+            # If found but make sure we are not getting duplicates of
+            # verse print outs if the words occur twice or more in 
+            # the same verse.
             if found and (wrd_rec.book.id != last_book or \
             wrd_rec.chapter != last_chapter or \
             wrd_rec.verse != last_verse):
@@ -347,8 +369,22 @@ class BibleBot(Plugin):
                             'chapter': wrd_rec.chapter, 'verse': wrd_rec.verse }
 
                 else: # mode == "simple"
-                    yield {'trans': trans.id, 'book': wrd_rec.book.id, 
-                       'chapter': wrd_rec.chapter, 'verse': wrd_rec.verse }
+                    if wildcard_list:
+                        found = False
+                        for wrd in wildcard_list:
+                            if BibleConcordance.objects.filter(trans_id = trans,\
+                                     book = wrd_rec.book,\
+                                     chapter = wrd_rec.chapter,\
+                                     verse = wrd_rec.verse )\
+                                         .extra(where=["word like '%s%%'" % wrd])\
+                                             .exists():
+                                found = True
+                                break
+                    else:
+                        found = True
+                    if found:
+                        yield {'trans': trans.id, 'book': wrd_rec.book.id, 
+                           'chapter': wrd_rec.chapter, 'verse': wrd_rec.verse }
 
             
 
@@ -457,7 +493,7 @@ class BibleBot(Plugin):
                 self.msg(chan,  "searching for " + str(words) + " in " + trans.upper() + " ....")
                                     
                 trans = BibleTranslations.objects.get(name=def_trans)
-                gen = self._concordance_generator(trans, 
+                gen = self._concordance_generator(chan, nick, trans, 
                         book_range, words, mode="phrase")
                 if chan.lower() not in self.pending_searches:
                     self.pending_searches[chan.lower()] = {}
@@ -488,7 +524,7 @@ class BibleBot(Plugin):
                                     
                 trans = BibleTranslations.objects.get(name=def_trans)
 
-                gen = self._concordance_generator(trans, book_range, 
+                gen = self._concordance_generator(chan, nick, trans, book_range, 
                                     words, mode="simple")
                 if chan.lower() not in self.pending_searches:
                     self.pending_searches[chan.lower()] = {}
