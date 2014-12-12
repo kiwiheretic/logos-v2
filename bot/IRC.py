@@ -295,8 +295,8 @@ class IRCBot(irc.IRCClient):
         self.plugins.userRenamed(oldname, newname)
         
         self.factory.reactor.callLater(5, self.do_whois, newname)
-        print self.nicks_db.nicks_in_room
-        print self.nicks_db.nicks_info
+        logger.debug(str( self.nicks_db.nicks_in_room))
+        logger.debug(str( self.nicks_db.nicks_info))
         
     def joined(self, channel):
         """ callback for when this bot has joined a channel """
@@ -315,6 +315,10 @@ class IRCBot(irc.IRCClient):
         line = "NAMES " + channel
         self.sendLine(line)
         logger.info(line)
+
+        act = get_room_option(self.factory.network, channel, 'activation')
+        if not act: act = '!'
+        self.say(channel, str("Your trigger is '%s', type %shelp for more info" % (act,act)))
 
         
     def left(self, channel):

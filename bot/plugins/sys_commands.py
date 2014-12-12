@@ -38,7 +38,7 @@ class SystemCommandsClass(Plugin):
         
         speak_mch = re.match(act+'speak\s+(.*)', msg)
         cmd_mch = re.match(act+'cmd\s+(.*)', orig_msg)
-        set_activ_mch = re.match(act+'set\s+activation\s+\"(.)\"', orig_msg)
+        set_activ_mch = re.match(act+'set\s+(?:activation|trigger)\s+\"(.)\"', orig_msg)
         set_errors_mch = re.match('set\s+errors\s+(.*)', msg)
         set_greet_mch = re.match(act+'set\s+greet\s+message\s+\"(.*)\"', orig_msg)
         version_mch = re.match('version\s*$', msg)  
@@ -192,7 +192,9 @@ class SystemCommandsClass(Plugin):
                     set_room_option(self.factory.network, ch, \
                         'activation', arg)  
  
-                    self.msg(chan, "Activator for room %s set to \"%s\"" % (ch,  arg))
+                    self.msg(chan, "Trigger for room %s set to \"%s\"" % (ch,  arg))
+                    if chan != ch:
+                        self.msg(ch, "Trigger has been changed to \"%s\"" % (arg,))
                     return
 
     def signedOn(self):

@@ -4,8 +4,10 @@ import re
 import time
 import copy
 import threading
+
 import pdb
 from logos.pluginlib import Registry
+from logos.constants import PUNCTUATION, STOP_WORDS
 
 from bot.pluginDespatch import Plugin, CommandException
 from logos.roomlib import get_room_option, set_room_option
@@ -26,23 +28,12 @@ def contains_sublist(lst, sublst):
     n = len(sublst)
     return any((sublst == lst[i:i+n]) for i in xrange(len(lst)-n+1))
 
-def get_wildcard_list(words):
-    resp = []
-    for w in words:
-        mch = re.match("([a-zA-Z]+)\*$", w)
-        if mch:
-            wrd = mch.group(1)
-            resp.append(wrd)
-    return resp
-            
-    
+# Strip out unneeded punctuation (and other fluff) from a list of words    
 def strip_fluff_to_list(text):
     words = []
     for w in re.split('\s+', text):
-        if re.match("([a-zA-Z]+)\*$", w):
-            continue
-        w1 = re.sub("[^a-zA-Z0-9']", "", w)
-        if not re.match("[a-zA-Z0-9']+", w1):
+        w1 = re.sub("[^a-zA-Z0-9'*]", "", w)
+        if not re.match("[a-zA-Z0-9']+\*?", w1):
             continue
         else:
             words.append(w1)
@@ -53,9 +44,7 @@ class BibleBot(Plugin):
     # stop words are words that are so common that they
     # are not indexed (in the concordance).  It makes for a lot
     # smaller concordance database.
-    stop_words = ['a', 'i', 'in', 'of', 'the', 'he', 'she',
-        'and', 'said', 'be', 'it', 'was', 'is', 'on', 'to', 
-        'thy', 'thou', 'her', 'his', 'him', 'there', 'their']
+    stop_words = STOP_WORDS
 
     def __init__(self, *args):
         super(BibleBot, self).__init__(*args)
@@ -259,45 +248,94 @@ class BibleBot(Plugin):
         else:
             br1 = None
              
+        for w in words:
+            if w == "*":
+                raise CommandException(nick, chan, \
+                            "Bare wildcards cannot be used in search")
+                                
         # strip out punctuation from word list 
-        word_list = strip_fluff_to_list(' '.join(words))            
-        wildcard_list = get_wildcard_list(words)
-        logger.debug("word_list = " + str(word_list))
-        logger.debug("wildcard_list = " + str(wildcard_list))
-        
+        word_list = strip_fluff_to_list(' '.join(words))
+
         # remove commonly occurring stop words from word list
         # (being careful not to iterate over list we are removing from)
         # word_list2 will contain the original list
+        stop_words_found = []
         word_list2 = copy.copy(word_list)
         for wrd in word_list2:
             if wrd in self.stop_words:
                 # remove from orignal list
                 word_list.remove(wrd)
+                stop_words_found.append(wrd)
+                
+        if stop_words_found:
+            self.say(chan, "Ignoring stop words \"%s\"." % (", ".join(stop_words_found)))
      
+        # split word list into those that are wildcards
+        # and those that are not.
+        normal_words = []
+        wild_words = []
+        for w in word_list:
+            if re.match("([a-zA-Z']+)\*$",w):
+                wild_words.append(w)
+            else:
+                normal_words.append(w)
+                        
+        logger.debug("normal_words = " + str(normal_words))
+        logger.debug("wild_words = " + str(wild_words))
         
         if len(word_list) == 0:
             raise CommandException(nick, chan, \
-                        "Need at least one non wildcard word in search ")
-            
+                        "At least one non stop word needed in search")            
         elif len(word_list) > 1:
             # To save ourselves some work find the word 
             # with the lowest number of occurences in concordance
             lowest = None
+            # If there is a book range search only between those books
+            # otherwise search the entire translation within the 
+            # concordance.
+            
             if br0 and br1:
                 q_results = BibleConcordance.objects.\
-                    filter(trans_id = trans, book__gte = br0, book__lte = br1).\
-                        extra(where=["word in %s" % str(tuple(word_list))]).\
-                        values('word').annotate(Count('word'))
+                    filter(trans_id = trans, book__gte = br0, 
+                           book__lte = br1)
             else:
-                q_results = BibleConcordance.objects.filter(trans_id = trans).\
-                        extra(where=["word in %s" % str(tuple(word_list))]).\
-                        values('word').annotate(Count('word'))
-            for q in q_results:
-                if lowest == None or q['word__count'] < lowest:
-                    lowest = q['word__count']
-                    wrd = q['word']
+                q_results = BibleConcordance.objects.filter(trans_id = trans)
+            
+            if len(normal_words) > 0:
+                s = "word in (" + ", ".join('\'{0}\''.format(w) for w in normal_words) +")"
+                logger.info("where clause is \""+s +"\"")
+                q0_results = q_results.extra(where=[s])
+                q0_results = q0_results.values('word').annotate(Count('word'))
+            # Example format of q_results
+            # (Pdb) q_results
+            # [{'word__count': 988, 'word': u'jesus'}, {'word__count': 80, 'word': u'wept'}]
+                               
+            # Now do the same for the wildcards.  This turns out to be hard
+            # to do because there doesn't seem to be a single query which can
+            # annotate all wildcard matches.  So we have to do them one by one.
+            match_counts = []
+            for w in wild_words:
+                q2_results = q_results.all()
+                mch = re.match("([a-zA-Z0-9']+)", w)
+                w1 = mch.group(1)
+                where_str = "word like '%s%%'" % (w1,)
+                logger.debug("where_str = " + where_str)
+                q2_results = q2_results.extra(where = [where_str])
+                counted = q2_results.count()
+                match_counts.append({'word__count': counted, 'word': w })
+                logger.debug( "Count of %s = %d" % (w, counted))
+            
+            # Append the two lists together
+            if normal_words:
+                for q in q0_results:
+                    match_counts.append(q)
+            
+            for q1 in match_counts:
+                if lowest == None or q1['word__count'] < lowest:
+                    lowest = q1['word__count']
+                    wrd = q1['word']
                 logger.debug("Lowest word count for %s is %d" % (wrd, lowest))
-        else:
+        else: # only one word in word list
             wrd = word_list[0]
         
         # Find all occurrences of this word with lowest occurrence 
@@ -308,14 +346,31 @@ class BibleBot(Plugin):
         
         # If a book range is defined the find all 
         # concordance lookups in that range
+        mch = re.match("([a-zA-Z']+)\*$",wrd)
         if br0 and br1:
-            conc_words = BibleConcordance.objects.\
-                filter(trans_id = trans, book__gte = br0, book__lte = br1,\
-                word = wrd).order_by('book', 'chapter', 'verse')
+            # Is this word a wildcard word?
+            if mch:
+                w = mch.group(1)
+                conc_words = BibleConcordance.objects.\
+                    filter(trans_id = trans, book__gte = br0, book__lte = br1)\
+                    .extra(where=["word like '%s%%'" % w])\
+                    .order_by('book', 'chapter', 'verse')
+            else:
+                conc_words = BibleConcordance.objects.\
+                    filter(trans_id = trans, book__gte = br0, book__lte = br1,\
+                    word = wrd).order_by('book', 'chapter', 'verse')
         # Otherwise 
         else:
-            conc_words = BibleConcordance.objects.filter(trans_id = trans,
-                word = wrd).order_by('book', 'chapter', 'verse')
+            # Is this word a wildcard word?
+            if mch: 
+                w = mch.group(1)
+                conc_words = BibleConcordance.objects.filter(trans_id = trans)\
+                    .extra(where=["word like '%s%%'" % w])\
+                    .order_by('book', 'chapter', 'verse')
+
+            else:           
+                conc_words = BibleConcordance.objects.filter(trans_id = trans,
+                    word = wrd).order_by('book', 'chapter', 'verse')
         logger.debug("Number of concordance occurrences of word %s = %d" % (wrd, len(conc_words),))
         
         last_book = None
@@ -325,7 +380,7 @@ class BibleBot(Plugin):
         for wrd_rec in conc_words:
             found = True
 
-            for wrd in word_list:
+            for wrd in normal_words:
                 if br0 and br1:
                     if not BibleConcordance.objects.filter(trans_id = trans,\
                                                  word = wrd,\
@@ -369,19 +424,21 @@ class BibleBot(Plugin):
                             'chapter': wrd_rec.chapter, 'verse': wrd_rec.verse }
 
                 else: # mode == "simple"
-                    if wildcard_list:
-                        found = False
-                        for wrd in wildcard_list:
-                            if BibleConcordance.objects.filter(trans_id = trans,\
+                    found = True
+                    if wild_words:
+                        for wrd in wild_words:
+                            mch = re.match("([a-zA-Z']+)\*$",wrd)
+                            w = mch.group(1)
+                            if not BibleConcordance.objects.filter(trans_id = trans,\
                                      book = wrd_rec.book,\
                                      chapter = wrd_rec.chapter,\
                                      verse = wrd_rec.verse )\
-                                         .extra(where=["word like '%s%%'" % wrd])\
+                                         .extra(where=["word like '%s%%'" % w])\
                                              .exists():
-                                found = True
+                                logger.debug("Word %s not found in %s,%d:%d" % (wrd, wrd_rec.book.long_book_name, wrd_rec.chapter, wrd_rec.verse))
+                                found = False
                                 break
-                    else:
-                        found = True
+
                     if found:
                         yield {'trans': trans.id, 'book': wrd_rec.book.id, 
                            'chapter': wrd_rec.chapter, 'verse': wrd_rec.verse }
@@ -393,7 +450,6 @@ class BibleBot(Plugin):
     def noticed(self, user, channel, message):
         """ Biblebot receives notice """
         logger.info('NOTICE: '+ message)
-#        self.notice(self.control_room, message)
         
     def joined(self, channel):
         """ BibleBot joins room """
@@ -476,7 +532,6 @@ class BibleBot(Plugin):
         elif phrase_search_mch:
             phrase = phrase_search_mch.group(2)
             ref = phrase_search_mch.group(1)
-            self.say(chan, "searching for phrase...\"%s\"" % (phrase,))
             searchlimit = self._get_searchlimit(chan)
             words = [x.lower() for x  in phrase.strip().split(' ')]
             ref_words = [x.lower() for x in ref.strip().split(' ')]
@@ -486,13 +541,13 @@ class BibleBot(Plugin):
             if len(words) == 0:
                 self.msg(chan, "Error: Must have at least one word for "+act+"search")
             else:
-                trans = parse_res['translation']
+                selected_trans = parse_res['translation']
+                self.say(chan, "searching for phrase...\"%s\" in %s" % (phrase,selected_trans.upper()))
                 
                 book_range = ( parse_res['book_start'],
                                parse_res['book_end'] )
-                self.msg(chan,  "searching for " + str(words) + " in " + trans.upper() + " ....")
                                     
-                trans = BibleTranslations.objects.get(name=def_trans)
+                trans = BibleTranslations.objects.get(name=selected_trans)
                 gen = self._concordance_generator(chan, nick, trans, 
                         book_range, words, mode="phrase")
                 if chan.lower() not in self.pending_searches:
@@ -502,7 +557,6 @@ class BibleBot(Plugin):
                 self._format_search_results(chan, gen)
         elif search_mch:
 
-            self.say(chan, "searching...")
             searchlimit = self._get_searchlimit(chan)
              
             words = [x.lower() for x  in search_mch.group(1).strip().split(' ')]
@@ -519,7 +573,8 @@ class BibleBot(Plugin):
                 
                 book_range = ( parse_res['book_start'],
                                parse_res['book_end'] )
-                self.msg(chan,  "searching for " + str(words) + " in " + trans.upper() + " ....")
+                self.msg(chan,  "searching for \"" +  ", ".join(words) +"\"" + \
+                    " in " + trans.upper() + " ....")
                                     
                 trans = BibleTranslations.objects.get(name=trans)
 
@@ -569,6 +624,9 @@ class BibleBot(Plugin):
             words.pop(0)
         else:
             results['translation'] = def_trans
+        if len(words) == 0:
+            return results
+        
         mch = re.match('[1-2]?[a-z]+', words[0], re.I)
         mch2 = re.match('([1-2]?[a-z]+)-([1-2]?[a-z]+)', words[0], re.I)
         if mch2:
