@@ -505,6 +505,7 @@ class BibleBot(Plugin):
                 self.msg(chan, "Default translation for %s set to %s " % (ch,def_trans))
             return True
         elif set_verselimit_mch:
+            pdb.set_trace()
             verselmt = int(set_verselimit_mch.group(1))
             ch = Registry.authorized[nick]['channel']
 
@@ -523,7 +524,7 @@ class BibleBot(Plugin):
             if searchlmt > 20:
                 self.msg(chan, "Search limit cannot be set higher than 20")
             else:
-                set_room_option(self.factory.servername, ch, \
+                set_room_option(self.factory.network, ch, \
                     'searchlimit', searchlmt)                        
 
                 self.msg(chan, "Search limit for %s set to %s " % (ch, searchlmt))

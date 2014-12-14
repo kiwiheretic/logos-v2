@@ -5,6 +5,7 @@ import pdb
 import django
 import twisted
 import sys
+from logos.constants import VERSION
 
 from bot.pluginDespatch import Plugin
 from logos.roomlib import get_room_option, set_room_option, set_room_defaults
@@ -51,7 +52,7 @@ class SystemCommandsClass(Plugin):
             py_ver = ".".join(map(lambda x: str(x), pyver))
             twstver = (twisted.version.major, twisted.version.minor)
             twst_ver = ".".join(map(lambda x: str(x), twstver))
-            self.msg(chan, "\x033Logos Super Bot -- Version 0.91 \x03")
+            self.msg(chan, "\x033Logos Super Bot -- Version %s \x03" % (VERSION,))
             self.msg(chan, "\x0310--- Courtesy of\x03\x0312 SplatsCreations\x03")        
             self.msg(chan, "\x0310--- Built with Django %s\\Python %s\\Twisted %s  \x03" % (dj_ver, py_ver, twst_ver))        
 
@@ -95,7 +96,9 @@ class SystemCommandsClass(Plugin):
             pw = auth_mch.group(2).strip()
             db_pw = get_room_option(self.factory.network, ch, 'password')
             nicks_in_room = self.irc_conn.get_room_nicks(ch)                                                               
-
+            if not nicks_in_room: # if it is None then we are not in room
+                self.msg(chan, 'The bot must be in room %s to authorize' % (ch,))
+                return
             # room password for the bot
             # You can only authorize into the bot if you 
             # are currently in the room you are authorizing for
