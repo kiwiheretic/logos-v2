@@ -514,14 +514,14 @@ class IRCBotFactory(protocol.ClientFactory):
         connector.connect()
         
     def clientConnectionLost(self, connector, reason):
-        print("Lost connection (%s), will reconnect shortly..." % (reason,))
+        logging.info("Lost connection (%s), will reconnect shortly..." % (reason,))
         # Taken from https://twistedmatrix.com/documents/13.1.0/core/howto/time.html
         self.reactor.callLater(3, self.doReconnect, connector)
-#        time.sleep(3)
-#        connector.connect()
+
 
     def clientConnectionFailed(self, connector, reason):
-        print("Could not connect: %s" % (reason,))
+        logging.info("Could not connect: %s, will reconnect in 10 seconds" % (reason,))
+        self.reactor.callLater(10, self.doReconnect, connector)
 
 
 ########################################################################
