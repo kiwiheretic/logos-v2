@@ -1,6 +1,10 @@
 # test plugin
 from bot.pluginDespatch import Plugin
 import re
+import logging
+from logos.settings import LOGGING
+logger = logging.getLogger(__name__)
+logging.config.dictConfig(LOGGING)
 
 class TestClass(Plugin):
     def __init__(self, *args, **kwargs):
@@ -15,7 +19,7 @@ class TestClass(Plugin):
         self.conversation = self.conversation[-10:]
 
     def command(self, nick, user, chan, orig_msg, msg, act):
-                
+        logger.debug("command: " + str((nick, user, chan, orig_msg, msg, act)))
         # if !nicks is typed print all nicks in room into channel
         nicks_mch = re.match('nicks', msg)
         if nicks_mch:
@@ -27,6 +31,7 @@ class TestClass(Plugin):
         if demo_mch:
             self.say(chan, "Elementary my dear Watson")
             self.describe(chan, "shakes its chains")
+            self.notice(nick, "Now is the time for all good men...")
             
         # if !convo is typed print the conversation list
         convo_mch = re.match('convo', msg)

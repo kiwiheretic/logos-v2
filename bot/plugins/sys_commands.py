@@ -214,6 +214,10 @@ class SystemCommandsClass(Plugin):
     def left(self, channel):
         set_room_option(self.factory.network, channel, 'active', 0)
     
-    def userRenamed(self, old, new):
-        pass
-
+    def userJoined(self, nick, channel):
+        greet_msg = get_room_option(self.factory.network, channel, 'greet_message')
+        if greet_msg:
+            greet_msg = re.sub("%nick%", nick, greet_msg)
+            self.notice(nick, str(greet_msg))
+            logger.info("Greet message sent to " + nick)
+        

@@ -505,7 +505,6 @@ class BibleBot(Plugin):
                 self.msg(chan, "Default translation for %s set to %s " % (ch,def_trans))
             return True
         elif set_verselimit_mch:
-            pdb.set_trace()
             verselmt = int(set_verselimit_mch.group(1))
             ch = Registry.authorized[nick]['channel']
 

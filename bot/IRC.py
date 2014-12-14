@@ -179,14 +179,16 @@ class IRCBot(irc.IRCClient):
 
     def onTimer(self):
         keys = self.channel_queues.keys()
-#        print [ (x, len(self.channel_queues[x])) for x in keys ]
+
         for chan in self.channel_queues:
-            if self.nicks_db.bot_in_room(chan): 
+            # If the bot is in the channel or if the message
+            # is not to a channel but a private message to
+            # an individual nick then proceed and send the message
+            if self.nicks_db.bot_in_room(chan) or chan[0] != '#': 
                 queue = self.channel_queues[chan]
                 try:
                     elmt = queue.pop(0)
                     action, msg = elmt
-#                    logger.debug('Timer ' + str(elmt))
 
                     if action == 'say':
                         self.say(chan, str(msg))
@@ -237,7 +239,6 @@ class IRCBot(irc.IRCClient):
         logger.info("Joining room "+ self.factory.channel)
         self.join(self.factory.channel)
         self.timer.start(QUEUE_TIMER)
-
 
     def userJoined(self, user, channel):
         """
