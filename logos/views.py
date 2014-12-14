@@ -58,7 +58,10 @@ def profile(request):
                     obj = Settings(option=fld.name, value=fld.value())
                     obj.save()
 
-
+        settings = _get_settings()
+        host = settings.get('rpc_host', None)
+        port = settings.get('rpc_port', None)
+        
     if not host or not port:
         context = {'form':form, 'errors': 'Missing connection parameters'}
         return render(request, 'logos/profile.html', context)        

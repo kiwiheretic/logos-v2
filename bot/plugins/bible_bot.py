@@ -609,10 +609,6 @@ class BibleBot(Plugin):
                 reply = ' '.join(resp)
                 self.say(chan, str(reply))
 
-
-
-
-    
     def _parse_trans_book_range(self, def_trans, words):
         results = {}
 

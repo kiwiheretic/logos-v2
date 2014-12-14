@@ -324,7 +324,7 @@ class IRCBot(irc.IRCClient):
     def left(self, channel):
         """ Called when bot leaves channel """
         irc.IRCClient.left(self, channel)
-
+        logger.info("The bot has left " + channel)
         self.nicks_db.remove_room(channel)
         if channel != self.factory.channel:
             self.say(self.factory.channel, "%s has left channel %s" %
@@ -464,7 +464,6 @@ class IRCBot(irc.IRCClient):
                         self.nicks_db.add_nick_to_room(this_name, room, opstatus=opstatus)
                         ident = self.nicks_db.get_ident(this_name)
                         if ident == None:
-                            print "no ident"
                             # need to strip opstatus off first
                             if this_name not in self.whois_in_progress:
                                 self.whois_in_progress.append(this_name)

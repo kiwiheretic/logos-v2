@@ -25,6 +25,7 @@ class Plugin(object):
         self.irc_conn = irc_conn
         self.dispatcher = dispatcher
         self.factory = irc_conn.factory
+        self.reactor = self.factory.reactor
         self.network = irc_conn.factory.network
         self.control_room = irc_conn.factory.channel
         
