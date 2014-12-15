@@ -31,13 +31,13 @@ class SystemCommandsClass(Plugin):
     def command(self, nick, user, chan, orig_msg, msg, act):
         sysauth_mch = re.match('sysauth\s(.+)', msg)
         syslogout_mch = re.match('syslogout', msg)
-
         eval_mch  = re.match(act + 'eval\s+(.+)', orig_msg)
         auth_mch = re.match('auth\s+#(#?[a-zA-Z0-9_-]+)\s+(.+)', msg)
         logout_mch = re.match('logout', msg)
+        help_mch = re.match('help', msg)
         set_password_mch = re.match(act + 'set\s+password\s+\"([^"]+)\"', orig_msg)
         
-        speak_mch = re.match(act+'speak\s+(.*)', msg)
+        speak_mch = re.match(act+'say\s+(.*)', msg)
         cmd_mch = re.match(act+'cmd\s+(.*)', orig_msg)
         set_activ_mch = re.match(act+'set\s+(?:activation|trigger)\s+\"(.)\"', orig_msg)
         set_errors_mch = re.match('set\s+errors\s+(.*)', msg)
@@ -61,6 +61,8 @@ class SystemCommandsClass(Plugin):
             
             return True
         
+        elif help_mch:
+            self.msg(chan, "** to be implemented **")
         elif sysauth_mch:
             pw = sysauth_mch.group(1).strip()
             

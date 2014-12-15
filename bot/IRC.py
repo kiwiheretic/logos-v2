@@ -319,7 +319,7 @@ class IRCBot(irc.IRCClient):
 
         act = get_room_option(self.factory.network, channel, 'activation')
         if not act: act = '!'
-        self.say(channel, str("Your trigger is '%s', type %shelp for more info" % (act,act)))
+        self.say(channel, str("Bot initialised, Your trigger is '%s'" % (act,)))
 
         
     def left(self, channel):
