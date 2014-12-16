@@ -2,6 +2,7 @@
 import os
 import sys
 import logging
+import email_settings
 
 logger = logging.getLogger(__name__)
 
@@ -65,18 +66,18 @@ TEST_RUNNER = 'django.test.runner.DiscoverRunner'
 
 #### Email Settings
 
-EMAIL_HOST = 'smtp.mail.com'
+EMAIL_HOST = email_settings.EMAIL_HOST
 
-EMAIL_PORT = 587 
+EMAIL_PORT = email_settings.EMAIL_PORT 
 
-EMAIL_HOST_USER = 'splat@myself.com'
+EMAIL_HOST_USER = email_settings.EMAIL_HOST_USER
 
-EMAIL_HOST_PASSWORD = 'qw3rty123'
+EMAIL_HOST_PASSWORD = email_settings.EMAIL_HOST_PASSWORD
 
-EMAIL_USE_TLS = True
+EMAIL_USE_TLS = email_settings.EMAIL_USE_TLS
 
-DEFAULT_FROM_EMAIL = 'splat@myself.com'
-SERVER_EMAIL = 'splat@myself.com'
+DEFAULT_FROM_EMAIL = email_settings.DEFAULT_FROM_EMAIL
+SERVER_EMAIL = email_settings.SERVER_EMAIL
 ###### End -- Email Settings
 
 BASE_DIR = os.path.dirname(os.path.realpath(__file__))

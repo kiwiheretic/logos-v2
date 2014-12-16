@@ -117,6 +117,7 @@ class NicksDB:
             return None
 
     def set_ident(self, user, ident):
+        logger.info("Setting Ident for %s = %s" % (user, ident))
         self.nicks_info[user.lower()]['ident'] = ident
     
     def get_op_status(self, user, room):
@@ -189,9 +190,13 @@ class IRCBot(irc.IRCClient):
                 try:
                     elmt = queue.pop(0)
                     action, msg = elmt
+                    logger.debug("timer: "+str((chan, action, msg)))
 
                     if action == 'say':
-                        self.say(chan, str(msg))
+                        if chan[0] == '#':
+                            self.say(chan, str(msg))
+                        else:
+                            self.msg(chan, str(msg))
                     elif action == 'msg':
                         self.msg(chan, str(msg))
                     elif action == 'describe':

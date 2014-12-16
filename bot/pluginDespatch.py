@@ -29,6 +29,9 @@ class Plugin(object):
         self.network = irc_conn.factory.network
         self.control_room = irc_conn.factory.channel
         
+    def get_ident(self, nick):
+        return self.irc_conn.get_ident(nick)
+    
     def get_room_nicks(self, room):
         return self.irc_conn.get_room_nicks(room)
 
@@ -163,7 +166,7 @@ class PluginDespatcher(object):
                 for m in pri_list[p]:
                     if hasattr(m, 'command'):
                         try:
-                            completed = m.command(nick, user, chan, orig_msg, msg, act)
+                            completed = m.command(nick, user, chan, orig_msg, msg, re.escape(act))
                             if completed:
                                 return
                         except CommandException as e:
