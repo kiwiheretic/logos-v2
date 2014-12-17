@@ -8,11 +8,15 @@ import sys
 from logos.constants import VERSION
 
 from bot.pluginDespatch import Plugin
-from logos.roomlib import get_room_option, set_room_option, set_room_defaults
+from logos.roomlib import get_room_option, set_room_option, set_room_defaults,\
+    set_global_option
+    
+
 from logos.pluginlib import Registry
 
 import logging
 from logos.settings import LOGGING
+from logos.models import Settings
 
 logger = logging.getLogger(__name__)
 logging.config.dictConfig(LOGGING)
@@ -40,6 +44,7 @@ class SystemCommandsClass(Plugin):
         speak_mch = re.match(act+'say\s+(.*)', msg)
         cmd_mch = re.match(act+'cmd\s+(.*)', orig_msg)
         set_activ_mch = re.match(act+'set\s+(?:activation|trigger)\s+\"(.)\"', orig_msg)
+        set_pvt_trigger_mch = re.match(act+'set\s+(?:private|pvt)\s+(?:activation|trigger)\s+\"(.)\"', orig_msg)
         set_errors_mch = re.match('set\s+errors\s+(.*)', msg)
         set_greet_mch = re.match(act+'set\s+greet\s+message\s+\"(.*)\"', orig_msg)
         version_mch = re.match('version\s*$', msg)  
@@ -144,6 +149,13 @@ class SystemCommandsClass(Plugin):
                     logger.info("%s issued command '%s' to bot" % (user, line))
                     self.sendLine(line)
                     return
+                elif set_pvt_trigger_mch:
+                    arg = set_pvt_trigger_mch.group(1)
+                    
+                    set_global_option('pvt-trigger', arg)
+
+                    self.msg(chan, "Private trigger set to \"%s\"" % (arg,))
+                                
                 elif eval_mch:
                     #
                     # Have the bot issue any arbitrary python command. 
@@ -189,6 +201,7 @@ class SystemCommandsClass(Plugin):
 
                     self.msg(chan, "Password for room %s set to %s " % (ch, pw))
                     return True
+
                 elif set_activ_mch:
                     # Command issued to bot to change the default activation
                     # character.
@@ -198,6 +211,7 @@ class SystemCommandsClass(Plugin):
                         'activation', arg)  
  
                     self.msg(chan, "Trigger for room %s set to \"%s\"" % (ch,  arg))
+                    # Don't send this message twice if chan,ch are same room
                     if chan != ch:
                         self.msg(ch, "Trigger has been changed to \"%s\"" % (arg,))
                     return

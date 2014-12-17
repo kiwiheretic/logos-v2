@@ -4,12 +4,12 @@ import sys
 import logging
 import re
 import time
-
 from simple_webserver import SimpleWeb
 from simple_rpcserver import SimpleRPC
 
 from copy import copy
-from logos.roomlib import get_room_option, set_room_option, get_startup_rooms
+from logos.roomlib import get_room_option, set_room_option, get_startup_rooms, \
+    get_global_option
 
 from pluginDespatch import PluginDespatcher as Plugins
 from twisted.internet import reactor, protocol
@@ -324,7 +324,8 @@ class IRCBot(irc.IRCClient):
 
         act = get_room_option(self.factory.network, channel, 'activation')
         if not act: act = '!'
-        self.say(channel, str("Bot initialised, Your trigger is '%s'" % (act,)))
+        pvt_act = get_global_option('pvt-trigger')
+        self.say(channel, str("Bot initialised, Your trigger is '%s', private chat trigger is \"%s\"" % (act,pvt_act)))
 
         
     def left(self, channel):
@@ -398,8 +399,7 @@ class IRCBot(irc.IRCClient):
         # ... and make all lower case for easy pattern matching
         #msg = msg.lower()
 
-        act = get_room_option(self.factory.network, channel, 'activation')
-        if not act: act = '!'
+
 
         # if we wish to return a self.msg(...) to an incoming command
         # we need to send it to a nickname if the message was private
@@ -408,8 +408,15 @@ class IRCBot(irc.IRCClient):
         # of a private message.  Hence the need to set the chan variable below.
         if channel == self.factory.nickname:
             chan = user.split('!')[0]
+            # determine the trigger for private chat window
+            act = get_global_option('pvt-trigger')
+            
         else:
             chan = channel.lower()
+            # determine the trigger for this room
+            act = get_room_option(self.factory.network, channel, 'activation')
+        
+        if not act: act = '!'
 
         # set the nick variable for use with self.msg(...) as user,
         # as an argument, doesn't work.  

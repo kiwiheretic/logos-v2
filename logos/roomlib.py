@@ -1,8 +1,24 @@
 #roomlib.py
-from logos.models import RoomOptions
+from logos.models import RoomOptions, Settings
 from django.core.exceptions import ObjectDoesNotExist
 import pdb
 
+def set_global_option(option, value):
+    try:
+        obj = Settings.objects.get(option = option)
+        obj.value = value
+        obj.save()
+    except Settings.DoesNotExist:
+        obj = Settings(option=option, value=value)
+        obj.save()   
+
+def get_global_option(option):
+    try:
+        obj = Settings.objects.get(option = option)
+        return obj.value
+    except Settings.DoesNotExist:
+        return None
+    
 def get_startup_rooms(network):
     rooms = RoomOptions.objects.filter(network=network, option='active')
     room_list = []
