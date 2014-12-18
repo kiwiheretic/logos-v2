@@ -241,8 +241,14 @@ class IRCBot(irc.IRCClient):
                 self.join(str(rm))
                 logger.info("Joining room "+ rm)
 
+        if self.factory.extra_options['room_key']:
+            room_key = self.factory.extra_options['room_key']
+            self.join(self.factory.channel, room_key)
+        else:
+            self.join(self.factory.channel)
+
         logger.info("Joining room "+ self.factory.channel)
-        self.join(self.factory.channel)
+        
         self.timer.start(QUEUE_TIMER)
 
     def userJoined(self, user, channel):
