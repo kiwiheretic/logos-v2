@@ -41,6 +41,8 @@ class Command(BaseCommand):
                     help="The bot nickserv password.  Defaults to 'qwerty'"),
         make_option('--sys-password', '-P', action='store',
                     help="The bot control password.  Defaults to 'zxcvbnm'"),
+        make_option('--no-services', action='store_true',
+                    help="Don't try and use IRC services"),
     )
     option_list = BaseCommand.option_list + extra_options
 
@@ -88,7 +90,11 @@ class Command(BaseCommand):
             engine_room = options['engine_room']
         else:
             engine_room = '#engineroom'
+        
+        extra_options = {}
+        extra_options['no_services'] = options['no_services']
 
         irc.instantiateIRCBot(server, port, engine_room, nickname, \
-                              sys_password, nick_password, web_port, rpc_port)
+                              sys_password, nick_password, web_port, rpc_port, \
+                              extra_options)
 

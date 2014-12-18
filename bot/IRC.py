@@ -492,15 +492,18 @@ class IRCBot(irc.IRCClient):
             if user in self.whois_in_progress:
                 self.whois_in_progress.remove(user)
                 self.nicks_db.set_ident(user, ident)
-                line = 'privmsg nickserv info ' + user
-                self.sendLine(line)
+                if self.factory.extra_options['no_services']:
+                    pass
+                else:
+                    line = 'privmsg nickserv info ' + user
+                    self.sendLine(line)
 
 
 class IRCBotFactory(protocol.ClientFactory):
     protocol = IRCBot
 
     def __init__(self, reactor, server, channel, nickname,  \
-                 sys_password, nickserv_pw, web_port, rpc_port):
+                 sys_password, nickserv_pw, web_port, rpc_port, extra_options):
         
         self.reactor = reactor
         self.channel = channel
@@ -511,6 +514,7 @@ class IRCBotFactory(protocol.ClientFactory):
         self.network = server
         self.nickserv_password = nickserv_pw
         self.sys_password = sys_password
+        self.extra_options = extra_options
         
         if web_port:
             self.web = SimpleWeb(reactor, self, web_port)
@@ -541,12 +545,14 @@ class IRCBotFactory(protocol.ClientFactory):
 ########################################################################
 
 def instantiateIRCBot(network, port, room, botName, sys_password, 
-                      nickserv, web_port = None, rpc_port=None):
+                      nickserv, web_port = None, rpc_port=None, 
+                      extra_options=None):
 
     # Start the IRC Bot
     reactor.connectTCP(network, port,
                        IRCBotFactory(reactor, network, room, botName,\
-                                     sys_password, nickserv, web_port, rpc_port))
+                                     sys_password, nickserv, web_port,\
+                                     rpc_port, extra_options))
 
     
     reactor.run()
