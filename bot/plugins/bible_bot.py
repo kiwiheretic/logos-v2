@@ -240,6 +240,8 @@ class BibleBot(Plugin):
     
     def _concordance_generator(self, chan, nick, trans, book_range, words, mode="simple"):
 
+        sri = 1  # This is the search result index
+        
         if book_range[0]:
             bk = self._get_book(book_range[0])
             br0 = BibleBooks.objects.filter(trans_id = trans, canonical=bk)\
@@ -425,8 +427,9 @@ class BibleBot(Plugin):
                     
                     if contains_sublist(verse_words, word_list2):
                         logger.debug("In sublist")
-                        yield {'trans': trans.id, 'book': wrd_rec.book.id, 
+                        yield {'index':sri, 'trans': trans.id, 'book': wrd_rec.book.id, 
                             'chapter': wrd_rec.chapter, 'verse': wrd_rec.verse }
+                        sri += 1
 
                 else: # mode == "simple"
                     found = True
@@ -445,8 +448,9 @@ class BibleBot(Plugin):
                                 break
 
                     if found:
-                        yield {'trans': trans.id, 'book': wrd_rec.book.id, 
+                        yield {'index': sri, 'trans': trans.id, 'book': wrd_rec.book.id, 
                            'chapter': wrd_rec.chapter, 'verse': wrd_rec.verse }
+                        sri += 1
 
             
 
@@ -675,13 +679,14 @@ class BibleBot(Plugin):
                 res = gen.next()
                 trans = BibleTranslations.objects.get(pk=res['trans'])
                 book = BibleBooks.objects.get(pk=res['book'])
+                idx = res['index']
                 chptr = res['chapter']
                 vrse = res['verse']
                 verse_txt = BibleVerses.objects.get(trans_id = trans,
                                 book = book, chapter = chptr,
                                 verse = vrse).verse_text
                             
-                str1 = "%s %s %d:%d : %s " % (trans.name.upper(), book.long_book_name, 
+                str1 = "[%d] %s %s %d:%d : %s " % (idx, trans.name.upper(), book.long_book_name, 
                                               chptr, vrse, verse_txt)
                 
                 self.say(chan, str1)
