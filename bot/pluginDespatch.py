@@ -56,17 +56,44 @@ class Plugin(object):
                 
             
     def say(self, channel, message):
-        self.irc_conn.queue_message(channel, 'say', message)
+        self.irc_conn.queue_message('say', channel, message)
 
     def msg(self, channel, message):
-        self.irc_conn.queue_message(channel, 'msg', message)
+        self.irc_conn.queue_message('msg', channel, message)
 
     def describe(self, channel, action):
-        self.irc_conn.queue_message(channel, 'describe', action)
+        self.irc_conn.queue_message('describe', channel, action)
 
     def notice(self, user, message):
-        self.irc_conn.queue_message(user, 'notice', message)
+        self.irc_conn.queue_message('notice', user, message)
 
+    def kick(self, channel, user, reason=None):    
+        self.irc_conn.queue_message('kick', channel, user, reason)
+
+    def mode(self, chan, set, modes, limit = None, user = None, mask = None):
+        """
+        Change the modes on a user or channel.
+
+        The C{limit}, C{user}, and C{mask} parameters are mutually exclusive.
+
+        @type chan: C{str}
+        @param chan: The name of the channel to operate on.
+        @type set: C{bool}
+        @param set: True to give the user or channel permissions and False to
+            remove them.
+        @type modes: C{str}
+        @param modes: The mode flags to set on the user or channel.
+        @type limit: C{int}
+        @param limit: In conjuction with the C{'l'} mode flag, limits the
+             number of users on the channel.
+        @type user: C{str}
+        @param user: The user to change the mode on.
+        @type mask: C{str}
+        @param mask: In conjuction with the C{'b'} mode flag, sets a mask of
+            users to be banned from the channel.
+        """        
+        self.irc_conn.queue_message('mode', chan, set, modes, limit, user, mask)
+                
     def sendLine(self, line):
         self.irc_conn.sendLine(line)
         
@@ -187,8 +214,8 @@ class PluginDespatcher(object):
                             if completed:
                                 return
                         except CommandException as e:
-                            self.irc_conn.queue_message(self.irc_conn.factory.channel, 'say', e.user + " typed: " + act + msg)
-                            self.irc_conn.queue_message(self.irc_conn.factory.channel, 'say', e.chan + ":" + e.msg)
+                            self.irc_conn.queue_message('say', self.irc_conn.factory.channel, e.user + " typed: " + act + msg)
+                            self.irc_conn.queue_message('say', self.irc_conn.factory.channel, e.chan + ":" + e.msg)
                             logger.debug('CommandException: ' + str( (e.user, e.chan, e.msg)))
 
 

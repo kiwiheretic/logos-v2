@@ -3,6 +3,7 @@ import pdb
 import sys
 import logging
 import re
+import types
 import time
 from simple_webserver import SimpleWeb
 from simple_rpcserver import SimpleRPC
@@ -159,12 +160,14 @@ class IRCBot(irc.IRCClient):
         self.channel_queues = {}
         self.whois_in_progress = []
         
-    def queue_message(self, channel, msg_type, msg):
+    def queue_message(self, msg_type, channel,  *args):
         chan = channel.lower()
+        l = [msg_type, channel]
+        l.extend(args)
         if chan in self.channel_queues:
-            self.channel_queues[chan].append((msg_type, msg))
+            self.channel_queues[chan].append(l)
         else:
-            self.channel_queues[chan] = [(msg_type, msg)]
+            self.channel_queues[chan] = [l]
             
     def _get_nickname(self):
         return self.factory.nickname
@@ -179,34 +182,31 @@ class IRCBot(irc.IRCClient):
         return self.nicks_db.get_room_nicks(room)
 
     def onTimer(self):
-        keys = self.channel_queues.keys()
-
         for chan in self.channel_queues:
             # If the bot is in the channel or if the message
             # is not to a channel but a private message to
             # an individual nick then proceed and send the message
-            if self.nicks_db.bot_in_room(chan) or chan[0] != '#': 
-                queue = self.channel_queues[chan]
-                try:
-                    elmt = queue.pop(0)
-                    action, msg = elmt
-                    logger.debug("timer: "+str((chan, action, msg)))
 
-                    if action == 'say':
-                        if chan[0] == '#':
-                            self.say(chan, str(msg))
-                        else:
-                            self.msg(chan, str(msg))
-                    elif action == 'msg':
-                        self.msg(chan, str(msg))
-                    elif action == 'describe':
-                        self.describe(chan, str(msg));
-                    elif action == 'notice':
-                        self.notice(chan, str(msg))
+            if self.nicks_db.bot_in_room(chan) or chan[0] != '#': 
+                msg_list = []
+                if len(self.channel_queues[chan]) == 0:
+                    continue
+                chan_q = self.channel_queues[chan].pop(0)
+                for elmt in chan_q:
+                    if type(elmt) == types.UnicodeType:
+                        msg_list.append(str(elmt))
                     else:
-                        logger.debug('action not found ' + str(elmt) )
-                except IndexError:
-                    pass
+                        msg_list.append(elmt)
+
+                logger.debug("timer: "+str((chan, msg_list)))
+                action = msg_list.pop(0)
+                if hasattr(self, action):
+                    f = getattr(self, action)
+                    args = msg_list
+                    f(*args)
+                else:
+                    logger.debug('action not found ' + str(action) )
+
 
     def signedOn(self):
         """ After we sign on to the server we need to mark this irc
