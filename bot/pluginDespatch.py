@@ -38,6 +38,23 @@ class Plugin(object):
     def signal(self, scope, message_id, *args):
         self.dispatcher.signal_plugins(self, scope, message_id, *args)
         
+
+    
+#    def __getattr__(self, name):
+#        if hasattr(self.irc_conn, name):
+#            attr = getattr(self.irc_conn, name)
+#            # fudge a closure in python 2.7 using a dictionary
+#            # see http://technotroph.wordpress.com/2012/10/01/python-closures-and-the-python-2-7-nonlocal-solution/
+#            d = {'conn': self.irc_conn}
+#            if hasattr(attr, "__call__"):
+#                def method_dispatcher(self, *args, **kwargs):
+#                    d['conn'].queue_message(*args, **kwargs)
+#                return method_dispatcher
+#            else:
+#                raise AttributeError
+                    
+                
+            
     def say(self, channel, message):
         self.irc_conn.queue_message(channel, 'say', message)
 

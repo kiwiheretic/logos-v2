@@ -10,7 +10,8 @@ from logos.pluginlib import Registry
 from logos.constants import PUNCTUATION, STOP_WORDS
 
 from bot.pluginDespatch import Plugin, CommandException
-from logos.roomlib import get_room_option, set_room_option
+from logos.roomlib import get_room_option, set_room_option, set_global_option, \
+    get_global_option
 from logos.pluginlib import CommandDecodeException
 from logos.models import BibleTranslations, BibleBooks, BibleVerses, \
     BibleConcordance
@@ -66,9 +67,13 @@ class BibleBot(Plugin):
         return trans_list
     
     def _get_defaulttranslation(self, channel):
-        res = get_room_option(self.network, channel,'default_translation')
+        if channel[0] == '#':
+            res = get_room_option(self.network, channel,'default_translation')
+        else:
+            res = get_global_option('pvt-translation')
         if not res:
             res = 'kjv' # default translation
+            
         return str(res)
 
     def _get_verselimit(self,channel):
@@ -483,6 +488,7 @@ class BibleBot(Plugin):
         phrase_search_mch = re.match('(?:search|s)\s+([^"]*)\"([^"]+)\"', msg)
         next_search_mch = re.match('(?:search|s)\s*$', msg)
         default_trans_mch = re.match('set\s+default\s+translation\s+([a-zA-Z]+)', msg)
+        pvt_trans_mch = re.match('set\s+(?:private|pvt)\s+translation\s+([a-zA-Z]+)', msg)
         set_searchlimit_mch = re.match('set\s+search\s+limit\s+(\d+)\s*$', msg)
         set_verselimit_mch = re.match('set\s+verse\s+limit\s+(\d+)\s*$', msg)
         versions_mch = re.match('(?:translations|versions)\s*$', msg)
@@ -503,6 +509,17 @@ class BibleBot(Plugin):
                     'default_translation', def_trans)
 
                 self.msg(chan, "Default translation for %s set to %s " % (ch,def_trans))
+            return True
+        elif pvt_trans_mch:
+            if nick in Registry.sys_authorized:
+                trans = pvt_trans_mch.group(1)
+                translations = self._get_translations()                        
+                if trans not in translations:
+                    self.msg(chan, "Could not locate translation %s " % (def_trans,))
+                    return True
+                else:
+                    set_global_option('pvt-translation', trans)
+                    self.msg(chan, "Private translation set to %s " % (trans,))
             return True
         elif set_verselimit_mch:
             verselmt = int(set_verselimit_mch.group(1))

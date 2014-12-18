@@ -325,6 +325,7 @@ class IRCBot(irc.IRCClient):
         act = get_room_option(self.factory.network, channel, 'activation')
         if not act: act = '!'
         pvt_act = get_global_option('pvt-trigger')
+        if not pvt_act: pvt_act = "!"
         self.say(channel, str("Bot initialised, Your trigger is '%s', private chat trigger is \"%s\"" % (act,pvt_act)))
 
         
