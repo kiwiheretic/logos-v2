@@ -56,7 +56,10 @@ class Plugin(object):
                 
             
     def say(self, channel, message):
-        self.irc_conn.queue_message('say', channel, message)
+        if channel[0] == '#':
+            self.irc_conn.queue_message('say', channel, message)
+        else:
+            self.irc_conn.queue_message('msg', channel, message)
 
     def msg(self, channel, message):
         self.irc_conn.queue_message('msg', channel, message)
