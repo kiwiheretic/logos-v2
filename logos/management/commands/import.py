@@ -73,22 +73,68 @@ class Command(BaseCommand):
             print "page_size = " + str(page_size) + " bytes"
             print "cache_size = " + str(cache_size) + " pages"
 
+        import_strongs_tables() 
         import_trans()
         import_concordance()
-        # store_true options are None if not used but the keys exist
-#        if options['updatedb']:
-#            updatedb()
+       
+def import_strongs_tables():
 
-#        elif options['createdb'] == 'concordance':
-#            import_concordance()
+    cache = []
+    idx = 0
 
-#        elif options['createdb'] == 'translations':
-#            import_trans()
-#        elif options['createdb'] == 'strongs':
-#            populate_strongs_tables()
+    #BibleDict.objects.all().delete()
+    for lang,prefix in (('grk', 'G'), ('heb', 'H')):
+        print lang, prefix
+        file1 = os.path.join(BIBLES_DIR, 'dict', lang)
+        f = open(file1, 'rb')
+        for line in f.readlines():
+            
+            mch = re.match('(\d+)\s+(.*)', line)
+            if mch:
+                num = prefix+str(mch.group(1))
+                text = mch.group(2).decode("utf8", "replace")
+                try:
+                    dict_obj = BibleDict.objects.get(strongs=num)
+                except BibleDict.DoesNotExist:
+                    dict_obj = BibleDict(id=idx+1, strongs=num, description=text)
+                    if len(cache) > 0 and dict_obj.strongs == cache[-1].strongs:
+                        pdb.set_trace()
+                    cache.append(dict_obj)
+                idx += 1
+            else:
+                print "strange dict line : " + line
 
-#        else:
-#            pass
+            # This horrible kludge is because the bulk_create
+            # method fails somewhere in the middle when inserting
+            # large numbers of records (but does not fail when inserting
+            # them individually) so I temporarily reduce the number of 
+            # objects to insert and then increase it again.  Does this only happen
+            # when using Sqlite3 as a database? Is this a known bug in Django?
+            if idx > 6000:
+                modulus = 100
+            elif idx > 5620:
+                modulus = 1
+            elif idx > 5600:
+                modulus = 10
+            else:
+                modulus = 200
+                
+            ### End Kludge ###
+            
+            if  idx % modulus == 0:
+                if len(cache) ==0:
+                    print "#",
+                else:
+                    print "(%d, %s) " % (idx,cache[-1].strongs),
+                    BibleDict.objects.bulk_create(cache)
+                    cache = []
+                    gc.collect()
+              
+            
+        f.close()
+        BibleDict.objects.bulk_create(cache)
+
+
 
 def updatedb(purge=False):
     populate_strongs_tables()

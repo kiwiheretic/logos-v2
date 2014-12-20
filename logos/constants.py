@@ -1,4 +1,4 @@
-VERSION = "0.98.03"
+VERSION = "0.98.05"
 
 PUNCTUATION = r"[\?`)(';:\*\[\],.\-\"|!\x7f]"
 

@@ -14,7 +14,7 @@ from logos.roomlib import get_room_option, set_room_option, set_global_option, \
     get_global_option
 from logos.pluginlib import CommandDecodeException
 from logos.models import BibleTranslations, BibleBooks, BibleVerses, \
-    BibleConcordance
+    BibleConcordance, BibleDict
 from _booktbl import book_table
 
 import logging
@@ -275,7 +275,7 @@ class BibleBot(Plugin):
                 stop_words_found.append(wrd)
                 
         if stop_words_found:
-            self.say(chan, "Ignoring stop words \"%s\"." % (", ".join(stop_words_found)))
+            self.say(chan, "Ignoring common words \"%s\"." % (", ".join(stop_words_found)))
      
         # split word list into those that are wildcards
         # and those that are not.
@@ -485,7 +485,7 @@ class BibleBot(Plugin):
         pass
 
     def command(self, nick, user, chan, orig_msg, msg, act):
-        logger.debug( "command: " + str(( user, chan, msg, act)))
+        logger.info( "BB command: " + str(( nick, user, chan, msg, act)))
         activator = re.escape(act)
         next_mch = re.match('(next|n)\s*$', msg)
         search_mch = re.match('(?:search|s)\s+(.+)', msg)
@@ -496,6 +496,7 @@ class BibleBot(Plugin):
         set_searchlimit_mch = re.match('set\s+search\s+limit\s+(\d+)\s*$', msg)
         set_verselimit_mch = re.match('set\s+verse\s+limit\s+(\d+)\s*$', msg)
         versions_mch = re.match('(?:translations|versions)\s*$', msg)
+        dict_mch = re.match('dict\s+(\S+)', msg)
         if versions_mch:
             translations = self._get_translations()
             tr_str = ",".join(translations)
@@ -622,6 +623,17 @@ class BibleBot(Plugin):
                     self.say(chan, str(reply))            
             else:
                 self.say(chan, "No more verses to read")            
+        elif dict_mch:
+            lookup = dict_mch.group(1)
+            lookup = lookup.upper()
+
+            try:
+                dict_obj = BibleDict.objects.get(strongs=lookup)
+                description = dict_obj.description
+                self.say(chan, description)
+            except BibleDict.DoesNotExist:
+                self.say(chan, "Sorry %s not found" % lookup)
+
         else:
             result = self._get_verses(chan, nick, user, msg)
             print result

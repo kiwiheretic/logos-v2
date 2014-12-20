@@ -189,6 +189,7 @@ class PluginDespatcher(object):
     def privmsg(self, user, channel, message):
         for m in self._cls_list:
             if hasattr(m, 'privmsg'):
+                logger.debug("Invoking privmsg of module " + str(m))
                 m.privmsg(user, channel, message)
 
 

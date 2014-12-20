@@ -160,6 +160,11 @@ class IRCBot(irc.IRCClient):
         self.channel_queues = {}
         self.whois_in_progress = []
         
+        # Some IRC servers seem to require username and realname
+        # (notably some Undernet servers)
+        self.username = "logos"
+        self.realname = "logos"
+        
     def queue_message(self, msg_type, channel,  *args):
         chan = channel.lower()
         l = [msg_type, channel]
