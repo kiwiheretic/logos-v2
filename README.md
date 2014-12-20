@@ -83,3 +83,41 @@ Haven't yet tracked down what causes this.
 
 See the [wiki](https://github.com/kiwiheretic/logos-v2/wiki) for more details.
 
+### Dependencies ###
+
+Currently ...
+  * Twisted 14.0
+  * Django 1.7
+  * Python 2.7
+  * django-registration-redux 1.1
+  * psutil 2.1.3
+  * zope.interface 4.1.1
+
+See the requirements.txt file in the source tree for most up to date information.
+
+### Database configuration ###
+
+Very little.  Uses sqlite3.
+
+### How to run tests ###
+
+Ummm .... still trying to figure out what constitutes a good test given the unpredictability and potential laggyness of IRC servers in general.
+
+### Deployment instructions ###
+
+As above
+
+### Contribution guidelines ###
+
+### Writing tests ###
+
+Open to suggestions
+
+* Code review
+* Other guidelines
+
+### Who do I talk to? ###
+
+* Repo owner or admin
+
+kiwiheretic (at) myself (dot) com
