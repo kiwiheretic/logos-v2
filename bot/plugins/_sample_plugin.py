@@ -6,6 +6,9 @@ from logos.settings import LOGGING
 logger = logging.getLogger(__name__)
 logging.config.dictConfig(LOGGING)
 
+# If using this file as a starting point for your plugin
+# then remember to change the class name 'MyBotPlugin' to
+# something more meaningful.
 class MyBotPlugin(Plugin):
     def __init__(self, *args, **kwargs):
         Plugin.__init__(self, *args, **kwargs)
