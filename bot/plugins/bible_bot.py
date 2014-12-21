@@ -497,6 +497,9 @@ class BibleBot(Plugin):
         set_verselimit_mch = re.match('set\s+verse\s+limit\s+(\d+)\s*$', msg)
         versions_mch = re.match('(?:translations|versions)\s*$', msg)
         dict_mch = re.match('dict\s+(\S+)', msg)
+        
+        # match "KJV John 3:16, John 3:16, John 3", etc...
+        verse_mch = re.match('(?:\w+\s+){1,2}\d+(?::\d+)?', msg)
         if versions_mch:
             translations = self._get_translations()
             tr_str = ",".join(translations)
@@ -634,7 +637,7 @@ class BibleBot(Plugin):
             except BibleDict.DoesNotExist:
                 self.say(chan, "Sorry %s not found" % lookup)
 
-        else:
+        elif verse_mch:
             result = self._get_verses(chan, nick, user, msg)
             print result
             for resp in result:
