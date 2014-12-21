@@ -140,7 +140,8 @@ class BibleBot(Plugin):
         if not book:
             raise CommandException(user, chan, "Could not find book %s" % (bookwork,))
 
-        passage = re.sub("\s+","", versework)
+        #passage = re.sub("\s+","", versework)
+        passage = versework
 
         versecount = 1
         #verselimit = 4
@@ -149,34 +150,23 @@ class BibleBot(Plugin):
         lastverse = 1
         verselimit = int(verselimit)
 
-        if ':' in passage:
-            splitwork = re.split(':',passage)
-            chapter = splitwork[0]
-
-            if '-' in passage:
-
-                firstverse, lastverse = re.split('-', splitwork[1])
-                firstverse = int(firstverse)
-                lastverse = int(lastverse)
-                passage = chapter + ':' + str(firstverse)
-                if lastverse - firstverse <= verselimit-1 and lastverse > firstverse:
-                    versecount = lastverse - firstverse + 1
-                elif lastverse <= firstverse:
-                    versecount = 1
-                else:
-                    versecount = verselimit
+        splitwork = re.split('(?::|-|\s+)',passage)
+        chapter = int(splitwork.pop(0))
+        if splitwork:
+            firstverse = int(splitwork.pop(0))
+            if splitwork:
+                lastverse = int(splitwork.pop(0))
             else:
-                lastverse = firstverse = splitwork[1]
-                firstverse = int(firstverse)
-                passage = chapter + ':' + str(firstverse)
-
+                lastverse = firstverse
         else:
-            try:
-                chapter = int(passage)
-                firstverse = 1
-                versecount = verselimit
-            except ValueError:
-                raise CommandException(nick, user, "Invalid chapter & verse reference ")
+            firstverse = lastverse = 1
+        if lastverse - firstverse <= verselimit-1 and lastverse > firstverse:
+            versecount = lastverse - firstverse + 1
+        elif lastverse <= firstverse:
+            versecount = 1
+        else:
+            versecount = verselimit
+             
 
         book_db = BibleBooks.objects.get(trans_id = trans_id,
                                          canonical = book)
@@ -498,8 +488,10 @@ class BibleBot(Plugin):
         versions_mch = re.match('(?:translations|versions)\s*$', msg)
         dict_mch = re.match('dict\s+(\S+)', msg)
         
-        # match "KJV John 3:16, John 3:16, John 3", etc...
-        verse_mch = re.match('(?:\w+\s+){1,2}\d+(?::\d+)?', msg)
+        # match "KJV John 3:16, John 3:16, John 3 16, John 3", etc...
+        verse_mch = re.match('(?:\w+\s+){1,2}\d+(?:\s*:?\s*\d+(?:\s*-?\s*\d+))?$',\
+                              msg)
+
         if versions_mch:
             translations = self._get_translations()
             tr_str = ",".join(translations)
