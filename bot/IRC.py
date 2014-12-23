@@ -2,6 +2,7 @@
 import pdb
 import sys
 import logging
+import string
 import re
 import types
 import time
@@ -169,6 +170,7 @@ class IRCBot(irc.IRCClient):
         chan = channel.lower()
         l = [msg_type, channel]
         l.extend(args)
+
         if chan in self.channel_queues:
             self.channel_queues[chan].append(l)
         else:
@@ -206,9 +208,15 @@ class IRCBot(irc.IRCClient):
                 logger.debug("timer: "+str((chan, msg_list)))
                 action = msg_list.pop(0)
                 if hasattr(self, action):
-                    f = getattr(self, action)
-                    args = msg_list
-                    f(*args)
+                    # sendLine used for startup script primarily
+                    if action == "sendLine":
+                        line = msg_list[1].strip()
+                        logger.debug("Sending raw line : "+line)
+                        self.sendLine(line)
+                    else:
+                        f = getattr(self, action)
+                        args = msg_list
+                        f(*args)
                 else:
                     logger.debug('action not found ' + str(action) )
 
@@ -231,7 +239,7 @@ class IRCBot(irc.IRCClient):
         self.sendLine(line)
         logger.info(line)
 
-        if self.factory.nickserv_password:
+        if self.factory.nickserv_password and not self.factory.extra_options['no_services']:
             line = "NS IDENTIFY " + self.factory.nickserv_password
             self.sendLine(line)
             logger.info(line)
@@ -251,10 +259,19 @@ class IRCBot(irc.IRCClient):
             self.join(self.factory.channel, room_key)
         else:
             self.join(self.factory.channel)
-
         logger.info("Joining room "+ self.factory.channel)
         
-        self.timer.start(QUEUE_TIMER)
+        if self.factory.extra_options['startup_script']:
+            try:
+                f = open(self.factory.extra_options['startup_script'])
+                for line in f.readlines():
+                    line_repl = string.replace(line, "%nick%", self.nickname)
+                    self.queue_message('sendLine', 'sendLine', line_repl)
+                f.close()
+            except IOError:
+                pass
+        self.timer.start(QUEUE_TIMER)        
+
 
     def userJoined(self, user, channel):
         """
@@ -393,7 +410,7 @@ class IRCBot(irc.IRCClient):
 
     def privmsg(self, user, channel, orig_msg):
         """ This is the ideal place to process commands from the user. """
-        #logger.debug( "%s on %s says %s " % ( user, channel, orig_msg))
+        logger.debug( "PRIVMSG %s on %s says %s " % ( user, channel, orig_msg))
 
         irc.IRCClient.privmsg(self, user, channel, orig_msg)
 
@@ -436,6 +453,7 @@ class IRCBot(irc.IRCClient):
         mch = re.match(re.escape(act)+ "(.*)", msg)
         if mch:
             msg = mch.group(1).strip()
+            logger.info("Received Command " + str((nick, user, chan, orig_msg, msg, act)))
             self.plugins.command(nick, user, chan, orig_msg, msg, act)
 
         self.plugins.privmsg(user, channel, orig_msg)
@@ -447,9 +465,9 @@ class IRCBot(irc.IRCClient):
             enters a channel with people already on it."""
         irc.IRCClient.irc_unknown(self, prefix, command, params)
 
-        line =  '[u]: ' + prefix + ',' + command + ',' + ','.join(params)
+        line =  '[server]: ' + prefix + ',' + command + ',' + ','.join(params)
         if command not in ['PONG']: # we don't care about these
-            logger.debug(line)
+            logger.info(line)
 #            self.queue_message(self.factory.channel, 'say', line)
 
         # We use the RPL_NAMREPLY to get a list of all people currently

@@ -43,6 +43,8 @@ class Command(BaseCommand):
                     help="The bot control password.  Defaults to 'zxcvbnm'"),
         make_option('--no-services', action='store_true',
                     help="Don't try and use IRC services"),
+        make_option('--startup-script', action='store',
+                    help="path to the startup script of IRC commands"),                    
         make_option('--room-key', action='store',
                     help="The key used to join the control room (if needed)"),
 
@@ -50,8 +52,7 @@ class Command(BaseCommand):
     option_list = BaseCommand.option_list + extra_options
 
     def handle(self, *args, **options):
-        logger.debug( "args = "+str(args))
-        logger.debug( "options = "+ str(options))
+#        logger.debug( "options = "+ str(options))
 
        
         if options['server']:
@@ -97,6 +98,7 @@ class Command(BaseCommand):
         extra_options = {}
         extra_options['no_services'] = options['no_services']
         extra_options['room_key'] = options['room_key']
+        extra_options['startup_script'] = options['startup_script']
 
         irc.instantiateIRCBot(server, port, engine_room, nickname, \
                               sys_password, nick_password, web_port, rpc_port, \

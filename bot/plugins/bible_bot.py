@@ -101,7 +101,7 @@ class BibleBot(Plugin):
 
         # Get the maximum number of verses to display in one
         # go for the current room
-        verselimit = self._get_verselimit(chan)
+        verselimit = int(self._get_verselimit(chan))
 
         # Find default translation for the current room
         def_trans = self._get_defaulttranslation(chan)
@@ -143,12 +143,6 @@ class BibleBot(Plugin):
         #passage = re.sub("\s+","", versework)
         passage = versework
 
-        versecount = 1
-        #verselimit = 4
-        chapter = 1
-        firstverse = 1 #this is here because the concordance has no firstveerse
-        lastverse = 1
-        verselimit = int(verselimit)
 
         splitwork = re.split('(?::|-|\s+)',passage)
         chapter = int(splitwork.pop(0))
@@ -158,14 +152,18 @@ class BibleBot(Plugin):
                 lastverse = int(splitwork.pop(0))
             else:
                 lastverse = firstverse
+
+            if lastverse - firstverse <= verselimit-1 and lastverse > firstverse:
+                versecount = lastverse - firstverse + 1
+            elif lastverse <= firstverse:
+                versecount = 1
+            else:
+                versecount = verselimit
         else:
-            firstverse = lastverse = 1
-        if lastverse - firstverse <= verselimit-1 and lastverse > firstverse:
-            versecount = lastverse - firstverse + 1
-        elif lastverse <= firstverse:
-            versecount = 1
-        else:
+            firstverse = 1
             versecount = verselimit
+
+
              
 
         book_db = BibleBooks.objects.get(trans_id = trans_id,
@@ -475,7 +473,6 @@ class BibleBot(Plugin):
         pass
 
     def command(self, nick, user, chan, orig_msg, msg, act):
-        logger.info( "BB command: " + str(( nick, user, chan, msg, act)))
         activator = re.escape(act)
         next_mch = re.match('(next|n)\s*$', msg)
         search_mch = re.match('(?:search|s)\s+(.+)', msg)
@@ -487,7 +484,6 @@ class BibleBot(Plugin):
         set_verselimit_mch = re.match('set\s+verse\s+limit\s+(\d+)\s*$', msg)
         versions_mch = re.match('(?:translations|versions)\s*$', msg)
         dict_mch = re.match('dict\s+(\S+)', msg)
-        
         # match "KJV John 3:16, John 3:16, John 3 16, John 3", etc...
         verse_mch = re.match('(?:\w+\s+){1,2}\d+(?:\s*:?\s*\d+(?:\s*-?\s*\d+))?$',\
                               msg)
@@ -496,7 +492,6 @@ class BibleBot(Plugin):
             translations = self._get_translations()
             tr_str = ",".join(translations)
             self.msg(chan, "Supported translations are %s " % (tr_str,))
-
         elif default_trans_mch:
             ch = Registry.authorized[nick]['channel']
             def_trans = default_trans_mch.group(1)

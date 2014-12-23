@@ -249,7 +249,7 @@ LOGGING = {
         'file': {
             'level': 'DEBUG',
             'class': 'logging.FileHandler',
-            'filename': 'logos-bot.log',
+            'filename': 'logos-log.txt',
             'formatter': 'verbose'
         },        
     },
