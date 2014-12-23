@@ -485,7 +485,7 @@ class BibleBot(Plugin):
         versions_mch = re.match('(?:translations|versions)\s*$', msg)
         dict_mch = re.match('dict\s+(\S+)', msg)
         # match "KJV John 3:16, John 3:16, John 3 16, John 3", etc...
-        verse_mch = re.match('(?:\w+\s+){1,2}\d+(?:\s*:?\s*\d+(?:\s*-?\s*\d+))?$',\
+        verse_mch = re.match('(?:\w+\s+){1,2}\d+(?:\s*:?\s*\d+(?:\s*-?\s*\d+)?)$',\
                               msg)
 
         if versions_mch:
