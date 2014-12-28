@@ -79,7 +79,8 @@ manage.py import
 
 The last import command may need to be run several times if a 
 MemoryError results.  Import automatically continues where left off.
-Haven't yet tracked down what causes this.
+Haven't yet tracked down what causes this.  __I think this is now fixed 
+in commit d87126856e__.
 
 ### Developing or modifying the bot ###
 
