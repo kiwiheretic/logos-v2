@@ -5,6 +5,7 @@ import sys
 import gc
 import os
 import re
+import csv
 import pdb
 import logging
 from datetime import datetime, timedelta
@@ -14,7 +15,8 @@ from optparse import OptionParser, make_option
 from django.core.management.base import BaseCommand, CommandError
 from django.core.exceptions import ObjectDoesNotExist
 from django.db.transaction import commit_on_success
-from django.db import connection
+from django.db import connection, reset_queries
+
 from django.db.models import Max
 
 from logos.settings import BIBLES_DIR, DATABASES
@@ -28,29 +30,13 @@ from logos.constants import PUNCTUATION, STOP_WORDS
 logger = logging.getLogger(__name__)
 
 class Command(BaseCommand):
-#    args = '<poll_id poll_id ...>'
     help = 'Import the translations'
 
     extra_options = (
 
-#        make_option('--createdb', choices=('translations','strongs',
-#                                           'concordance', 'session'),
-#                    help="One of 'translations', 'strongs', 'concordance', "+\
-#                        "'session'"),
-        make_option('--importdb',action='store_true',
-                    help="Import translation files and generate concordance"),
-        make_option('--repair-if-incomplete', action='store_false', dest='repair',
-                    help="Don't ensure the database is empty when using --createdb"),
-        make_option('--purge-if-incomplete', action='store_true',dest='purge',
-                    help="Check that the translations are complete, if not purge"),
-
-        make_option('--updatedb', action='store_true',
-                    help="Update the database"),
-        make_option('--search', action='store',
-                    help="Test the concordance search function"),
-        make_option('--translation', action='store',
-                    help="A translation like \"nasb\", \"esv\", \"kjv\", etc."+\
-                        " Use with --search"),
+        make_option('--replace-version',action='store',
+                    help="Only replace the specified translation in the" + \
+                    "database.  Should be a folder name in bibles/"),
 
     )
     option_list = BaseCommand.option_list + extra_options
@@ -73,9 +59,20 @@ class Command(BaseCommand):
             print "page_size = " + str(page_size) + " bytes"
             print "cache_size = " + str(cache_size) + " pages"
 
-        import_strongs_tables() 
-        import_trans()
-        import_concordance()
+        
+        if options['replace_version']:
+            version = options['replace_version']
+            biblepath = BIBLES_DIR + os.sep + version        
+            if not os.path.exists(biblepath):
+                print "Version %s does not exists in bibles/" % (version,)
+                return
+        else:
+            # don't bother repopulating the strongs tables if we are just
+            # replacing a single translation
+            import_strongs_tables() 
+            
+        import_trans(options)
+        import_concordance(options)
        
 def import_strongs_tables():
 
@@ -134,53 +131,82 @@ def import_strongs_tables():
         f.close()
         BibleDict.objects.bulk_create(cache)
 
-
-
-def updatedb(purge=False):
-    populate_strongs_tables()
-    import_trans(purge=purge)
-    import_concordance(purge=purge)
-
-def import_trans(purge=False):
+def import_trans(options):
     print "importing translations..."
     print BIBLES_DIR
     valid_books = map(lambda x:x[0], book_table)
 
+    def process_books(version):
+        biblepath = BIBLES_DIR + os.sep + version
+        trans_file = biblepath + os.sep + "trans_file.csv"
+        print biblepath
+        for bk in valid_books:
+            book_path = biblepath + os.sep + bk
+            if os.path.exists(book_path):
+                pass
+            elif os.path.exists(book_path + ".txt"):
+                book_path = book_path + ".txt"
+            else:
+                print "Could not find book : " + book_path
+                continue
+            translation = version
+            add_book_to_db(translation, book_path)
 
 
+        # process apocraphyl books in folder (if any).
+        # Uses the csv file in the same folder to determine what are
+        # the apocraphyl files.
+        if os.path.exists(trans_file):
+            with open(trans_file, 'rb') as csvfile:
+                csvreader = csv.reader(csvfile)
+                for row in csvreader:
+                    long_name = row[0]
+                    short_name = row[1]
+                    book_path = biblepath + os.sep + short_name + ".txt"
+                    if os.path.exists(book_path):
+                        add_book_to_db(translation, book_path, long_name=long_name)
+                    else:
+                        print "Error in adding apocraphyl book %s %s" %(version, short_name)
+          
+    if options['replace_version']:
+        version = options['replace_version']
+        print "Purging translation " + version
+        purge_translation(version)
+        process_books(version)
+    else:
+        for this_dir in os.listdir(BIBLES_DIR):
+            if this_dir[0] != '_' and this_dir != 'dict':
+                biblepath = BIBLES_DIR + os.sep + this_dir
+                print biblepath
+                process_books(this_dir)
 
-    for this_dir in os.listdir(BIBLES_DIR):
-        if this_dir[0] != '_' and this_dir != 'dict':
-            print this_dir
-            biblepath = BIBLES_DIR + os.sep + this_dir
-            print biblepath
-
-            for bk in valid_books:
-                book_path = biblepath + os.sep + bk
-                if os.path.exists(book_path):
-                    pass
-                elif os.path.exists(book_path + ".txt"):
-                    book_path = book_path + ".txt"
-                else:
-                    print "Could not find book : " + book_path
-                    continue
-                translation = this_dir
-                add_book_to_db(translation, book_path)
-
-def import_concordance(purge=False):
+            
+def import_concordance(options):
     print "Importing concordance ..."
-    populate_concordance(purge=purge)
+    if options['replace_version']:
+        version = options['replace_version']
+        purge_concordance(version)
+    populate_concordance(options)
 
-def populate_concordance(purge=False):
-    print "populate concordance"
+def purge_concordance(version):
+    print "Purging concordance of " + version
+    try:
+        trans = BibleTranslations.objects.get(name=version)
+    except ObjectDoesNotExist:
+        return
+    BibleConcordance.objects.filter(trans_id=trans)      
 
-    for trans in BibleTranslations.objects.all().iterator():
+def populate_concordance(options):
+    """ Run through the bible verse database looking up all verses
+    and create concordance records for each word (except common words)"""
 
-        trans_name = trans.name
-        print "Adding missing translation to concordance", trans.name
 
+    def really_pop_concordance(version):
         conc_cache = []
-
+        try:
+            trans = BibleTranslations.objects.get(name=version)
+        except ObjectDoesNotExist:
+            return
         if BibleConcordance.objects.exists():
             next_id = BibleConcordance.objects.all().\
                 aggregate(Max('id'))['id__max']+1
@@ -240,7 +266,7 @@ def populate_concordance(purge=False):
                         conc_cache.append(conc)
 
                     idx+= 1
-                    if  idx % 100 == 0:
+                    if  idx % 500 == 0:
                         if len(conc_cache) ==0:
                             print "#",
                         else:
@@ -251,12 +277,44 @@ def populate_concordance(purge=False):
                         if iidx % 35 == 0: print
                         gc.collect()
 
+                        # reset_queries, workaround for large databases
+                        # See http://travelingfrontiers.wordpress.com/2010/06/26/django-memory-error-how-to-work-with-large-databases/
+                        # and https://docs.djangoproject.com/en/dev/faq/models/#why-is-django-leaking-memory
+                        reset_queries()
+
         BibleConcordance.objects.bulk_create(conc_cache)
         conc_cache = []
 
+        
+    
+    if options['replace_version']:
+        version = options['replace_version']
+        print "populate concordance with " + version
+        really_pop_concordance(version)
+    else:    
+        for trans in BibleTranslations.objects.all().iterator():
+        
+            trans_name = trans.name
+            print "Adding missing translation to concordance", trans.name
+
+            really_pop_concordance(trans.name)
+
+
 
 @commit_on_success
-def add_book_to_db(translation, book_path, purge=False):
+def purge_translation(translation):
+    """ Delete entire translation/version from database """
+    try:
+        trans = BibleTranslations.objects.get(name=translation)
+    except ObjectDoesNotExist:
+        return
+    BibleVerses.objects.filter(trans_id = trans).delete()
+    BibleBooks.objects.filter(trans_id = trans).delete()
+    trans.delete()
+
+
+@commit_on_success
+def add_book_to_db(translation, book_path, long_name = None):
     book = os.path.splitext(book_path)[0]
     book = os.path.split(book)[1]
 
@@ -269,8 +327,12 @@ def add_book_to_db(translation, book_path, purge=False):
         print "saved new trans " + translation
         trans_id = new_trans.pk
 
-
-    long_book, idx = get_long_book_name(book)
+    if long_name:
+        max_bb = BibleBooks.objects.filter(trans_id = new_trans).aggregate(Max('book_idx'))
+        idx = max_bb['book_idx__max']+1
+        long_book = long_name
+    else:
+        long_book, idx = get_long_book_name(book)
     mch = re.match("^([^\.]+)", book)
     if mch:
         base_book = mch.group(1)
@@ -292,7 +354,8 @@ def add_book_to_db(translation, book_path, purge=False):
     gc.collect()
 
 def populate_verses(trans_id, book_id, filename):
-    """  """
+    """ Add a book (of the bible) file in CancelBot 
+    format to the database """
     book_cache = []
     if BibleVerses.objects.exists():
         next_id = BibleVerses.objects.all().\
@@ -358,80 +421,6 @@ def populate_strongs_tables():
 
 
     f.close()
-
-def update_translation(translation, book=None):
-    print translation, ":", book
-
-    try:
-        trans_id = BibleTranslations.objects.get(name=translation).pk
-    except ObjectDoesNotExist:
-
-        new_trans = BibleTranslations(name = translation)
-        print "saving new trans " + translation
-        new_trans.save()
-        print "done"
-        trans_id = new_trans.pk
-
-    if book:
-        sql_stmt = """select id from bible_books where trans_id = ?
-        and abbreviations = ?"""
-        c.execute(sql_stmt, (trans_id, book))
-        rows = c.fetchone()
-        if rows:
-            book_id = rows[0]
-            print "%s = %s" % (book, book_id)
-
-        else:
-            print "Book %s not found" % (book,)
-            return
-        c2 = db_hash["concordance"].db.cursor()
-        sql_stmt = """select count(*) from bible_concordance
-        where trans_id = ? and book = ?"""
-        c2.execute(sql_stmt, (trans_id, book_id))
-        row_cnt = c2.fetchone()[0]
-        print "Rows to be deleted in bible_concordance = ", row_cnt
-
-        sql_stmt = """select count(*) from bible_verses
-        where trans_id = ? and book = ?"""
-        c.execute(sql_stmt, (trans_id, book_id))
-        row_cnt = c.fetchone()[0]
-        print "Rows to be deleted in bible_verses = ", row_cnt
-
-        sql_stmt = """delete from bible_concordance
-        where trans_id = ? and book = ?"""
-        c2.execute(sql_stmt, (trans_id, book_id))
-
-        db_hash["concordance"].db.commit()
-
-        sql_stmt = """delete from bible_verses
-        where trans_id = ? and book = ?"""
-        c.execute(sql_stmt, (trans_id, book_id))
-        db_hash["translations"].db.commit()
-
-        pathname = self.bibles + os.sep + translation + os.sep + book
-        if not os.path.exists(pathname):
-            pathname += ".txt"
-        print pathname
-        try:
-            self._populate_verses(c, trans_id, book_id, pathname)
-        except IOError:
-            pdb.set_trace()
-        db_hash["translations"].db.commit()
-        self.populate_concordance(trans_id, book_id)
-    else: #translation only
-        row_cnt = BibleConcordance.objects.filter(trans_id = trans_id).count()
-        print "Rows to be deleted in bible_concordance = ", row_cnt
-
-        row_cnt = BibleVerses.objects.filter(trans_id = trans_id).count()
-        print "Rows to be deleted in bible_verses = ", row_cnt
-
-        BibleVerses.objects.filter(trans_id = trans_id).delete()
-        BibleConcordance.objects.filter(trans_id = trans_id).delete()
-
-        add_trans_to_db(translation)
-        populate_concordance(trans_id)
-
-
 
 
 def get_long_book_name(book):

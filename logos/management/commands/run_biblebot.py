@@ -21,10 +21,13 @@ class Command(BaseCommand):
 
     extra_options = (
 
+        # I think --db-path is no longer implemented, a relic
+        # of logos v1.
         make_option('--db-path', action='store',
         help="""File path to create the settings and user search databases.  """ + \
         "Defaults to APPDATA\\SplatsCreations\\bibleBot for windows " + \
         "and current directory for others."),
+        
         make_option('-s','--server', action='store',
                     help="IRC server to connect to."),
         make_option('--port', action='store',

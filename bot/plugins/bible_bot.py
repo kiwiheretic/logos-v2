@@ -136,7 +136,7 @@ class BibleBot(Plugin):
             raise CommandException(nick, user, "Unknown translation %s" % (version,))
 
         # remove possible spaces between books like "1 John" etc
-        book = self._get_book(bookwork)
+        book = self._get_book(version, bookwork)
         if not book:
             raise CommandException(user, chan, "Could not find book %s" % (bookwork,))
 
@@ -170,6 +170,7 @@ class BibleBot(Plugin):
                                          canonical = book)
         book_id = book_db.pk
         long_book_name = book_db.long_book_name
+        
 
         # get qualifying verses
         qual_verses = BibleVerses.objects.filter(trans_id = trans_id,
@@ -231,13 +232,13 @@ class BibleBot(Plugin):
         sri = 1  # This is the search result index
         
         if book_range[0]:
-            bk = self._get_book(book_range[0])
+            bk = self._get_book(trans.name, book_range[0])
             br0 = BibleBooks.objects.filter(trans_id = trans, canonical=bk)\
                 .first()
         else:
             br0 = None
         if book_range[1]:
-            bk = self._get_book(book_range[1])
+            bk = self._get_book(trans.name, book_range[1])
             br1 = BibleBooks.objects.filter(trans_id = trans, canonical=bk)\
                 .first()
         else:
@@ -487,8 +488,8 @@ class BibleBot(Plugin):
         # match "KJV John 3:16, John 3:16, John 3 16, John 3", etc...
         verse_mch = re.match('(?:\w+\s+){1,2}\d+(?:\s*:?\s*\d+(?:\s*-?\s*\d+)?)$',\
                               msg)
-
-        if versions_mch:
+        book_names_mch = re.match('book names (?:for )?(?:translation|version)\s+(.*)', msg)
+        if versions_mch: 
             translations = self._get_translations()
             tr_str = ",".join(translations)
             self.msg(chan, "Supported translations are %s " % (tr_str,))
@@ -541,6 +542,15 @@ class BibleBot(Plugin):
                 self.msg(chan, "Search limit for %s set to %s " % (ch, searchlmt))
             return True
                 
+        elif book_names_mch:
+            version = book_names_mch.group(1)
+            trans = BibleTranslations.objects.get(name=version)
+            book_names = []
+            for bb in BibleBooks.objects.filter(trans_id = trans):
+                book_names.append((str(bb.canonical), str(bb.long_book_name)))
+            self.msg(chan, str(book_names))
+            return True
+        
         elif phrase_search_mch:
             phrase = phrase_search_mch.group(2)
             ref = phrase_search_mch.group(1)
@@ -651,14 +661,14 @@ class BibleBot(Plugin):
         if mch2:
             bk_s = mch2.group(1)
             bk_e = mch2.group(2)
-            if self._get_book(bk_s) and \
-            self._get_book(bk_e):
+            if self._get_book(results['translation'], bk_s) and \
+            self._get_book(results['translation'], bk_e):
                 results['book_start'] = bk_s
                 results['book_end'] = bk_e
                 words.pop(0)
         elif mch:
             bk = mch.group(0).lower()
-            if self._get_book(bk):
+            if self._get_book(results['translation'], bk):
                 results['book_start'] = words.pop(0)
                 results['book_end'] = results['book_start']
             elif bk == 'nt':
@@ -698,7 +708,7 @@ class BibleBot(Plugin):
         elapsed = time.clock() - start_time    
         self.say(chan, "Query took %6.3f seconds " % (elapsed,))
         
-    def _get_book(self, bookwork):
+    def _get_book(self, version, bookwork):
         
         # remove possible spaces between books like "1 John" etc
         book = re.sub("\s+", "", bookwork)
@@ -715,7 +725,11 @@ class BibleBot(Plugin):
                 break
         
         if not book_found:
-            return None
+            trans = BibleTranslations.objects.get(name=version)
+            if BibleBooks.objects.filter(trans_id=trans, canonical = book).exists():
+                return book
+            else:
+                return None
         
         return book_found
 

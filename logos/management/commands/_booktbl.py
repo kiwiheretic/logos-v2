@@ -38,16 +38,6 @@ book_table = (
     ("hag", "haggai"),
     ("zec", "zechariah"),
     ("mal", "malachi"),
-        
-    ("1ma", "1maccabees"),
-    ("2ma", "2maccabees"),
-    ("jdt","judith"),
-    ("jdt","judith"),
-    ("wis", "wisdom"),
-    ("tob", "tobit"),
-    ("sir", "sirach"),
-    ("bar", "baruch"),
-
     ("mat", "matthew"),
     ("mar", "mark"),
     ("luk", "luke"),
