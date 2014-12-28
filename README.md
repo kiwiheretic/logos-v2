@@ -2,6 +2,8 @@
 
 This is the Logos-V2 project, a Django/Twisted IRC bot  originally based (in concept) on the  [CancelBot Project](http://cancelbot.sourceforge.net/home.html), but no longer shares any code (except for a few lines) with the original project.  No longer binds to XChat but is completely self contained.  Is cross platform and supports Centos, Ubuntu & Windows.  (Basically anywhere Django, Twisted and Python 2.7 is supported)  Released under the Apache License.
 
+You can see screenshots on the [official user documentation website](https://biblebot.wordpress.com/).
+
 ### Features ###
 
 Features include:
@@ -79,45 +81,8 @@ The last import command may need to be run several times if a
 MemoryError results.  Import automatically continues where left off.
 Haven't yet tracked down what causes this.
 
-### Extending the bot ###
+### Developing or modifying the bot ###
 
 See the [wiki](https://github.com/kiwiheretic/logos-v2/wiki) for more details.
 
-### Dependencies ###
 
-Currently ...
-  * Twisted 14.0
-  * Django 1.7
-  * Python 2.7
-  * django-registration-redux 1.1
-  * psutil 2.1.3
-  * zope.interface 4.1.1
-
-See the requirements.txt file in the source tree for most up to date information.
-
-### Database configuration ###
-
-Very little.  Uses sqlite3.
-
-### How to run tests ###
-
-Ummm .... still trying to figure out what constitutes a good test given the unpredictability and potential laggyness of IRC servers in general.
-
-### Deployment instructions ###
-
-As above
-
-### Contribution guidelines ###
-
-### Writing tests ###
-
-Open to suggestions
-
-* Code review
-* Other guidelines
-
-### Who do I talk to? ###
-
-* Repo owner or admin
-
-kiwiheretic (at) myself (dot) com
