@@ -3,7 +3,7 @@ import os
 import sys
 import logging
 import email_settings
-
+import pdb
 logger = logging.getLogger(__name__)
 
 NETWORK='irc.cornerstonechristianchat.com'
@@ -18,11 +18,12 @@ ADMINS = (
 )
 
 MANAGERS = ADMINS
+DB_ROOT = os.path.join(os.path.dirname(os.path.realpath(__file__)), "..", "sqlite-databases")
 
 DATABASES = {
     'default' : {
         'ENGINE': 'django.db.backends.sqlite3', # Add 'postgresql_psycopg2', 'mysql', 'sqlite3' or 'oracle'.
-        'NAME': 'sqlite-databases/default.sqlite3.db',
+        'NAME': os.path.join(DB_ROOT, 'default.sqlite3.db'),
         'USER': '',
         'PASSWORD': '',
         'HOST': '',                      # Empty for localhost through domain sockets or '127.0.0.1' for localhost through TCP.
@@ -31,7 +32,7 @@ DATABASES = {
 
     'bibles': {
         'ENGINE': 'django.db.backends.sqlite3', # Add 'postgresql_psycopg2', 'mysql', 'sqlite3' or 'oracle'.
-        'NAME': 'sqlite-databases/bibles.sqlite3.db',                       # Or path to database file if using sqlite3.
+        'NAME': os.path.join(DB_ROOT, 'bibles.sqlite3.db'),                       # Or path to database file if using sqlite3.
         # The following settings are not used with sqlite3:
         'USER': '',
         'PASSWORD': '',
@@ -39,7 +40,7 @@ DATABASES = {
         'PORT': '',                      # Set to empty string for default.
     },
      'settings': {
-        'NAME': 'sqlite-databases/settings.sqlite3.db', 
+        'NAME': os.path.join(DB_ROOT, 'settings.sqlite3.db'), 
         'ENGINE': 'django.db.backends.sqlite3',
         'USER': '',
         'PASSWORD': '',
@@ -47,7 +48,7 @@ DATABASES = {
         'PORT': '',          
     },
      'game-data': {
-        'NAME': 'sqlite-databases/game-data.sqlite3.db', 
+        'NAME': os.path.join(DB_ROOT, 'game-data.sqlite3.db'), 
         'ENGINE': 'django.db.backends.sqlite3',
         'USER': '',
         'PASSWORD': '',
