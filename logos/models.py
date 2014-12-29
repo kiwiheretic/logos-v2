@@ -90,18 +90,6 @@ class Scriptures(models.Model):
     ref = models.TextField()
     scripture_text = models.TextField()
 
-#class BotRequests(models.Model):
-#    network = models.TextField()
-#    room = models.TextField()
-#    password = models.TextField()
-#    user = models.ForeignKey(settings.AUTH_USER_MODEL)
-#    approved = models.BooleanField(default=False)
-
-#    def get_approval_url(self):
-#        return reverse('logos.views.bot_approval', args=[str(self.id)])
-#    def get_deny_url(self):
-#        return reverse('logos.views.bot_deny', args=[str(self.id)])
-
 class Bots(models.Model):
     network = models.TextField()
     room = models.TextField()
