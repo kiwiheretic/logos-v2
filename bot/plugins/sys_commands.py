@@ -60,7 +60,7 @@ class SystemCommandsClass(Plugin):
             self.msg(chan, "\x0310--- Courtesy of\x03\x0312 SplatsCreations\x03")        
             self.msg(chan, "\x0310--- Built with Django %s\\Python %s\\Twisted %s  \x03" % (dj_ver, py_ver, twst_ver))        
 
-            self.msg(chan, "\x1f\x0312http://biblebot.wordpress.com/bible-bot-instructions/")        
+            self.msg(chan, "\x1f\x0312https://github.com/kiwiheretic/logos-v2/")        
 
             
             return True
