@@ -38,7 +38,6 @@ class SystemCommandsClass(Plugin):
         eval_mch  = re.match(act + 'eval\s+(.+)', orig_msg)
         auth_mch = re.match('auth\s+#(#?[a-zA-Z0-9_-]+)\s+(.+)', msg)
         logout_mch = re.match('logout', msg)
-        help_mch = re.match('help', msg)
         set_password_mch = re.match(act + 'set\s+password\s+\"([^"]+)\"', orig_msg)
         
         speak_mch = re.match(act+'say\s+(.*)', msg)
@@ -66,8 +65,6 @@ class SystemCommandsClass(Plugin):
             
             return True
         
-        elif help_mch:
-            self.msg(chan, "** to be implemented **")
         elif sysauth_mch:
             pw = sysauth_mch.group(1).strip()
             

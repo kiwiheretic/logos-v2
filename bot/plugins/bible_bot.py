@@ -492,11 +492,15 @@ class BibleBot(Plugin):
         # It is just a convenience to not clutter up the regex
         verse_mch = re.match('(\w+\+?\s+)?\d?\s*[a-zA-Z]+\s+\d+\s*(:?\s*\d+\s*(-?\s*\d+)?)?$',\
                               msg)
+        help_mch = re.match('help',msg)
+        
         book_names_mch = re.match('book names (?:for )?(?:translation|version)\s+(.*)', msg)
         if versions_mch: 
             translations = self._get_translations()
             tr_str = ",".join(translations)
             self.msg(chan, "Supported translations are %s " % (tr_str,))
+        elif help_mch:
+            self.msg(chan, "For help see https://biblebot.wordpress.com/user-instructions/")
         elif default_trans_mch:
             ch = Registry.authorized[nick]['channel']
             def_trans = default_trans_mch.group(1)
