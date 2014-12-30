@@ -485,8 +485,12 @@ class BibleBot(Plugin):
         set_verselimit_mch = re.match('set\s+verse\s+limit\s+(\d+)\s*$', msg)
         versions_mch = re.match('(?:translations|versions)\s*$', msg)
         dict_mch = re.match('dict\s+(\S+)', msg)
+
         # match "KJV John 3:16, John 3:16, John 3 16, John 3", etc...
-        verse_mch = re.match('(?:\w+\s+){1,2}\d+(?:\s*:?\s*\d+(?:\s*-?\s*\d+)?)$',\
+        # also "KJV 1 John 3:16" or "KJV+ john 3:16"
+        # Note the parenthesis matching captured groups are not  used.  
+        # It is just a convenience to not clutter up the regex
+        verse_mch = re.match('(\w+\+?\s+)?\d?\s*[a-zA-Z]+\s+\d+\s*(:?\s*\d+\s*(-?\s*\d+)?)?$',\
                               msg)
         book_names_mch = re.match('book names (?:for )?(?:translation|version)\s+(.*)', msg)
         if versions_mch: 
