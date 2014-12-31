@@ -664,8 +664,8 @@ class BibleBot(Plugin):
         if len(words) == 0:
             return results
         
-        mch = re.match('[1-2]?[a-z]+', words[0], re.I)
-        mch2 = re.match('([1-2]?[a-z]+)-([1-2]?[a-z]+)', words[0], re.I)
+        mch = re.match('[1-3]?[a-z]+', words[0], re.I)
+        mch2 = re.match('([1-3]?[a-z]+)-([1-3]?[a-z]+)', words[0], re.I)
         if mch2:
             bk_s = mch2.group(1)
             bk_e = mch2.group(2)
