@@ -98,7 +98,7 @@ class BibleBot(Plugin):
         """ Retrieve the passage using the passage lookup supplied.
         This will look something like "nasb john 3:3-5"
         """
-
+        
         # Get the maximum number of verses to display in one
         # go for the current room
         verselimit = int(self._get_verselimit(chan))
@@ -108,8 +108,8 @@ class BibleBot(Plugin):
 
         #available_trans = BibleTranslations.objects.all()
         passage_ref = passage_ref.lower().strip()
-        mch1 = re.match(r"([a-z\+]+)\s+([12]?\s*[a-z]+)\s+(.*)", passage_ref)
-        mch2 = re.match(r"([12]?\s*[a-z]+)\s+(.*)", passage_ref)
+        mch1 = re.match(r"([a-z\+]+)\s+([1-3]?\s*[a-z]+)\s+(.*)", passage_ref)
+        mch2 = re.match(r"([1-3]?\s*[a-z]+)\s+(.*)", passage_ref)
         if mch1:
             mch = mch1
         elif mch2:
