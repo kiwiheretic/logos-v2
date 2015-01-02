@@ -84,40 +84,32 @@ class Settings(models.Model):
     value = models.TextField(null=True, blank=True)
     
     
-class Scriptures(models.Model):
-    idx = models.IntegerField()
-    submitter = models.TextField()
-    ref = models.TextField()
-    scripture_text = models.TextField()
 
-class Bots(models.Model):
-    network = models.TextField()
-    room = models.TextField()
-    user = models.ForeignKey(settings.AUTH_USER_MODEL)
-    password = models.TextField()
+
+#class Bots(models.Model):
+#    network = models.TextField()
+#    room = models.TextField()
+#    user = models.ForeignKey(settings.AUTH_USER_MODEL)
+#    password = models.TextField()
+
+class Scriptures(models.Model):
+    ref = models.TextField()
+    verse = models.TextField()
     
 class GameGames(models.Model):
-    game_datetime = models.TextField(blank=True)
+    timestamp = models.DateTimeField(auto_now=True)
     ref = models.TextField(blank=True)
     scripture = models.TextField(blank=True)
     num_rounds = models.TextField(blank=True)
-    winner = models.ForeignKey('GameUsers')
-
-    class Meta:
-        managed = False
-        db_table = 'game_games'
+    winner = models.ForeignKey('GameUsers', null=True)
 
 
 class GameSolveAttempts(models.Model):
     game = models.ForeignKey('GameGames')
-    attempt_id = models.IntegerField(blank=True, null=True)
+    timestamp = models.DateTimeField(auto_now=True)
     user = models.ForeignKey('GameUsers')
     attempt = models.TextField(blank=True)
     reason = models.TextField(blank=True)
-
-    class Meta:
-        managed = False
-        db_table = 'game_solve_attempts'
 
 
 class GameUsers(models.Model):
@@ -125,7 +117,5 @@ class GameUsers(models.Model):
     nick = models.TextField(blank=True)
     host = models.TextField(blank=True)
 
-    class Meta:
-        managed = False
-        db_table = 'game_users'
+
     

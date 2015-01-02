@@ -30,7 +30,7 @@ class Plugin(object):
         self.control_room = irc_conn.factory.channel
         
     def get_ident(self, nick):
-        return self.irc_conn.get_ident(nick)
+        return self.irc_conn.nicks_db.get_ident(nick)
     
     def get_room_nicks(self, room):
         return self.irc_conn.get_room_nicks(room)

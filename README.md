@@ -37,7 +37,9 @@ $ source ~\venvs\logos2\bin\activate
 $ pip install -r requirements.txt
 $ python manage.py syncdb
 $ python manage.py syncdb --database=bibles
+$ python manage.py syncdb --database=game-data
 $ python manage.py syncdb --database=settings
+$ python manage.py loaddata --database=game-data scriptures.json
 $ python manage.py import
 ```
 
@@ -54,6 +56,8 @@ $ pip install -r requirements.txt
 $ python manage.py syncdb
 $ python manage.py syncdb --database=bibles
 $ python manage.py syncdb --database=settings
+$ python manage.py syncdb --database=game-data
+$ python manage.py loaddata --database=game-data scriptures.json
 $ python manage.py import
 ```
 
@@ -74,6 +78,8 @@ pip install -r requirements.txt
 manage.py syncdb
 manage.py syncdb --database=bibles
 manage.py syncdb --database=settings
+manage.py syncdb --database=game-data
+manage.py loaddata --database=game-data scriptures.json
 manage.py import
 ```
 

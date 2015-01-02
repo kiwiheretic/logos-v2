@@ -1,0 +1,82 @@
+[
+{
+    "pk": 1,
+    "model": "logos.scriptures",
+    "fields": {
+        "verse": "For God so loved the world that whosoever believeth in Him shall not perish but have everlasting life",
+        "ref": "John 3:16"
+    }
+},
+{
+    "pk": 2,
+    "model": "logos.scriptures",
+    "fields": {
+        "verse": "The LORD is my shepherd; I shall not want. ",
+        "ref": "psalm 23:1"
+    }
+},
+{
+    "pk": 3,
+    "model": "logos.scriptures",
+    "fields": {
+        "verse": "For all have sinned, and come short of the glory of God;",
+        "ref": "Romans 3:23"
+    }
+},
+{
+    "pk": 4,
+    "model": "logos.scriptures",
+    "fields": {
+        "verse": "But seek ye first the kingdom of God, and his righteousness; and all these things shall be added unto you. ",
+        "ref": "Matthew 6:33"
+    }
+},
+{
+    "pk": 5,
+    "model": "logos.scriptures",
+    "fields": {
+        "verse": "For the wages of sin is death; but the gift of God is eternal life through Jesus Christ our Lord.",
+        "ref": "Romans 6:23"
+    }
+},
+{
+    "pk": 6,
+    "model": "logos.scriptures",
+    "fields": {
+        "verse": "Be anxious for nothing, but in everything by prayer and supplication with thanksgiving let your requests be made known to God.",
+        "ref": "Phillipians 4:6"
+    }
+},
+{
+    "pk": 7,
+    "model": "logos.scriptures",
+    "fields": {
+        "verse": "Therefore there is now no condemnation for those who are in Christ Jesus. ",
+        "ref": "Romans 8:1"
+    }
+},
+{
+    "pk": 8,
+    "model": "logos.scriptures",
+    "fields": {
+        "verse": "Surely goodness and mercy shall follow me all the days of my life: and I will dwell in the house of the LORD for ever",
+        "ref": "Psalm 23:6"
+    }
+},
+{
+    "pk": 9,
+    "model": "logos.scriptures",
+    "fields": {
+        "verse": "For I know the plans I have for you, declares the LORD, plans to prosper you and not to harm you, plans to give you hope and a future.",
+        "ref": "Jeremiah 29:11"
+    }
+},
+{
+    "pk": 10,
+    "model": "logos.scriptures",
+    "fields": {
+        "verse": "And we know that in all things God works for the good of those who love him, who have been called according to his purpose.",
+        "ref": "Romans 8:28"
+    }
+}
+]

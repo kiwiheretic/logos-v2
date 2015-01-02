@@ -8,15 +8,9 @@ bible_tables = ('BibleTranslations', 'BibleBooks',
 settings_tables = ('Settings',
                  'BibleColours', 'RoomOptions',)
 
-#settings_tables = ('BibleReading', 
-#                   'Settings',
-#                 'BibleSearchHeader','BibleSearchResults',
-#                 'UserWords',
-#                 'BibleColours', 'RoomOptions',
-#                 'StatusMessages')
 
-
-scripture_game_tables = ('GameGames', 'GameUsers', 'GameSolveAttempts')
+scripture_game_tables = ('GameGames', 'GameUsers', 'GameSolveAttempts',
+                         'Scriptures')
 
 class LogosRouter(object):
     def db_for_read(self, model, **hints):
@@ -52,9 +46,37 @@ class LogosRouter(object):
         """
         return None
 
+    def allow_migrate(self, db, model):
+        """
+        Whether to allow data migrations on this model
+        manage.py loaddata seems to not work without this
+        """
+        if model._meta.object_name in bible_tables:
+            if db == 'bibles':
+                return True
+            else:
+                return False
+            
+        elif model._meta.object_name in settings_tables:
+            if db == 'settings':
+                return True
+            else:
+                return False                                         
+
+        elif model._meta.object_name in scripture_game_tables:
+            if db == 'game-data':
+                return True
+            else:
+                return False  
+                                         
+        elif db == 'default':
+            return True
+        else:
+            return False
+    
     def allow_syncdb(self, db, model):
         """
-        Sync the tables to appropriate databases
+        Sync the tables to appropriate databases,
         """
 #        print "syncdb",  db, model._meta.object_name
         if model._meta.object_name in bible_tables:
@@ -68,6 +90,12 @@ class LogosRouter(object):
                 return True
             else:
                 return False                                         
+
+        elif model._meta.object_name in scripture_game_tables:
+            if db == 'game-data':
+                return True
+            else:
+                return False  
                                          
         elif db == 'default':
             return True
