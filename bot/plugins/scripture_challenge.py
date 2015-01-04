@@ -18,7 +18,8 @@ VERSION = 0.9
 SCRIPTURE_COLOUR = ''
 from string import split
 import string
-import sqlite3
+# should be database agnostic - remove import
+#import sqlite3
 import random
 from types import TupleType, UnicodeType
 
@@ -318,7 +319,6 @@ class ScriptureChallenge(Plugin):
         elif mch_join: # !join (as in multiuser game)
             rooms_hash = self.rooms_hash[chan.lower()]
 
-            # Can only join a game once !challenge invoked
             if not rooms_hash['GameStarted']:
                 # It is only meaningful to join a game once.
                 if not short_nick.lower() in map(lambda x: x.lower(), rooms_hash['NicksInGame']):
@@ -328,7 +328,6 @@ class ScriptureChallenge(Plugin):
                     self.say(chan, short_nick + ' has already joined game')
             else:
                 self.say(chan, short_nick + ', game has already started, cannot join.')                            
-            print self.rooms_hash
 
         elif mch_start: # !start
             if 'NicksInGame' not in rooms_hash or \
