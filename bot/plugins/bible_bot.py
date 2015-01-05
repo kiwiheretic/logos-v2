@@ -56,21 +56,21 @@ class BibleBot(Plugin):
                          (r'(?:search|s)\s+(.+)', self.search, "perform a concordance search"),
                          (r'(?:search|s)\s+([^"]*)\"([^"]+)\"', self.phrase_search, "perform a phrase search"),
                          (r'(?:search|s)\s*$', self.next_search, "continue a search"),
-#                         (r'set\s+default\s+translation\s+([a-zA-Z]+)', self.set_default_trans,\
-#                          "set default translation for room"),
-#                         (r'set\s+(?:private|pvt)\s+translation\s+([a-zA-Z]+)', self.set_pvt_translation,
-#                          "set default translation for private chat window"),
+                         (r'set\s+default\s+translation\s+([a-zA-Z]+)', self.set_default_trans,\
+                          "set default translation for room"),
+                         (r'set\s+(?:private|pvt)\s+translation\s+([a-zA-Z]+)', self.set_pvt_translation,
+                          "set default translation for private chat window"),
                          (r'set\s+search\s+limit\s+(\d+)\s*$', self.set_search_limit,
                           "set limit on number of verses searched at once"),
                          (r'set\s+verse\s+limit\s+(\d+)\s*$', self.set_verse_limit,
                           "set limit on number of verses read at once"),
-#                         (r'(?:translations|versions)\s*$', self.versions, 
-#                          "display available versions or translations"),
+                         (r'(?:translations|versions)\s*$', self.versions, 
+                          "display available versions or translations"),
                          (r'dict\s+(\S+)', self.dict, "lookup strongs numbers"),
                          (r'(\w+\+?\s+)?\d?\s*[a-zA-Z]+\s+\d+\s*(:?\s*\d+\s*(-?\s*\d+)?)?$',
                           self.verse_lookup, "lookup bible verse"), \
-#                         (r'book names (?:for )?(?:translation|version)\s+(.*)',
-#                          self.book_names, "show book names for translation"),
+                         (r'book names (?:for )?(?:translation|version)\s+(.*)',
+                          self.book_names, "show book names for translation"),
                          
                          )
         
@@ -488,170 +488,54 @@ class BibleBot(Plugin):
 
     def left(self, channel):
         """ Called when bible bot leaves channel """
-
-
         network = self.network
         set_room_option(network, channel, 'active', 0)
 
-    def privmsg(self, user, channel, message):
-        pass
-
-    def command(self, nick, user, chan, orig_msg, msg, act):
-        activator = re.escape(act)
-        if versions_mch: 
-            translations = self._get_translations()
-            tr_str = ",".join(translations)
-            self.msg(chan, "Supported translations are %s " % (tr_str,))
-        elif help_mch:
-            self.msg(chan, "For help see https://biblebot.wordpress.com/user-instructions/")
-        elif default_trans_mch:
-            ch = Registry.authorized[nick]['channel']
-            def_trans = default_trans_mch.group(1)
+    def book_names(self, regex, **kwargs):
+        nick = kwargs['nick']
+        chan = kwargs['channel'] 
+        version = regex.group(1)
+        trans = BibleTranslations.objects.get(name=version)
+        book_names = []
+        for bb in BibleBooks.objects.filter(trans_id = trans):
+            book_names.append((str(bb.canonical), str(bb.long_book_name)))
+        self.msg(chan, str(book_names))  
+              
+    def versions(self, regex, **kwargs):
+        nick = kwargs['nick']
+        chan = kwargs['channel'] 
+        translations = self._get_translations()
+        tr_str = ",".join(translations)
+        self.msg(chan, "Supported translations are %s " % (tr_str,))     
+                   
+    def set_pvt_translation(self, regex, **kwargs):
+        nick = kwargs['nick']
+        chan = kwargs['channel']        
+        if nick in Registry.sys_authorized:
+            trans = regex.group(1)
             translations = self._get_translations()                        
-            if def_trans not in translations:
+            if trans not in translations:
                 self.msg(chan, "Could not locate translation %s " % (def_trans,))
-                return
+                return True
             else:
-                set_room_option(self.factory.network, ch, \
-                    'default_translation', def_trans)
+                set_global_option('pvt-translation', trans)
+                self.msg(chan, "Private translation set to %s " % (trans,))   
+                 
+    def set_default_trans(self, regex, **kwargs):
+        nick = kwargs['nick']
+        chan = kwargs['channel']
+        ch = Registry.authorized[nick]['channel']
+        def_trans = regex.group(1)
+        translations = self._get_translations()                        
+        if def_trans not in translations:
+            self.msg(chan, "Could not locate translation %s " % (def_trans,))
+            return
+        else:
+            set_room_option(self.factory.network, ch, \
+                'default_translation', def_trans)
 
-                self.msg(chan, "Default translation for %s set to %s " % (ch,def_trans))
-            return True
-        elif pvt_trans_mch:
-            if nick in Registry.sys_authorized:
-                trans = pvt_trans_mch.group(1)
-                translations = self._get_translations()                        
-                if trans not in translations:
-                    self.msg(chan, "Could not locate translation %s " % (def_trans,))
-                    return True
-                else:
-                    set_global_option('pvt-translation', trans)
-                    self.msg(chan, "Private translation set to %s " % (trans,))
-            return True
-        elif set_verselimit_mch:
-            verselmt = int(set_verselimit_mch.group(1))
-            ch = Registry.authorized[nick]['channel']
-
-            if verselmt > 20:
-                self.msg(chan, "Verse limit cannot be set higher than 20")
-            else:
-                set_room_option(self.factory.network, ch, \
-                    'verselimit', verselmt)
-
-                self.msg(chan, "Verse limit for %s set to %s " % (ch,verselmt))
-            return True
-        elif set_searchlimit_mch:
-            searchlmt = int(set_searchlimit_mch.group(1))
-            ch = Registry.authorized[nick]['channel']
-
-            if searchlmt > 20:
-                self.msg(chan, "Search limit cannot be set higher than 20")
-            else:
-                set_room_option(self.factory.network, ch, \
-                    'searchlimit', searchlmt)                        
-
-                self.msg(chan, "Search limit for %s set to %s " % (ch, searchlmt))
-            return True
-                
-        elif book_names_mch:
-            version = book_names_mch.group(1)
-            trans = BibleTranslations.objects.get(name=version)
-            book_names = []
-            for bb in BibleBooks.objects.filter(trans_id = trans):
-                book_names.append((str(bb.canonical), str(bb.long_book_name)))
-            self.msg(chan, str(book_names))
-            return True
-        
-        elif phrase_search_mch:
-            phrase = phrase_search_mch.group(2)
-            ref = phrase_search_mch.group(1)
-            searchlimit = self._get_searchlimit(chan)
-            words = [x.lower() for x  in phrase.strip().split(' ')]
-            ref_words = [x.lower() for x in ref.strip().split(' ')]
-            def_trans = self._get_defaulttranslation(chan)
-            parse_res = self._parse_trans_book_range(def_trans, ref_words)
-            
-            if len(words) == 0:
-                self.msg(chan, "Error: Must have at least one word for "+act+"search")
-            else:
-                selected_trans = parse_res['translation']
-                self.say(chan, "searching for phrase...\"%s\" in %s" % (phrase,selected_trans.upper()))
-                
-                book_range = ( parse_res['book_start'],
-                               parse_res['book_end'] )
-                                    
-                trans = BibleTranslations.objects.get(name=selected_trans)
-                gen = self._concordance_generator(chan, nick, trans, 
-                        book_range, words, mode="phrase")
-                if chan.lower() not in self.pending_searches:
-                    self.pending_searches[chan.lower()] = {}
-                
-                self.pending_searches[chan.lower()][nick.lower()] = gen
-                self._format_search_results(chan, gen)
-        elif search_mch:
-
-            searchlimit = self._get_searchlimit(chan)
-             
-            words = [x.lower() for x  in search_mch.group(1).strip().split(' ')]
-
-            def_trans = self._get_defaulttranslation(chan)
-            parse_res = self._parse_trans_book_range(def_trans, words)            
-
-            if len(words) == 0:
-                self.msg(chan, "Must have at least one word for "+act+"search")
-                self.usage(chan, 'search')
-                
-            else:
-                trans = parse_res['translation']
-                
-                book_range = ( parse_res['book_start'],
-                               parse_res['book_end'] )
-                self.msg(chan,  "searching for \"" +  ", ".join(words) +"\"" + \
-                    " in " + trans.upper() + " ....")
-                                    
-                trans = BibleTranslations.objects.get(name=trans)
-
-                gen = self._concordance_generator(chan, nick, trans, book_range, 
-                                    words, mode="simple")
-                if chan.lower() not in self.pending_searches:
-                    self.pending_searches[chan.lower()] = {}
-                
-                self.pending_searches[chan.lower()][nick.lower()] = gen
-                    
-                    
-                self._format_search_results(chan, gen)
-                
-        elif next_search_mch:
-            gen = self.pending_searches[chan.lower()][nick.lower()]
-            self._format_search_results(chan, gen)
-
-        elif next_mch: # next reading
-            result = self._next_reading(chan, nick)
-            print result
-            if result:
-                for resp in result:
-                    reply = ' '.join(resp)
-                    self.say(chan, str(reply))            
-            else:
-                self.say(chan, "No more verses to read")            
-        elif dict_mch:
-            lookup = dict_mch.group(1)
-            lookup = lookup.upper()
-
-            try:
-                dict_obj = BibleDict.objects.get(strongs=lookup)
-                description = dict_obj.description
-                self.say(chan, description)
-            except BibleDict.DoesNotExist:
-                self.say(chan, "Sorry %s not found" % lookup)
-
-        elif verse_mch:
-            result = self._get_verses(chan, nick, user, msg)
-            print result
-            for resp in result:
-                reply = ' '.join(resp)
-                self.say(chan, str(reply))
-
+            self.msg(chan, "Default translation for %s set to %s " % (ch,def_trans)) 
+               
     def set_search_limit(self, regex, **kwargs):
         nick = kwargs['nick']
         chan = kwargs['channel']         

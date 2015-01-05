@@ -27,7 +27,10 @@ class SystemCommandsClass(Plugin):
     def __init__(self, *args):
         super(SystemCommandsClass, self).__init__(*args)
         self.commands = ((r'auth\s+#(#?[a-zA-Z0-9_-]+)\s+(.+)',self.auth, \
-                          "Authorise access to a room"),)
+                          "Authorise access to a room"),
+                         ('sysauth\s(.+)', self.sysauth, "Perform a system login"),
+#                         ('syslogout', self.syslogout, "Perform a system logout")
+)
         Registry.sys_authorized = []   # List of system authorized nicks - ie owner
         Registry.authorized = {}  
     
@@ -62,6 +65,28 @@ class SystemCommandsClass(Plugin):
         else:
             self.msg(chan, 'You must be in room %s to authorize' % (ch,))
     
+    def sysauth(self, regex, **kwargs):
+        nick = kwargs['nick'] 
+        chan = kwargs['channel']
+        pw = regex.group(1).strip()
+        
+        if pw == self.factory.sys_password:
+            # check to see whether nick is in control room.  You
+            # can only system administrator authorise if in the 
+            # engine room.
+            if nick in self.get_room_nicks(self.factory.channel):
+                self.msg(chan, '** Authorized **')
+                logger.info( "%s sys authorized the bot" % (nick,))
+
+                if nick not in Registry.sys_authorized:
+                    Registry.sys_authorized.append(nick)
+            else:
+                self.msg(chan, "** You must be in the control room to system authorize **")
+        else:
+            self.msg(chan, 'Authorization Failure' )
+
+            logger.info( "%s failed to sys authorize the bot" % (user,))
+
     def command(self, nick, user, chan, orig_msg, msg, act):
         sysauth_mch = re.match('sysauth\s(.+)', msg)
         syslogout_mch = re.match('syslogout', msg)
