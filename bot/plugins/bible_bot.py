@@ -50,6 +50,29 @@ class BibleBot(Plugin):
     def __init__(self, *args):
         super(BibleBot, self).__init__(*args)
         
+        self.plugin_name = "bible"
+        self.commands = (\
+                         (r'(next|n)\s*$', self.next, "read next verse"),
+                         (r'(?:search|s)\s+(.+)', self.search, "perform a concordance search"),
+                         (r'(?:search|s)\s+([^"]*)\"([^"]+)\"', self.phrase_search, "perform a phrase search"),
+                         (r'(?:search|s)\s*$', self.next_search, "continue a search"),
+#                         (r'set\s+default\s+translation\s+([a-zA-Z]+)', self.set_default_trans,\
+#                          "set default translation for room"),
+#                         (r'set\s+(?:private|pvt)\s+translation\s+([a-zA-Z]+)', self.set_pvt_translation,
+#                          "set default translation for private chat window"),
+                         (r'set\s+search\s+limit\s+(\d+)\s*$', self.set_search_limit,
+                          "set limit on number of verses searched at once"),
+                         (r'set\s+verse\s+limit\s+(\d+)\s*$', self.set_verse_limit,
+                          "set limit on number of verses read at once"),
+#                         (r'(?:translations|versions)\s*$', self.versions, 
+#                          "display available versions or translations"),
+                         (r'dict\s+(\S+)', self.dict, "lookup strongs numbers"),
+                         (r'(\w+\+?\s+)?\d?\s*[a-zA-Z]+\s+\d+\s*(:?\s*\d+\s*(-?\s*\d+)?)?$',
+                          self.verse_lookup, "lookup bible verse"), \
+#                         (r'book names (?:for )?(?:translation|version)\s+(.*)',
+#                          self.book_names, "show book names for translation"),
+                         
+                         )
         
         # pending_searches used to remember
         # where up to with users searches
@@ -475,26 +498,6 @@ class BibleBot(Plugin):
 
     def command(self, nick, user, chan, orig_msg, msg, act):
         activator = re.escape(act)
-        next_mch = re.match('(next|n)\s*$', msg)
-        search_mch = re.match('(?:search|s)\s+(.+)', msg)
-        phrase_search_mch = re.match('(?:search|s)\s+([^"]*)\"([^"]+)\"', msg)
-        next_search_mch = re.match('(?:search|s)\s*$', msg)
-        default_trans_mch = re.match('set\s+default\s+translation\s+([a-zA-Z]+)', msg)
-        pvt_trans_mch = re.match('set\s+(?:private|pvt)\s+translation\s+([a-zA-Z]+)', msg)
-        set_searchlimit_mch = re.match('set\s+search\s+limit\s+(\d+)\s*$', msg)
-        set_verselimit_mch = re.match('set\s+verse\s+limit\s+(\d+)\s*$', msg)
-        versions_mch = re.match('(?:translations|versions)\s*$', msg)
-        dict_mch = re.match('dict\s+(\S+)', msg)
-
-        # match "KJV John 3:16, John 3:16, John 3 16, John 3", etc...
-        # also "KJV 1 John 3:16" or "KJV+ john 3:16"
-        # Note the parenthesis matching captured groups are not  used.  
-        # It is just a convenience to not clutter up the regex
-        verse_mch = re.match('(\w+\+?\s+)?\d?\s*[a-zA-Z]+\s+\d+\s*(:?\s*\d+\s*(-?\s*\d+)?)?$',\
-                              msg)
-        help_mch = re.match('help',msg)
-        
-        book_names_mch = re.match('book names (?:for )?(?:translation|version)\s+(.*)', msg)
         if versions_mch: 
             translations = self._get_translations()
             tr_str = ",".join(translations)
@@ -649,6 +652,143 @@ class BibleBot(Plugin):
                 reply = ' '.join(resp)
                 self.say(chan, str(reply))
 
+    def set_search_limit(self, regex, **kwargs):
+        nick = kwargs['nick']
+        chan = kwargs['channel']         
+        searchlmt = int(regex.group(1))
+        # Get the channel the user is authorised to access
+        ch = Registry.authorized[nick]['channel']
+
+        if searchlmt > 20:
+            self.msg(chan, "Search limit cannot be set higher than 20")
+        else:
+            set_room_option(self.factory.network, ch, \
+                'searchlimit', searchlmt)                        
+
+            self.msg(chan, "Search limit for %s set to %s " % (ch, searchlmt)) 
+                   
+    def set_verse_limit(self, regex, **kwargs):
+        nick = kwargs['nick'] 
+        chan = kwargs['channel']        
+        verselmt = int(regex.group(1))
+        
+        # Get the channel the user is authorised to access
+        ch = Registry.authorized[nick]['channel']
+        if verselmt > 20:
+            self.msg(chan, "Verse limit cannot be set higher than 20")
+        else:
+            set_room_option(self.factory.network, ch, \
+                'verselimit', verselmt)
+
+            self.msg(chan, "Verse limit for %s set to %s " % (ch,verselmt)) 
+               
+    def dict(self, regex, **kwargs):
+        chan = kwargs['channel']
+        nick = kwargs['nick'] 
+        lookup = regex.group(1)
+        lookup = lookup.upper()
+
+        try:
+            dict_obj = BibleDict.objects.get(strongs=lookup)
+            description = dict_obj.description
+            self.say(chan, description)
+        except BibleDict.DoesNotExist:
+            self.say(chan, "Sorry %s not found" % lookup)
+    
+    def search(self, regex, **kwargs):
+        chan = kwargs['channel']
+        nick = kwargs['nick']          
+        searchlimit = self._get_searchlimit(chan)
+         
+        words = [x.lower() for x  in regex.group(1).strip().split(' ')]
+
+        def_trans = self._get_defaulttranslation(chan)
+        parse_res = self._parse_trans_book_range(def_trans, words)            
+
+        if len(words) == 0:
+            self.msg(chan, "Must have at least one word for "+act+"search")
+            self.usage(chan, 'search')
+            
+        else:
+            trans = parse_res['translation']
+            
+            book_range = ( parse_res['book_start'],
+                           parse_res['book_end'] )
+            self.msg(chan,  "searching for \"" +  ", ".join(words) +"\"" + \
+                " in " + trans.upper() + " ....")
+                                
+            trans = BibleTranslations.objects.get(name=trans)
+
+            gen = self._concordance_generator(chan, nick, trans, book_range, 
+                                words, mode="simple")
+            if chan.lower() not in self.pending_searches:
+                self.pending_searches[chan.lower()] = {}
+            
+            self.pending_searches[chan.lower()][nick.lower()] = gen
+                
+                
+            self._format_search_results(chan, gen)
+    
+    def next_search(self, regex, **kwargs):
+        chan = kwargs['channel']
+        nick = kwargs['nick'] 
+        gen = self.pending_searches[chan.lower()][nick.lower()]
+        self._format_search_results(chan, gen)
+    
+    def phrase_search(self, regex, **kwargs):
+        chan = kwargs['channel']
+        nick = kwargs['nick']        
+        phrase = regex.group(2)
+        ref = regex.group(1)
+        searchlimit = self._get_searchlimit(chan)
+        words = [x.lower() for x  in phrase.strip().split(' ')]
+        ref_words = [x.lower() for x in ref.strip().split(' ')]
+        def_trans = self._get_defaulttranslation(chan)
+        parse_res = self._parse_trans_book_range(def_trans, ref_words)
+        
+        if len(words) == 0:
+            self.msg(chan, "Error: Must have at least one word for "+act+"search")
+        else:
+            selected_trans = parse_res['translation']
+            self.say(chan, "searching for phrase...\"%s\" in %s" % (phrase,selected_trans.upper()))
+            
+            book_range = ( parse_res['book_start'],
+                           parse_res['book_end'] )
+                                
+            trans = BibleTranslations.objects.get(name=selected_trans)
+            gen = self._concordance_generator(chan, nick, trans, 
+                    book_range, words, mode="phrase")
+            if chan.lower() not in self.pending_searches:
+                self.pending_searches[chan.lower()] = {}
+            
+            self.pending_searches[chan.lower()][nick.lower()] = gen
+            self._format_search_results(chan, gen)
+    
+    def verse_lookup(self, regex, **kwargs):
+        chan = kwargs['channel']
+        nick = kwargs['nick']
+        user = kwargs['user']
+        msg = kwargs['line']
+        result = self._get_verses(chan, nick, user, msg)
+        print result
+        for resp in result:
+            reply = ' '.join(resp)
+            self.say(chan, str(reply))
+
+    def next(self, regex, **kwargs):
+        chan = kwargs['channel']
+        nick = kwargs['nick']        
+        result = self._next_reading(chan, nick)
+        print result
+        if result:
+            for resp in result:
+                reply = ' '.join(resp)
+                self.say(chan, str(reply))            
+        else:
+            self.say(chan, "No more verses to read")   
+    
+
+            
     def _parse_trans_book_range(self, def_trans, words):
         results = {}
 

@@ -83,6 +83,7 @@ class ScriptureChallenge(Plugin):
         commands """
     def __init__(self, *args):
         super(ScriptureChallenge, self).__init__(*args)
+        
         self.servername = self.irc_conn.factory.network
         self.rooms_hash = {}
         

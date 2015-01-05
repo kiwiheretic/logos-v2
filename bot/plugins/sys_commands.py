@@ -26,12 +26,42 @@ class SystemCommandsClass(Plugin):
     
     def __init__(self, *args):
         super(SystemCommandsClass, self).__init__(*args)
+        self.commands = ((r'auth\s+#(#?[a-zA-Z0-9_-]+)\s+(.+)',self.auth, \
+                          "Authorise access to a room"),)
         Registry.sys_authorized = []   # List of system authorized nicks - ie owner
         Registry.authorized = {}  
     
     def privmsg(self, user, channel, message):
         pass
 
+    def auth(self, regex, **kwargs):
+        nick = kwargs['nick'] 
+        chan = kwargs['channel']
+        ch = "#" + regex.group(1).lower()
+        pw = regex.group(2).strip()
+        db_pw = get_room_option(self.factory.network, ch, 'password')
+        nicks_in_room = self.irc_conn.get_room_nicks(ch)                                                               
+        if not nicks_in_room: # if it is None then we are not in room
+            self.msg(chan, 'The bot must be in room %s to authorize' % (ch,))
+            return
+        # room password for the bot
+        # You can only authorize into the bot if you 
+        # are currently in the room you are authorizing for
+        if nick in nicks_in_room:
+            # check password matches the one in database
+            if db_pw == pw:
+                if Registry.authorized.has_key(nick):
+                    Registry.authorized[nick]['channel'] = ch
+                else:
+                    Registry.authorized[nick]={'channel':ch}
+                
+                self.msg(chan, '** Authorized **')
+                return True
+            else:
+                self.msg(chan, 'Authorization Failure')
+        else:
+            self.msg(chan, 'You must be in room %s to authorize' % (ch,))
+    
     def command(self, nick, user, chan, orig_msg, msg, act):
         sysauth_mch = re.match('sysauth\s(.+)', msg)
         syslogout_mch = re.match('syslogout', msg)

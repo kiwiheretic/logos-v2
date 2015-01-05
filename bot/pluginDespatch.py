@@ -194,33 +194,35 @@ class PluginDespatcher(object):
 
 
     def command(self, nick, user, chan, orig_msg, msg, act):
-        pri_list = {}
-        priorities = ('system', 'high', 'normal', 'low')
 
-        for m in self._cls_list:
-            if hasattr(m, 'priority'):
-                pri = m.priority
-                if pri not in priorities: pri = 'normal'
+        try:
+            kwargs = {'trigger':act,
+                      'line': msg,
+                      'channel': chan,
+                      'nick': nick,
+                      'user': user}
+            
+            matched_fn = []
+            for m in self._cls_list:
+                if hasattr(m, 'commands'):
+                    for rgx_s, f, _ in m.commands:
+                        regex = re.match(rgx_s, msg)
+                        if regex:
+                            matched_fn.append((f, regex))
+            if len(matched_fn) == 1:
+                fn, regex = matched_fn[0]
+                fn(regex, **kwargs)
+            elif len(matched_fn) == 0:
+                raise CommandException(nick, chan, "Command not found")
             else:
-                pri = 'normal'
-            if pri in pri_list:
-                pri_list[pri].append(m)
-            else:
-                pri_list[pri] = [m]
-                
-        
-        for p in priorities:
-            if p in pri_list:
-                for m in pri_list[p]:
-                    if hasattr(m, 'command'):
-                        try:
-                            completed = m.command(nick, user, chan, orig_msg, msg, re.escape(act))
-                            if completed:
-                                return
-                        except CommandException as e:
-                            self.irc_conn.queue_message('say', self.irc_conn.factory.channel, e.user + " typed: " + act + msg)
-                            self.irc_conn.queue_message('say', self.irc_conn.factory.channel, e.chan + ":" + e.msg)
-                            logger.debug('CommandException: ' + str( (e.user, e.chan, e.msg)))
+                # Display error message about ambiguous command here
+                pass
+            
+                    
+        except CommandException as e:
+            self.irc_conn.queue_message('say', self.irc_conn.factory.channel, e.user + " typed: " + act + msg)
+            self.irc_conn.queue_message('say', self.irc_conn.factory.channel, e.chan + ":" + e.msg)
+            logger.debug('CommandException: ' + str( (e.user, e.chan, e.msg)))
 
 
     def joined(self, channel):

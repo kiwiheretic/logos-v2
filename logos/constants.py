@@ -1,4 +1,4 @@
-VERSION = "0.98.14"
+VERSION = "0.98.15-branch-new-plugins-0.01"
 
 PUNCTUATION = r"[\?`)(';:\*\[\],.\-\"|!\x7f]"
 
