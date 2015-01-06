@@ -112,7 +112,7 @@ class NicksDB:
             self.nicks_info[user.lower()] = nick_info
 
             
-    def get_ident(self, user):
+    def get_host(self, user):
         if 'ident' in self.nicks_info[user.lower()]:
             return self.nicks_info[user.lower()]['ident']
         else:
@@ -505,7 +505,7 @@ class IRCBot(irc.IRCClient):
 
                     if not self.nicks_db.nick_in_room(this_name, room):
                         self.nicks_db.add_nick_to_room(this_name, room, opstatus=opstatus)
-                        ident = self.nicks_db.get_ident(this_name)
+                        ident = self.nicks_db.get_host(this_name)
                         if ident == None:
                             # need to strip opstatus off first
                             if this_name not in self.whois_in_progress:

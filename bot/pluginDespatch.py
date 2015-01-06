@@ -29,8 +29,8 @@ class Plugin(object):
         self.network = irc_conn.factory.network
         self.control_room = irc_conn.factory.channel
         
-    def get_ident(self, nick):
-        return self.irc_conn.nicks_db.get_ident(nick)
+    def get_host(self, nick):
+        return self.irc_conn.nicks_db.get_host(nick)
     
     def get_room_nicks(self, room):
         return self.irc_conn.get_room_nicks(room)
@@ -129,9 +129,11 @@ class PluginDespatcher(object):
                     # Check if the class is a class derived from 
                     # bot.PluginDespatch.Plugin
                     # but is not the base class only
+
                     if inspect.isclass(a1) and \
                     a1 != bot.pluginDespatch.Plugin and \
-                    issubclass(a1, Plugin):  
+                    issubclass(a1, Plugin) and \
+                    hasattr(a1, 'plugin'):  
                         logger.info('loading module '+'bot.plugins.'+m)
                         self._cls_list.append(a1(self, irc_conn))
                         break

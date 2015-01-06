@@ -373,7 +373,7 @@ class ScriptureChallenge(Plugin):
             game.save()
             
             for nick in NicksInGame:
-                host = self.irc_conn.nicks_db.get_ident(nick)
+                host = self.irc_conn.nicks_db.get_host(nick)
                 
                 gu = GameUsers(game = game, nick = nick, host = host)
                 gu.save() 

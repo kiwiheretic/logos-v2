@@ -3,7 +3,6 @@ import datetime
 import re
 import time
 import copy
-import threading
 
 import pdb
 from logos.pluginlib import Registry
@@ -46,11 +45,12 @@ class BibleBot(Plugin):
     # are not indexed (in the concordance).  It makes for a lot
     # smaller concordance database.
     stop_words = STOP_WORDS
-
+    plugin = ("bible", "Bible Bot")
+    
     def __init__(self, *args):
         super(BibleBot, self).__init__(*args)
         
-        self.plugin_name = "bible"
+
         self.commands = (\
                          (r'(next|n)\s*$', self.next, "read next verse"),
                          (r'(?:search|s)\s+(.+)', self.search, "perform a concordance search"),

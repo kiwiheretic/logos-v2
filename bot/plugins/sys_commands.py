@@ -22,7 +22,7 @@ logger = logging.getLogger(__name__)
 logging.config.dictConfig(LOGGING)
 
 class SystemCommandsClass(Plugin):
-    priority="system"
+    plugin = ("system", "System Module")
     
     def __init__(self, *args):
         super(SystemCommandsClass, self).__init__(*args)
