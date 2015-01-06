@@ -129,7 +129,6 @@ class BibleBot(Plugin):
         # Find default translation for the current room
         def_trans = self._get_defaulttranslation(chan)
 
-        #available_trans = BibleTranslations.objects.all()
         passage_ref = passage_ref.lower().strip()
         mch1 = re.match(r"([a-z\+]+)\s+([1-3]?\s*[a-z]+)\s+(.*)", passage_ref)
         mch2 = re.match(r"([1-3]?\s*[a-z]+)\s+(.*)", passage_ref)
@@ -163,7 +162,6 @@ class BibleBot(Plugin):
         if not book:
             raise CommandException(user, chan, "Could not find book %s" % (bookwork,))
 
-        #passage = re.sub("\s+","", versework)
         passage = versework
 
 
@@ -227,7 +225,8 @@ class BibleBot(Plugin):
         else:
             verses_pk = self.reading_progress[user.lower()]['verses_pk']
             qual_verses = BibleVerses.objects.filter(pk__gte = verses_pk)
-            # Get the maximum number of verses to display in one
+        
+        # Get the maximum number of verses to display in one
         # go for the current room
         verselimit = self._get_verselimit(chan)
         
