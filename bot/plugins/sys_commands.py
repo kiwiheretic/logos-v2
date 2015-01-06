@@ -32,6 +32,7 @@ class SystemCommandsClass(Plugin):
                          (r'sysauth\s(.+)', self.sysauth, "Perform a system login"),
                          (r'version\s*$', self.version, "Show this bot's version info"),
                          (r'cmd\s+(.*)', self.cmd, "Have bot perform an IRC command"),
+                         (r'say\s+(.*)', self.say, "Say something into a room"),
                          (r'set\s+(?:activation|trigger)\s+\"(.)\"', self.set_trigger,
                            "Set the trigger used by the bot"),
                          (r'set\s+greet\s+message\s+\"(.*)\"', self.set_greet, 
@@ -61,6 +62,14 @@ class SystemCommandsClass(Plugin):
             else:
                 self.msg(chan, "Unknown status \"%s\", expected 'on' or 'off' " % (errors_status,))            
             
+    def say(self, regex, **kwargs):
+        nick = kwargs['nick'] 
+        chan = kwargs['channel']
+        if Registry.authorized.has_key(nick):
+            ch = Registry.authorized[nick]['channel']
+            text = regex.group(1)
+            self.msg(ch, text)
+
     def set_greet(self, regex, **kwargs):
         nick = kwargs['nick'] 
         chan = kwargs['channel']
@@ -191,40 +200,6 @@ class SystemCommandsClass(Plugin):
 
             self.msg(chan, "Password for room %s set to %s " % (ch, pw))
                                  
-    def command(self, nick, user, chan, orig_msg, msg, act):
-        eval_mch  = re.match(act + 'eval\s+(.+)', orig_msg)
-        speak_mch = re.match(act+'say\s+(.*)', msg)
-
-        # Now we check if a system administrator command is
-        # being issued to bot
-        if nick in Registry.sys_authorized:
-            if speak_mch:
-                text = speak_mch.group(1)
-                rooms = self.nicks_in_room.keys()
-                for rm in rooms:
-                    self.msg(rm, text)
-                    
-                return
-
-            elif eval_mch:
-                #
-                # Have the bot issue any arbitrary python command. 
-                # WARNING WARNING WARNING!!!! 
-                # This is mainly used for testing and debugging and 
-                # should eventually be disabled.  
-                # This is because it is a MAJOR backdoor 
-                # security issue.  Comment out this whole elif block
-                # before final release
-                eval_str = eval_mch.group(1)
-                try:
-                    res = repr(eval(eval_str))
-                except Exception as ex:
-                    res = ex.args[0]
-                self.msg(chan, res)
-                return True
-
-
-
     def signedOn(self):
         pass
 
