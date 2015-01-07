@@ -200,8 +200,8 @@ class PluginDespatcher(object):
         try:
             kwargs = {'trigger':act,
                       'line': msg,
-                      'channel': chan,
-                      'nick': nick,
+#                      'channel': chan,
+#                      'nick': nick,
                       'user': user}
             
             matched_fn = []
@@ -213,7 +213,7 @@ class PluginDespatcher(object):
                             matched_fn.append((f, regex))
             if len(matched_fn) == 1:
                 fn, regex = matched_fn[0]
-                fn(regex, **kwargs)
+                fn(regex, chan, nick, **kwargs)
             elif len(matched_fn) == 0:
                 raise CommandException(nick, chan, "Command not found")
             else:

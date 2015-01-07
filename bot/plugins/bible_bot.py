@@ -490,9 +490,8 @@ class BibleBot(Plugin):
         network = self.network
         set_room_option(network, channel, 'active', 0)
 
-    def book_names(self, regex, **kwargs):
-        nick = kwargs['nick']
-        chan = kwargs['channel'] 
+    def book_names(self, regex, chan, nick, **kwargs):
+ 
         version = regex.group(1)
         trans = BibleTranslations.objects.get(name=version)
         book_names = []
@@ -500,16 +499,14 @@ class BibleBot(Plugin):
             book_names.append((str(bb.canonical), str(bb.long_book_name)))
         self.msg(chan, str(book_names))  
               
-    def versions(self, regex, **kwargs):
-        nick = kwargs['nick']
-        chan = kwargs['channel'] 
+    def versions(self, regex, chan, nick, **kwargs):
+ 
         translations = self._get_translations()
         tr_str = ",".join(translations)
         self.msg(chan, "Supported translations are %s " % (tr_str,))     
                    
-    def set_pvt_translation(self, regex, **kwargs):
-        nick = kwargs['nick']
-        chan = kwargs['channel']        
+    def set_pvt_translation(self, regex, chan, nick, **kwargs):
+       
         if nick in Registry.sys_authorized:
             trans = regex.group(1)
             translations = self._get_translations()                        
@@ -520,9 +517,8 @@ class BibleBot(Plugin):
                 set_global_option('pvt-translation', trans)
                 self.msg(chan, "Private translation set to %s " % (trans,))   
                  
-    def set_default_trans(self, regex, **kwargs):
-        nick = kwargs['nick']
-        chan = kwargs['channel']
+    def set_default_trans(self, regex, chan, nick, **kwargs):
+
         ch = Registry.authorized[nick]['channel']
         def_trans = regex.group(1)
         translations = self._get_translations()                        
@@ -535,9 +531,8 @@ class BibleBot(Plugin):
 
             self.msg(chan, "Default translation for %s set to %s " % (ch,def_trans)) 
                
-    def set_search_limit(self, regex, **kwargs):
-        nick = kwargs['nick']
-        chan = kwargs['channel']         
+    def set_search_limit(self, regex, chan, nick, **kwargs):
+       
         searchlmt = int(regex.group(1))
         # Get the channel the user is authorised to access
         ch = Registry.authorized[nick]['channel']
@@ -550,9 +545,8 @@ class BibleBot(Plugin):
 
             self.msg(chan, "Search limit for %s set to %s " % (ch, searchlmt)) 
                    
-    def set_verse_limit(self, regex, **kwargs):
-        nick = kwargs['nick'] 
-        chan = kwargs['channel']        
+    def set_verse_limit(self, regex, chan, nick, **kwargs):
+    
         verselmt = int(regex.group(1))
         
         # Get the channel the user is authorised to access
@@ -565,9 +559,8 @@ class BibleBot(Plugin):
 
             self.msg(chan, "Verse limit for %s set to %s " % (ch,verselmt)) 
                
-    def dict(self, regex, **kwargs):
-        chan = kwargs['channel']
-        nick = kwargs['nick'] 
+    def dict(self, regex, chan, nick, **kwargs):
+
         lookup = regex.group(1)
         lookup = lookup.upper()
 
@@ -578,9 +571,8 @@ class BibleBot(Plugin):
         except BibleDict.DoesNotExist:
             self.say(chan, "Sorry %s not found" % lookup)
     
-    def search(self, regex, **kwargs):
-        chan = kwargs['channel']
-        nick = kwargs['nick']          
+    def search(self, regex, chan, nick, **kwargs):
+          
         searchlimit = self._get_searchlimit(chan)
          
         words = [x.lower() for x  in regex.group(1).strip().split(' ')]
@@ -612,15 +604,13 @@ class BibleBot(Plugin):
                 
             self._format_search_results(chan, gen)
     
-    def next_search(self, regex, **kwargs):
-        chan = kwargs['channel']
-        nick = kwargs['nick'] 
+    def next_search(self, regex, chan, nick, **kwargs):
+
         gen = self.pending_searches[chan.lower()][nick.lower()]
         self._format_search_results(chan, gen)
     
-    def phrase_search(self, regex, **kwargs):
-        chan = kwargs['channel']
-        nick = kwargs['nick']        
+    def phrase_search(self, regex, chan, nick, **kwargs):
+        
         phrase = regex.group(2)
         ref = regex.group(1)
         searchlimit = self._get_searchlimit(chan)
@@ -647,9 +637,8 @@ class BibleBot(Plugin):
             self.pending_searches[chan.lower()][nick.lower()] = gen
             self._format_search_results(chan, gen)
     
-    def verse_lookup(self, regex, **kwargs):
-        chan = kwargs['channel']
-        nick = kwargs['nick']
+    def verse_lookup(self, regex, chan, nick, **kwargs):
+
         user = kwargs['user']
         msg = kwargs['line']
         result = self._get_verses(chan, nick, user, msg)
@@ -658,9 +647,8 @@ class BibleBot(Plugin):
             reply = ' '.join(resp)
             self.say(chan, str(reply))
 
-    def next(self, regex, **kwargs):
-        chan = kwargs['channel']
-        nick = kwargs['nick']        
+    def next(self, regex, chan, nick, **kwargs):
+        
         result = self._next_reading(chan, nick)
         print result
         if result:

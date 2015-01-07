@@ -21,11 +21,11 @@ from logos.models import Settings
 logger = logging.getLogger(__name__)
 logging.config.dictConfig(LOGGING)
 
-class SystemCommandsClass(Plugin):
+class SystemCoreCommands(Plugin):
     plugin = ("system", "System Module")
     
     def __init__(self, *args):
-        super(SystemCommandsClass, self).__init__(*args)
+        super(SystemCoreCommands, self).__init__(*args)
         self.commands = ((r'auth\s+#(#?[a-zA-Z0-9_-]+)\s+(.+)',self.auth, \
                           "Authorise access to a room"),
                          (r'logout', self.logout, "Log out of bot"),
@@ -49,9 +49,8 @@ class SystemCommandsClass(Plugin):
         pass
 
     
-    def set_errors(self, regex, **kwargs):
-        nick = kwargs['nick'] 
-        chan = kwargs['channel']
+    def set_errors(self, regex, chan, nick, **kwargs):
+
         if Registry.authorized.has_key(nick):
             error_status = regex.group(1).strip().lower()
             if error_status in ( "on", "off" ):
@@ -62,17 +61,15 @@ class SystemCommandsClass(Plugin):
             else:
                 self.msg(chan, "Unknown status \"%s\", expected 'on' or 'off' " % (errors_status,))            
             
-    def say(self, regex, **kwargs):
-        nick = kwargs['nick'] 
-        chan = kwargs['channel']
+    def say(self, regex, chan, nick, **kwargs):
+
         if Registry.authorized.has_key(nick):
             ch = Registry.authorized[nick]['channel']
             text = regex.group(1)
             self.msg(ch, text)
 
-    def set_greet(self, regex, **kwargs):
-        nick = kwargs['nick'] 
-        chan = kwargs['channel']
+    def set_greet(self, regex, chan, nick, **kwargs):
+
         if Registry.authorized.has_key(nick):
             ch = Registry.authorized[nick]['channel']
             greet_msg = regex.group(1)
@@ -80,9 +77,8 @@ class SystemCommandsClass(Plugin):
                     'greet_message', greet_msg)
             self.msg(chan, "Greet message for %s set to \"%s\" " % (ch,greet_msg))  
                   
-    def set_trigger(self, regex, **kwargs):
-        nick = kwargs['nick'] 
-        chan = kwargs['channel']
+    def set_trigger(self, regex, chan, nick, **kwargs):
+
         if Registry.authorized.has_key(nick): 
             # Command issued to bot to change the default activation
             # character.
@@ -96,9 +92,8 @@ class SystemCommandsClass(Plugin):
             if chan != ch:
                 self.msg(ch, "Trigger has been changed to \"%s\"" % (arg,)) 
                                   
-    def cmd(self, regex, **kwargs):
-        nick = kwargs['nick'] 
-        chan = kwargs['channel']
+    def cmd(self, regex, chan, nick, **kwargs):
+
         if nick in Registry.sys_authorized:
             # Have the bot issue any IRC command
             
@@ -106,9 +101,8 @@ class SystemCommandsClass(Plugin):
             logger.info("%s issued command '%s' to bot" % (nick, line))
             self.sendLine(line)
             
-    def version(self, regex, **kwargs):
-        nick = kwargs['nick'] 
-        chan = kwargs['channel']
+    def version(self, regex, chan, nick, **kwargs):
+
         dj_ver = ".".join(map(lambda x: str(x), django.VERSION[0:3]))
         pyver = (sys.version_info.major, sys.version_info.minor)
         py_ver = ".".join(map(lambda x: str(x), pyver))
@@ -120,9 +114,8 @@ class SystemCommandsClass(Plugin):
 
         self.msg(chan, "\x1f\x0312https://github.com/kiwiheretic/logos-v2/")        
         
-    def auth(self, regex, **kwargs):
-        nick = kwargs['nick'] 
-        chan = kwargs['channel']
+    def auth(self, regex, chan, nick, **kwargs):
+
         ch = "#" + regex.group(1).lower()
         pw = regex.group(2).strip()
         db_pw = get_room_option(self.factory.network, ch, 'password')
@@ -148,18 +141,16 @@ class SystemCommandsClass(Plugin):
         else:
             self.msg(chan, 'You must be in room %s to authorize' % (ch,))
     
-    def logout(self, regex, **kwargs):
-        nick = kwargs['nick'] 
-        chan = kwargs['channel']
+    def logout(self, regex, chan, nick, **kwargs):
+
         if nick in Registry.authorized:
             del Registry.authorized[nick]
             self.msg(chan, 'You have logged out')
         else:
             self.msg(chan, 'You were not logged in')
             
-    def sysauth(self, regex, **kwargs):
-        nick = kwargs['nick'] 
-        chan = kwargs['channel']
+    def sysauth(self, regex, chan, nick, **kwargs):
+
         pw = regex.group(1).strip()
         
         if pw == self.factory.sys_password:
@@ -179,9 +170,8 @@ class SystemCommandsClass(Plugin):
 
             logger.info( "%s failed to sys authorize the bot" % (user,))
 
-    def syslogout(self, regex, **kwargs):
-        nick = kwargs['nick'] 
-        chan = kwargs['channel']
+    def syslogout(self, regex, chan, nick, **kwargs):
+
         if nick in Registry.sys_authorized:
             Registry.sys_authorized.remove(nick)
             self.msg(chan, 'You have logged out')
@@ -189,9 +179,8 @@ class SystemCommandsClass(Plugin):
         else:
             self.msg(chan, 'You were not logged in')
 
-    def set_password(self, regex, **kwargs):
-        nick = kwargs['nick'] 
-        chan = kwargs['channel']
+    def set_password(self, regex, chan, nick, **kwargs):
+
         if nick in Registry.authorized:
             pw = regex.group(1)
             ch = Registry.authorized[nick]['channel']

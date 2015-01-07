@@ -37,11 +37,23 @@ import datetime
 from optparse import OptionParser
 
 import pdb
+#    Process commands from the user.  All messages directed to the bot
+#    end up here.
 
-# Basic design of game_bot (such as it is).
-#
-# -- Removed hopelessly outdated and wrong documentation from here.
-
+#    Currently handles these commands:
+#    !gamed played
+#        - lists the games played in the database
+#    !restart
+#        - restart the currently selected game
+#    !join
+#        - join a multi-user game
+#    !start
+#        - start a multi-user game after everyone has joined
+#    !stop
+#    !end
+#    !endgame
+#        - stop a game that is in progress
+        
 import shutil
 import logging
 import logos.settings as settings
@@ -81,14 +93,27 @@ def blank_out_letters(letters, text):
 class ScriptureChallenge(Plugin):
     """ The class created by the factory class for handling non game specific
         commands """
+    plugin = ('scripture_game', 'Scripture Challenge Game')
+    
     def __init__(self, *args):
         super(ScriptureChallenge, self).__init__(*args)
         
+        self.commands = (\
+            ('games played', self.games_played, "Change this description"),
+            ('challenge', self.challenge, "Change this description"),
+            ('examine\s+(\d+)', self.examine, "Change this description"),
+            ('join', self.join, "Change this description"),
+            ('start', self.start, "Change this description"),
+            ('stop|end|endgame', self.stop, "Change this description"),
+            ('restart', self.restart, "Change this description"),
+            ('hash', self.hash, "Change this description"),
+            )
         self.servername = self.irc_conn.factory.network
         self.rooms_hash = {}
         
     def write_log (self, text):
         logger.info(text)
+
     def joined(self, chan):
         logger.info("Scripture challenge joined %s" % (chan,))
         self.rooms_hash[chan.lower()] = {}
@@ -131,40 +156,11 @@ class ScriptureChallenge(Plugin):
         room_hash['current_user'] = nextPlayer
         self.user_left(channel)
   
-#    def userQuit(self, user, quitMessage):
-#        """
-#        Called when I see another user disconnect from the network.
-#        """
-#        self.write_log( "userQuit %s %s - deleting hash entry " % (self.channel, user))
-        
-#        # vsvs - bug, userQuit has no channel
-#        room_hash = self.rooms_hash[channel.lower()]
-#        del room_hash['NicksInChannel'][user.lower()]
-#        NicksInGame = room_hash['NicksInGame']
-#        ActiveModule = room_hash['self.active_gameModule']            
-#        if user in NicksInGame:
-#            self.say(self.channel, user + " has left the game.")
-#            idx = room_hash['NickCurrentTurn']
-#            currTurnPlayer = NicksInGame[idx]
-#            nextPlayer = currTurnPlayer
-#            NicksInGame.remove(user)
-#            if user != currTurnPlayer:
-#                room_hash['NickCurrentTurn'] = NicksInGame.index(currTurnPlayer)
-#            else:
-#                # If it was the last player in the list that left and
-#                # it was his turn then special case.  Then we move to
-#                # the first player.
-#                if idx >= len(NicksInGame):
-#                    room_hash['NickCurrentTurn'] = 0
-#                else:
-#                    pass
-#                idx = room_hash['NickCurrentTurn']
-#                nextPlayer = NicksInGame[idx]
-#                self.say(self.channel, "Play moves to " + nextPlayer)
-#                # If its not the last player we don't need to do anything
-#                # as then when the list is reduced it moves to the next player
-#            self.active_game.current_user = nextPlayer
-#            self.active_game.user_left(self.channel)
+    def userQuit(self, user, quitMessage):
+        """
+        Called when I see another user disconnect from the network.
+        """
+        pass
           
   
         
@@ -245,126 +241,81 @@ class ScriptureChallenge(Plugin):
                     self.non_turn_based_command(chan, short_nick,  msg)
                     
             
+    def games_played(self, regex, chan, nick, **kwargs):
+        self.game_list(chan)
 
-    def command(self, nick, user, chan, orig_msg, msg, act):
-        """ Process commands from the user.  All messages directed to the bot
-            end up here.
+    def challenge(self, regex, chan, nick, **kwargs):
+        self.rooms_hash[chan.lower()] = {}
+        rooms_hash = self.rooms_hash[chan.lower()]
+        rooms_hash['GameStarted'] = False
+        rooms_hash['NicksInGame'] = []
+        rooms_hash['NickCurrentTurn'] = 0
+        self.say(chan, "== Scripture Challenge Version %s ==" % (VERSION,))
+        self.say(chan, " -- Courtesy of SplatsCreations")
+        self.say(chan, " http://www.splats-world.pw/wp/chat/scripture-challenge-game/")  
+              
+    def examine(self, regex, chan, nick, **kwargs):
+        game_id = int(regex.group(1))
+        self.examine(chan, game_id)
+        
+    def join(self, regex, chan, nick, **kwargs):
 
-            Currently handles these commands:
-            !gamelist
-                - lists the current games that the bot knows about
-            !game <number>
-                - select a game and start it
-            !restart
-                - restart the currently selected game
-            !join
-                - join a multi-user game
-            !start
-                - start a multi-user game after everyone has joined
-            !stop
-            !end
-            !endgame
-                - stop a game that is in progress
-                
-            Other commands are game specific commands and these are passed
-            to the game module for processing.  Only the person who has started
-            the game or person whose turn it is in the game can send commands
-            to the game module.
-                """
-        logger.info("SC command : " + str(( nick, user, chan, orig_msg, msg, act)))
-        if chan.lower() in self.rooms_hash:
-            rooms_hash = self.rooms_hash[chan.lower()]
+        rooms_hash = self.rooms_hash[chan.lower()]
+        if not rooms_hash['GameStarted']:
+            # It is only meaningful to join a game once.
+            if not short_nick.lower() in map(lambda x: x.lower(), rooms_hash['NicksInGame']):
+                rooms_hash['NicksInGame'].append(short_nick)
+                self.say(chan, short_nick + ' has joined game')
+            else:
+                self.say(chan, short_nick + ' has already joined game')
         else:
-            rooms_hash = None
-        
-        short_nick = split(user, '!')[0]
-        if (re.match(act, msg) or re.match('@', msg)) \
-        and not re.match(act+'[a-z]\s*$', msg):
-            t = datetime.datetime.now()
-            self.write_log("%s <%s>  %s" % \
-            (t.strftime("%H:%M:%S"), short_nick, repr(msg)))
+            self.say(chan, short_nick + ', game has already started, cannot join.')                            
 
-        mch_gamelist = re.match('games played', msg)
-        mch_challenge = re.match('challenge', msg)
-        mch_examine  = re.match('examine\s+(\d+)', msg)
-        mch_join = re.match('join', msg)
-        mch_start = re.match('start', msg)
-        mch_stop = re.match('stop|end|endgame', msg)
-        restart_mch = re.match('restart', msg)
-        server_hash_mch = re.match('hash', msg)        
-        
-        # if no game started yet
-        if mch_challenge:
-            self.rooms_hash[chan.lower()] = {}
-            rooms_hash = self.rooms_hash[chan.lower()]
-            rooms_hash['GameStarted'] = False
-            rooms_hash['NicksInGame'] = []
-            rooms_hash['NickCurrentTurn'] = 0
-            self.say(chan, "== Scripture Challenge Version %s ==" % (VERSION,))
-            self.say(chan, " -- Courtesy of SplatsCreations")
-            self.say(chan, " http://www.splats-world.pw/wp/chat/scripture-challenge-game/")
+    def start(self, regex,chan, nick, **kwargs):
+        rooms_hash = self.rooms_hash[chan.lower()]
+        if 'NicksInGame' not in rooms_hash or \
+            len(rooms_hash['NicksInGame']) == 0:
+            self.say(chan, 'No one has yet joined game.')
             
-        elif mch_gamelist:
-            self.game_list(chan)
-        elif restart_mch:
+        elif not rooms_hash['GameStarted']:
+            
+            NicksInGame = rooms_hash['NicksInGame']
 
-            self.start_game(short_nick)
-        elif server_hash_mch:
-            self.show_server_hash(chan)
-        elif mch_stop:
-            self.end_game(chan)
-        elif mch_examine:
-            game_id = int(mch_examine.group(1))
-            self.examine(chan, game_id)
-            return True
-        elif mch_join: # !join (as in multiuser game)
-            rooms_hash = self.rooms_hash[chan.lower()]
-
-            if not rooms_hash['GameStarted']:
-                # It is only meaningful to join a game once.
-                if not short_nick.lower() in map(lambda x: x.lower(), rooms_hash['NicksInGame']):
-                    rooms_hash['NicksInGame'].append(short_nick)
-                    self.say(chan, short_nick + ' has joined game')
-                else:
-                    self.say(chan, short_nick + ' has already joined game')
+            if 'NickCurrentTurn' in rooms_hash:
+                NickCurrentTurn = rooms_hash['NickCurrentTurn']
             else:
-                self.say(chan, short_nick + ', game has already started, cannot join.')                            
-
-        elif mch_start: # !start
-            if 'NicksInGame' not in rooms_hash or \
-                len(rooms_hash['NicksInGame']) == 0:
-                self.say(chan, 'No one has yet joined game.')
-                
-            elif not rooms_hash['GameStarted']:
-                
-                NicksInGame = rooms_hash['NicksInGame']
-
-                if 'NickCurrentTurn' in rooms_hash:
-                    NickCurrentTurn = rooms_hash['NickCurrentTurn']
-                else:
-                    rooms_hash['NickCurrentTurn'] = 0
-                    NickCurrentTurn = 0
-
-                CurrNick = NicksInGame[NickCurrentTurn]
-
-
+                rooms_hash['NickCurrentTurn'] = 0
                 NickCurrentTurn = 0
-                game = self._create_game(NicksInGame)
 
-                self.say(chan, 'Game started...')
-                self.say(chan, ' ')
-                
-                rooms_hash['game'] = game
-                rooms_hash['current_user'] = CurrNick
-                rooms_hash['Round'] = 0
+            CurrNick = NicksInGame[NickCurrentTurn]
 
-                rooms_hash['GameStarted'] = True
-                rooms_hash['NickCurrentTurn'] = NickCurrentTurn
-                self.start(chan)
 
-            else:
-                self.chan(chan, 'Game already started')
-                
+            NickCurrentTurn = 0
+            game = self._create_game(NicksInGame)
+
+            self.say(chan, 'Game started...')
+            self.say(chan, ' ')
+            
+            rooms_hash['game'] = game
+            rooms_hash['current_user'] = CurrNick
+            rooms_hash['Round'] = 0
+
+            rooms_hash['GameStarted'] = True
+            rooms_hash['NickCurrentTurn'] = NickCurrentTurn
+            self.start(chan)
+
+        else:
+            self.chan(chan, 'Game already started')
+        
+    def stop(self, regex, chan, nick, **kwargs):
+        self.end_game(chan)
+        
+    def restart(self, regex, chan, nick, **kwargs):
+        self.start_game(nick)
+        
+    def hash(self, regex, chan, nick, **kwargs):
+        self.show_server_hash(chan)  
+      
     def _create_game(self, NicksInGame):
         # Record the new game to the database
         with transaction.atomic():

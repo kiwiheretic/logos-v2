@@ -35,26 +35,25 @@ class MyBotPlugin(Plugin):
         # keep only the last 10 items in the list
         self.conversation = self.conversation[-10:]
 
-    def nicks(self, regex, **kwargs):
-        chan = kwargs['channel']
+    def nicks(self, regex, chan, nick, **kwargs):
+
         nicks = self.get_room_nicks(chan)
         self.say(chan, "Nicks in room are " + ", ".join(nicks))
 
-    def demo(self, regex, **kwargs):
-        nick = kwargs['nick']
-        chan = kwargs['channel']        
+    def demo(self, regex, chan, nick, **kwargs):
+     
         self.say(chan, "Elementary my dear Watson")
         self.describe(chan, "shakes its chains")
         self.notice(nick, "Now is the time for all good men...")
 
     
-    def convo(self, regex, **kwargs):
-        chan = kwargs['channel'] 
+    def convo(self, regex, chan, nick, **kwargs):
+
         for u, c, m in self.conversation:
             self.say(chan, "%s said %s on %s" % (u,m,c))
     
-    def timer(self, regex, **kwargs):
-        chan = kwargs['channel']         
+    def timer(self, regex, chan, nick, **kwargs):
+         
         self.reactor.callLater(5, self.timer_expired, chan)
         self.say(chan, "The timer will expire in 5 seconds")
 
@@ -78,21 +77,18 @@ class MyBotPlugin(Plugin):
 #        mask: In conjuction with the {'b'} mode flag, sets a mask of
 #            users to be banned from the channel.  
       
-    def op_me(self, regex, **kwargs):
-        nick = kwargs['nick']
-        chan = kwargs['channel']         
+    def op_me(self, regex, chan, nick, **kwargs):
+         
         # using True is the same as +o
         self.mode(chan, True, "o", user = nick)
 
-    def deop_me(self, regex, **kwargs):
-        nick = kwargs['nick']
-        chan = kwargs['channel']         
+    def deop_me(self, regex, chan, nick, **kwargs):
+      
         # using False is the same as -o
         self.mode(chan, False, "o", user = nick)
 
-    def kick_me(self, regex, **kwargs):
-        nick = kwargs['nick']
-        chan = kwargs['channel']         
+    def kick_me(self, regex, chan, nick, **kwargs):
+         
         self.kick(chan, nick, reason="Well, you asked ;)")
         
     def joined(self, channel):
