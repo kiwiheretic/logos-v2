@@ -10,7 +10,10 @@ logging.config.dictConfig(LOGGING)
 # then remember to change the class name 'MyBotPlugin' to
 # something more meaningful.
 class MyBotPlugin(Plugin):
-    # Uncomment the line below to load this plugin
+    # Uncomment the line below to load this plugin.  Also if
+    # you are using this as a starting point for your own plugin
+    # remember to change 'sample' to be a unique identifier for your plugin,
+    # and 'My Bot Plugin' to a short description for your plugin.
     #plugin = ('sample', 'My Bot Plugin')
     
     def __init__(self, *args, **kwargs):
