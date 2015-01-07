@@ -103,7 +103,7 @@ class ScriptureChallenge(Plugin):
             ('challenge', self.challenge, "Change this description"),
             ('examine\s+(\d+)', self.examine, "Change this description"),
             ('join', self.join, "Change this description"),
-            ('start', self.start, "Change this description"),
+            ('start', self.start1, "Change this description"),
             ('stop|end|endgame', self.stop, "Change this description"),
             ('restart', self.restart, "Change this description"),
             ('hash', self.hash, "Change this description"),
@@ -263,15 +263,15 @@ class ScriptureChallenge(Plugin):
         rooms_hash = self.rooms_hash[chan.lower()]
         if not rooms_hash['GameStarted']:
             # It is only meaningful to join a game once.
-            if not short_nick.lower() in map(lambda x: x.lower(), rooms_hash['NicksInGame']):
-                rooms_hash['NicksInGame'].append(short_nick)
-                self.say(chan, short_nick + ' has joined game')
+            if not nick.lower() in map(lambda x: x.lower(), rooms_hash['NicksInGame']):
+                rooms_hash['NicksInGame'].append(nick)
+                self.say(chan, nick + ' has joined game')
             else:
-                self.say(chan, short_nick + ' has already joined game')
+                self.say(chan, nick + ' has already joined game')
         else:
-            self.say(chan, short_nick + ', game has already started, cannot join.')                            
+            self.say(chan, nick + ', game has already started, cannot join.')                            
 
-    def start(self, regex,chan, nick, **kwargs):
+    def start1(self, regex,chan, nick, **kwargs):
         rooms_hash = self.rooms_hash[chan.lower()]
         if 'NicksInGame' not in rooms_hash or \
             len(rooms_hash['NicksInGame']) == 0:

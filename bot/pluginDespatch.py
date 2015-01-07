@@ -200,11 +200,11 @@ class PluginDespatcher(object):
         try:
             kwargs = {'trigger':act,
                       'line': msg,
-#                      'channel': chan,
-#                      'nick': nick,
-                      'user': user}
+                      'user': user, # full nick@host
+                      }
             
             matched_fn = []
+
             for m in self._cls_list:
                 if hasattr(m, 'commands'):
                     for rgx_s, f, _ in m.commands:
