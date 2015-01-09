@@ -357,9 +357,8 @@ class ScriptureChallenge(Plugin):
         
         rooms_hash = self.rooms_hash[channel.lower()]
 
-        self.say(channel, "Game Finished.")
         if rooms_hash['GameStarted']:
-
+            self.say(channel, "Game Finished.")
             game = rooms_hash['game']
             # Find the winner if any
             if win:
