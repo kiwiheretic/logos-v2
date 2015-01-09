@@ -185,6 +185,8 @@ TEMPLATE_CONTEXT_PROCESSORS = (
   # ...
   'django.core.context_processors.request',
   # ...
+  'django.contrib.messages.context_processors.messages',
+  'django.contrib.auth.context_processors.auth',
 )
 
 TEMPLATE_DIRS = (
@@ -206,7 +208,7 @@ INSTALLED_APPS = (
 
     'logos',
     # Uncomment the next line to enable the admin:
-    # 'django.contrib.admin',
+     'django.contrib.admin',
     # Uncomment the next line to enable admin documentation:
     # 'django.contrib.admindocs',
 )
