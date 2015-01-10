@@ -85,13 +85,10 @@ class Settings(models.Model):
     
     
 
-
-#class Bots(models.Model):
-#    network = models.TextField()
-#    room = models.TextField()
-#    user = models.ForeignKey(settings.AUTH_USER_MODEL)
-#    password = models.TextField()
-
+class Plugins(models.Model):
+    name = models.TextField()
+    active = models.BooleanField(default=False)
+    
 class Scriptures(models.Model):
     ref = models.TextField()
     verse = models.TextField()

@@ -166,6 +166,7 @@ class IRCBot(irc.IRCClient):
         self.username = "logos"
         self.realname = "logos"
         
+              
     def queue_message(self, msg_type, channel,  *args):
         chan = channel.lower()
         l = [msg_type, channel]
@@ -342,9 +343,7 @@ class IRCBot(irc.IRCClient):
         # when we get a RPL_NAMREPLY response as to who is actually in room.
         self.nicks_db.add_room(channel)
 
-
         self.plugins.joined(channel)
-
 
         line = "NAMES " + channel
         self.sendLine(line)

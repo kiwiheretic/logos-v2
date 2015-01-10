@@ -48,7 +48,7 @@ class SystemCoreCommands(Plugin):
     def privmsg(self, user, channel, message):
         pass
 
-    
+   
     def set_errors(self, regex, chan, nick, **kwargs):
 
         if Registry.authorized.has_key(nick):

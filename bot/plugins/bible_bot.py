@@ -52,6 +52,7 @@ class BibleBot(Plugin):
         
 
         self.commands = (\
+                         (r'help\s*$', self.help, "display bible bot help url"),
                          (r'(next|n)\s*$', self.next, "read next verse"),
                          (r'(?:search|s)\s+(.+)', self.search, "perform a concordance search"),
                          (r'(?:search|s)\s+([^"]*)\"([^"]+)\"', self.phrase_search, "perform a phrase search"),
@@ -490,6 +491,10 @@ class BibleBot(Plugin):
         network = self.network
         set_room_option(network, channel, 'active', 0)
 
+    
+    def help(self, regex, chan, nick, **kwargs):
+        self.msg(chan, "Help can be found at https://biblebot.wordpress.com/user-instructions/")
+        
     def book_names(self, regex, chan, nick, **kwargs):
  
         version = regex.group(1)
@@ -640,7 +645,8 @@ class BibleBot(Plugin):
     def verse_lookup(self, regex, chan, nick, **kwargs):
 
         user = kwargs['user']
-        msg = kwargs['line']
+        msg = kwargs['clean_line']
+
         result = self._get_verses(chan, nick, user, msg)
         print result
         for resp in result:

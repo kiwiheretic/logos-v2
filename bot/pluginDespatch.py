@@ -204,21 +204,32 @@ class PluginDespatcher(object):
                       }
             
             matched_fn = []
-
             for m in self._cls_list:
                 if hasattr(m, 'commands'):
                     for rgx_s, f, _ in m.commands:
                         regex = re.match(rgx_s, msg)
-                        if regex:
-                            matched_fn.append((f, regex))
+                        plugin_id = m.plugin[0]
+                        s = plugin_id + "\s+" + rgx_s
+                        regex2 = re.match(s, msg)
+                        if regex2:
+                            # clean_line is line without the plugin id
+                            kwargs['clean_line'] = re.sub(plugin_id + "\s+", "", msg)
+                            f(regex2, chan, nick, **kwargs)
+                            return
+                        elif regex:
+                            kwargs['clean_line'] = msg
+                            matched_fn.append((f, regex, m.plugin))
+                            
             if len(matched_fn) == 1:
-                fn, regex = matched_fn[0]
+                fn, regex, _ = matched_fn[0]
                 fn(regex, chan, nick, **kwargs)
             elif len(matched_fn) == 0:
                 raise CommandException(nick, chan, "Command not found")
             else:
                 # Display error message about ambiguous command here
-                pass
+                plugin_list = [str(act)+x[2][0] + " " + msg for x in matched_fn ]
+                self.irc_conn.say(chan, 
+                    "Ambiguous command.  Choose from one of %s" % (", ".join(plugin_list)))
             
                     
         except CommandException as e:
