@@ -218,6 +218,7 @@ class PluginDespatcher(object):
                             return
                         elif regex:
                             kwargs['clean_line'] = msg
+                            logger.debug('matching regex = ' + s)
                             matched_fn.append((f, regex, m.plugin))
                             
             if len(matched_fn) == 1:

@@ -54,8 +54,9 @@ class BibleBot(Plugin):
         self.commands = (\
                          (r'help\s*$', self.help, "display bible bot help url"),
                          (r'(next|n)\s*$', self.next, "read next verse"),
-                         (r'(?:search|s)\s+(.+)', self.search, "perform a concordance search"),
-                         (r'(?:search|s)\s+([^"]*)\"([^"]+)\"', self.phrase_search, "perform a phrase search"),
+                         (r'(?:search|s)\s+((?:\w+\s+)?(?:\w+(?:-\w+)?\s+)?[^"]+)$', self.search, "perform a concordance search"),
+                         (r'(?:search|s)\s+((?:\w+\s+)?(?:\w+(?:-\w+)?\s+)?)\"([^"]+)\"\s*$', self.phrase_search, "perform a phrase search"),
+#                         (r'(?:search|s)\s+([^"]+)', self.search, False),
                          (r'(?:search|s)\s*$', self.next_search, "continue a search"),
                          (r'set\s+default\s+translation\s+([a-zA-Z]+)', self.set_default_trans,\
                           "set default translation for room"),
@@ -594,8 +595,11 @@ class BibleBot(Plugin):
             
             book_range = ( parse_res['book_start'],
                            parse_res['book_end'] )
+            
+            book_range_s = self._stringify_book_range(trans, book_range)
+
             self.msg(chan,  "searching for \"" +  ", ".join(words) +"\"" + \
-                " in " + trans.upper() + " ....")
+                " in " + trans.upper() + " " + book_range_s + " ....")
                                 
             trans = BibleTranslations.objects.get(name=trans)
 
@@ -628,11 +632,13 @@ class BibleBot(Plugin):
             self.msg(chan, "Error: Must have at least one word for "+act+"search")
         else:
             selected_trans = parse_res['translation']
-            self.say(chan, "searching for phrase...\"%s\" in %s" % (phrase,selected_trans.upper()))
+            
             
             book_range = ( parse_res['book_start'],
                            parse_res['book_end'] )
-                                
+            book_range_s = self._stringify_book_range(selected_trans, book_range)
+            
+            self.say(chan, "searching for phrase...\"%s\" in %s %s" % (phrase,selected_trans.upper(),book_range_s))                                
             trans = BibleTranslations.objects.get(name=selected_trans)
             gen = self._concordance_generator(chan, nick, trans, 
                     book_range, words, mode="phrase")
@@ -681,8 +687,8 @@ class BibleBot(Plugin):
         if len(words) == 0:
             return results
         
-        mch = re.match('[1-3]?[a-z]+', words[0], re.I)
-        mch2 = re.match('([1-3]?[a-z]+)-([1-3]?[a-z]+)', words[0], re.I)
+        mch = re.match('([1-3]?[a-z]+)$', words[0], re.I)
+        mch2 = re.match('([1-3]?[a-z]+)-([1-3]?[a-z]+)$', words[0], re.I)
         if mch2:
             bk_s = mch2.group(1)
             bk_e = mch2.group(2)
@@ -758,3 +764,17 @@ class BibleBot(Plugin):
         
         return book_found
 
+    def _stringify_book_range(self, version, book_range):
+        if book_range[0] == None:
+            return "Gen-Rev"
+        elif book_range[1] == None:
+            bk = self._get_book(version, book_range[0])
+            return bk
+        else:
+            bk1 = self._get_book(version, book_range[0])
+            bk2 = self._get_book(version, book_range[1])
+            if bk1 == bk2:
+                return bk1
+            else:
+                return bk1 + "-" + bk2
+            
