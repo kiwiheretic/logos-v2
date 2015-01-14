@@ -56,9 +56,10 @@ class NicksDB:
         self.nicks_in_room[channel.lower()] = []
         
     def nick_in_room(self, user, channel):
-        for nick_info in self.nicks_in_room[channel.lower()]:
-            if user.lower() == nick_info['nick'].lower():
-                return True
+        if channel.lower() in self.nicks_in_room:
+            for nick_info in self.nicks_in_room[channel.lower()]:
+                if user.lower() == nick_info['nick'].lower():
+                    return True
         return False
     def bot_in_room(self, channel):
         if self.nicks_in_room.has_key(channel):
@@ -97,16 +98,19 @@ class NicksDB:
         nick_info = {'ident': None, 'nickserv_approved':None}
         keep_list = []
         found = False
-        for nick_data in self.nicks_in_room[channel.lower()]:
-            if user.lower() == nick_data['nick'].lower():
-                keep_list.append(channel_info)
-                found = True
-            else:
-                keep_list.append(nick_data)
-        if not found:
-            self.nicks_in_room[channel.lower()].append(channel_info)
+        if channel.lower() not in self.nicks_in_room:
+            self.nicks_in_room[channel.lower()] = [channel_info]
         else:
-            self.nicks_in_room[channel.lower()] = keep_list
+            for nick_data in self.nicks_in_room[channel.lower()]:
+                if user.lower() == nick_data['nick'].lower():
+                    keep_list.append(channel_info)
+                    found = True
+                else:
+                    keep_list.append(nick_data)
+            if not found:
+                self.nicks_in_room[channel.lower()].append(channel_info)
+            else:
+                self.nicks_in_room[channel.lower()] = keep_list
         
         if user.lower() not in self.nicks_info:
             self.nicks_info[user.lower()] = nick_info
@@ -353,7 +357,7 @@ class IRCBot(irc.IRCClient):
         if not act: act = '!'
         pvt_act = get_global_option('pvt-trigger')
         if not pvt_act: pvt_act = "!"
-        self.say(channel, str("Bot initialised, Your trigger is '%s', private chat trigger is \"%s\"" % (act,pvt_act)))
+        self.msg(channel, str("Bot initialised, Your trigger is '%s', private chat trigger is \"%s\"" % (act,pvt_act)))
 
         
     def left(self, channel):
@@ -525,6 +529,8 @@ class IRCBot(irc.IRCClient):
                 else:
                     line = 'privmsg nickserv info ' + user
                     self.sendLine(line)
+                if len(self.whois_in_progress) == 0:
+                    self.say(self.factory.channel, "Whois completed")
 
 
 class IRCBotFactory(protocol.ClientFactory):
