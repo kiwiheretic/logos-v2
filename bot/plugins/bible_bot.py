@@ -71,7 +71,7 @@ class BibleBot(Plugin):
                          (r'dict\s+(\S+)', self.dict, "lookup strongs numbers"),
                          (r'(\w+\+?\s+)?\d?\s*[a-zA-Z]+\s+\d+\s*(:?\s*\d+\s*(-?\s*\d+)?)?$',
                           self.verse_lookup, "lookup bible verse"), \
-                         (r'book names (?:for )?(?:translation|version)\s+(.*)',
+                         (r'book names (?:for\s+(?:translation|version)\s+)?(.*)',
                           self.book_names, "show book names for translation"),
                          
                          )
@@ -503,7 +503,11 @@ class BibleBot(Plugin):
         book_names = []
         for bb in BibleBooks.objects.filter(trans_id = trans):
             book_names.append((str(bb.canonical), str(bb.long_book_name)))
-        self.msg(chan, str(book_names))  
+            if len(book_names) >= 10:
+                self.notice(nick, str(book_names)) 
+                book_names = []
+        self.notice(nick, str(book_names)) 
+                
               
     def versions(self, regex, chan, nick, **kwargs):
  
@@ -652,7 +656,7 @@ class BibleBot(Plugin):
 
         user = kwargs['user']
         msg = kwargs['clean_line']
-
+        
         result = self._get_verses(chan, nick, user, msg)
         print result
         for resp in result:
