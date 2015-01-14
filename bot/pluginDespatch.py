@@ -29,6 +29,9 @@ class Plugin(object):
         self.network = irc_conn.factory.network
         self.control_room = irc_conn.factory.channel
         
+    def get_nickname(self):
+        return self.irc_conn.nickname
+    
     def get_host(self, nick):
         return self.irc_conn.nicks_db.get_host(nick)
     
@@ -218,18 +221,32 @@ class PluginDespatcher(object):
                             return
                         elif regex:
                             kwargs['clean_line'] = msg
-                            logger.debug('matching regex = ' + s)
+                            logger.debug('matching %s regex = %s' % (str(m.plugin), s))
                             matched_fn.append((f, regex, m.plugin))
                             
+            # === Undernet Hack? ====
+            # IRC servers seems to pass chan as nickname of bot's name
+            # so we try to reverse this here.
+            if (self.irc_conn.nickname == chan) or \
+                (len(chan) == 12 and chan.lower() in self.irc_conn.nickname.lower()) :
+                adj_chan = nick
+            else:
+                adj_chan = chan
+                
+            # === End Hack ===
+            
+            # If we found the one and only regex
             if len(matched_fn) == 1:
                 fn, regex, _ = matched_fn[0]
-                fn(regex, chan, nick, **kwargs)
+                fn(regex, adj_chan, nick, **kwargs)
+            # regex not found 
             elif len(matched_fn) == 0:
                 raise CommandException(nick, chan, "Command not found")
+            # otherwise more than one regex was found
             else:
                 # Display error message about ambiguous command here
                 plugin_list = [str(act)+x[2][0] + " " + msg for x in matched_fn ]
-                self.irc_conn.say(chan, 
+                self.irc_conn.say(adj_chan, 
                     "Ambiguous command.  Choose from one of %s" % (", ".join(plugin_list)))
             
                     

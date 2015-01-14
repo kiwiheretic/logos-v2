@@ -41,6 +41,7 @@ class SystemCoreCommands(Plugin):
                           "Set whether errors go to room or not"),
                          (r'set\s+password\s+\"([^"]+)\"', self.set_password, "Set your password"),
                          (r'syslogout', self.syslogout, "Perform a system logout"),
+#                         (r'help', self.help, "test"),
         )
         Registry.sys_authorized = []   # List of system authorized nicks - ie owner
         Registry.authorized = {}  
@@ -48,7 +49,9 @@ class SystemCoreCommands(Plugin):
     def privmsg(self, user, channel, message):
         pass
 
-   
+#    def help(self, regex, chan, nick, **kwargs):
+#        pass
+    
     def set_errors(self, regex, chan, nick, **kwargs):
 
         if Registry.authorized.has_key(nick):
