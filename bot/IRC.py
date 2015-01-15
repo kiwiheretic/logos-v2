@@ -204,7 +204,7 @@ class IRCBot(irc.IRCClient):
     nickname = property(_get_nickname)
 
     def do_whois(self, nick):
-        print "do_whois " + nick
+        logger.debug( "do_whois " + nick)
         line = "whois " + nick
         self.sendLine(line)
         
@@ -317,8 +317,8 @@ class IRCBot(irc.IRCClient):
         self.plugins.userJoined(user, channel)
         line = "WHOIS " + user
         self.sendLine(line)
-        print self.nicks_db.nicks_in_room
-        print self.nicks_db.nicks_info
+        logger.debug(str( self.nicks_db.nicks_in_room))
+        logger.debug(str( self.nicks_db.nicks_info))
 
     def userLeft(self, user, channel):
         """
@@ -418,7 +418,6 @@ class IRCBot(irc.IRCClient):
                 user = mch.group(1)
                 user = re.sub('\x02', '', user)
                 self.expecting_nickserv = user
-                print "got here"
             mch = re.search("(\w+)\W+is part of this Network's Services", message)
             if mch:
                 user = mch.group(1)
@@ -428,8 +427,8 @@ class IRCBot(irc.IRCClient):
                     self.nicks_db.set_nickserv_response(self.expecting_nickserv, 
                                                         approved=True) 
                     self.expecting_nickserv = None
-                    print self.nicks_db.nicks_in_room
-                    print self.nicks_db.nicks_info                                
+#                    print self.nicks_db.nicks_in_room
+#                    print self.nicks_db.nicks_info                                
         if self.plugins:
             self.plugins.noticed(user, channel, message)
 #        elif self.factory:
