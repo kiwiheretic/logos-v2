@@ -81,17 +81,21 @@ DEFAULT_FROM_EMAIL = email_settings.DEFAULT_FROM_EMAIL
 SERVER_EMAIL = email_settings.SERVER_EMAIL
 ###### End -- Email Settings
 
-BASE_DIR = os.path.dirname(os.path.realpath(__file__))
-PROJECT_ROOT_DIR = os.path.dirname(BASE_DIR)
-SQLITE_DB_DIR = os.path.join(PROJECT_ROOT_DIR, "sqlite-databases")
+# BASE_DIR is deemed to be one directory above this file's directory
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
+LOG_DIR = os.path.join(BASE_DIR, "logs")
+
+SQLITE_DB_DIR = os.path.join(BASE_DIR, "sqlite-databases")
 
 if not os.path.exists(SQLITE_DB_DIR):
     os.mkdir(SQLITE_DB_DIR)
-    
-sys.path.append(PROJECT_ROOT_DIR)
-# PROJECT_ROOT_DIR - C:\Projects\Logos
 
-BIBLES_DIR = os.path.join(PROJECT_ROOT_DIR, 'bibles')
+if not os.path.exists(LOG_DIR):
+    os.mkdir(LOG_DIR)
+
+BIBLES_DIR = os.path.join(BASE_DIR, 'bibles')
+
+
 # Hosts/domain names that are valid for this site; required if DEBUG is False
 # See https://docs.djangoproject.com/en/1.5/ref/settings/#allowed-hosts
 ALLOWED_HOSTS = []
@@ -143,8 +147,8 @@ STATICFILES_DIRS = (
     # Put strings here, like "/home/html/static" or "C:/www/django/static".
     # Always use forward slashes, even on Windows.
     # Don't forget to use absolute paths, not relative paths.
-    os.path.join(PROJECT_ROOT_DIR, 'assets'),
-    os.path.join(PROJECT_ROOT_DIR, 'vendor'),
+    os.path.join(BASE_DIR, 'assets'),
+    os.path.join(BASE_DIR, 'vendor'),
 )
 
 # List of finder classes that know how to find static files in
@@ -193,7 +197,7 @@ TEMPLATE_DIRS = (
     # Put strings here, like "/home/html/django_templates" or "C:/www/django/templates".
     # Always use forward slashes, even on Windows.
     # Don't forget to use absolute paths, not relative paths.
-    os.path.join(PROJECT_ROOT_DIR, "templates"),
+    os.path.join(BASE_DIR, "templates"),
 )
 
 INSTALLED_APPS = (
@@ -252,7 +256,7 @@ LOGGING = {
         'file': {
             'level': 'DEBUG',
             'class': 'logging.FileHandler',
-            'filename': 'logos-log.txt',
+            'filename': os.path.join(LOG_DIR, 'logos-log.txt'),
             'formatter': 'verbose'
         },        
     },

@@ -4,8 +4,11 @@ import sys
 import logging
 import string
 import re
+import os
 import types
 import time
+import signal
+
 from simple_webserver import SimpleWeb
 from simple_rpcserver import SimpleRPC
 
@@ -17,6 +20,8 @@ from pluginDespatch import PluginDespatcher as Plugins
 from twisted.internet import reactor, protocol
 from twisted.words.protocols import irc
 from twisted.internet import task
+
+from django.conf import settings
 
 # LINE_RATE - The number of lines per second in IRC
 LINE_RATE = 0.5
@@ -155,8 +160,8 @@ class NicksDB:
 class IRCBot(irc.IRCClient):
     """ The class decodes all the IRC events"""
 
-    def __init__(self):
-        irc.IRCClient()
+    def __init__(self, *args, **kwargs):
+        irc.IRCClient(*args, **kwargs)
         self.plugins = None 
         self.nicks_db = NicksDB()
         self.expecting_nickserv = None
@@ -170,7 +175,20 @@ class IRCBot(irc.IRCClient):
         self.username = "logos"
         self.realname = "logos"
         
+        if settings.DEBUG:
+            self.irc_line_log = open(os.path.join(settings.LOG_DIR, "IRClinesReceived.txt"), "a")
+        else:
+            self.irc_line_log = None
+        
+        signal.signal(signal.SIGINT, self.handle_ctrl_c)
               
+    def handle_ctrl_c(self, signum, frame):
+        print "closing file"
+        if self.irc_line_log:
+            self.irc_line_log.close()
+        self.factory.reactor.stop()
+        self.factory.shutting_down = True
+            
     def queue_message(self, msg_type, channel,  *args):
         chan = channel.lower()
         l = [msg_type, channel]
@@ -277,7 +295,16 @@ class IRCBot(irc.IRCClient):
                 pass
         self.timer.start(QUEUE_TIMER)        
 
+    def sendLine(self, line):
+        if self.irc_line_log:
+           self.irc_line_log.write(">> " + line+"\n") 
+        irc.IRCClient.sendLine(self, line)
 
+    def lineReceived(self, line):
+        if self.irc_line_log:
+           self.irc_line_log.write("<< " + line+"\n") 
+        irc.IRCClient.lineReceived(self, line)
+        
     def userJoined(self, user, channel):
         """
         Called when I see another user joining a channel.
@@ -539,6 +566,7 @@ class IRCBotFactory(protocol.ClientFactory):
     def __init__(self, reactor, server, channel, nickname,  \
                  sys_password, nickserv_pw, web_port, rpc_port, extra_options):
         
+        self.shutting_down = False
         self.reactor = reactor
         self.channel = channel
         self.web_port = web_port
@@ -566,9 +594,11 @@ class IRCBotFactory(protocol.ClientFactory):
         connector.connect()
         
     def clientConnectionLost(self, connector, reason):
-        logging.info("Lost connection (%s), will reconnect shortly..." % (reason,))
+        logging.info("Lost connection (%s)", (reason,))
         # Taken from https://twistedmatrix.com/documents/13.1.0/core/howto/time.html
-        self.reactor.callLater(3, self.doReconnect, connector)
+        if not self.shutting_down:
+            logging.info("Will reconnect shortly...")
+            self.reactor.callLater(3, self.doReconnect, connector)
 
 
     def clientConnectionFailed(self, connector, reason):

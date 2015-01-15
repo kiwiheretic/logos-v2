@@ -5,10 +5,11 @@ import inspect
 import logging
 import bot
 import pdb
-from logos.settings import PROJECT_ROOT_DIR, LOGGING
+from django.conf import settings
+#from logos.settings import BASE_DIR, LOGGING
 
 logger = logging.getLogger(__name__)
-logging.config.dictConfig(LOGGING)
+logging.config.dictConfig(settings.LOGGING)
 
 class CommandException(Exception):
     def __init__(self, user, chan, msg):
@@ -116,7 +117,7 @@ class PluginDespatcher(object):
         
         self.irc_conn = irc_conn
                 
-        dirs = os.listdir(PROJECT_ROOT_DIR + os.sep + os.path.join('bot', 'plugins'))
+        dirs = os.listdir(settings.BASE_DIR + os.sep + os.path.join('bot', 'plugins'))
         for m in dirs:
             if m == '__init__.py' : continue
             if m[0] == '_': continue  #ignore private files
