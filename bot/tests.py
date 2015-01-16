@@ -1,54 +1,30 @@
 # tests
-from django.utils import unittest
+
+# Helper modules to load in some fixture data which in this
+# case is a small amount of bible data KJV gospels only along 
+# with concordance data.
 from django.conf import settings
 from django.core import serializers
-
-import io
 import gzip
 import os
-#from django.test import TestCase
-import pdb
-import bot.plugins.bible_bot as bb
-import pluginDespatch
 
-class FakePlugin(object):
-    def __init__(self, *args, **kwargs):
-        self.irc_conn = self
-        self._cls_list = [self]
-        self.output = []
-        
-    def say(self, channel, message):
-        self.output.append(('say', channel, message))
+# Import the plugin you wish to test
+from bot.plugins.bible_bot import BibleBot
 
-    def msg(self, channel, message):
-        self.output.append(('msg', channel, message))
+# Subclass your test class from LogosTestCase
+from bot.testing.utils import LogosTestCase
 
-    def describe(self, channel, action):
-        pass
-
-    def notice(self, user, message):
-        self.output.append(('notice', channel, message))
-
-    def kick(self, channel, user, reason=None):    
-        pass
-
-    def mode(self, chan, set, modes, limit = None, user = None, mask = None):
-        pass
-                
-    def sendLine(self, line):
-        pass
-
-# Monkey patch for testing only
-# based on http://stackoverflow.com/questions/9646187/how-to-copy-a-member-function-of-another-class-into-myclass-in-python
-FakePlugin.command = pluginDespatch.PluginDespatcher.__dict__['command']
-
-class TestBibleBot(unittest.TestCase):
-    #https://docs.djangoproject.com/en/1.7/topics/testing/tools/#topics-testing-fixtures
-    #https://docs.djangoproject.com/en/dev/ref/django-admin/#database-specific-fixtures
-
+class TestBibleBot(LogosTestCase):
+    # set plugin_class to the actual class
+    # of the plugin you wish to test
+    plugin_class = BibleBot
+    
     def setUp(self):
-        # Load test data into test database
         
+        # Load initial test data into test database
+
+        #https://docs.djangoproject.com/en/1.7/topics/testing/tools/#topics-testing-fixtures
+        #https://docs.djangoproject.com/en/dev/ref/django-admin/#database-specific-fixtures        
         fixtures_path = os.path.join(settings.BASE_DIR, 'logos', 'fixtures')
         fixture_file = os.path.join(fixtures_path, 'testdata.bibles.json.gz')
         fp = gzip.open(fixture_file)
@@ -56,24 +32,14 @@ class TestBibleBot(unittest.TestCase):
             if ii % 500 == 0: print ".",
             obj.save()
         print
-        cls = bb.BibleBot
-        # Hideous Monkey Patch for testing only
-        cls.__bases__ = (FakePlugin,)
-        self.plugin = cls()
-        self.nick = 'testBot'
+        ### === Finished loading test data ===
         
-        self.user = "testBot!logos@Chatopia-530r0e.xtra.co.nz"
-        self.chan = '#test'
-        self.act = '?'
-        
-        self.plugin.nickname = self.nick
-        self.plugin.network = 'irc.server.net'
-        
-
     def testVerseLookup(self):
-        msg = "John 3 16"
-        orig_msg = self.act + msg
-        self.plugin.command(self.nick, self.user, self.chan, orig_msg, msg, self.act)
-        print "---"
+        self.plugin.send_command("John 3 16")
         self.assertIn('John 3:16', self.plugin.output.pop()[2])
+        
+        self.plugin.send_command("next")
+        self.assertIn('John 3:17', self.plugin.output.pop(0)[2])
+
+        
         

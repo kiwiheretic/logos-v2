@@ -47,8 +47,8 @@ class BibleBot(Plugin):
     stop_words = STOP_WORDS
     plugin = ("bible", "Bible Bot")
     
-    def __init__(self, *args):
-        super(BibleBot, self).__init__(*args)
+    def __init__(self, *args, **kwargs):
+        super(BibleBot, self).__init__(*args, **kwargs)
         
 
         self.commands = (\
