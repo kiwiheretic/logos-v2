@@ -35,6 +35,9 @@ $ virtualenv ~\venvs\logos2
 $ source ~\venvs\logos2\bin\activate
 
 $ pip install -r requirements.txt
+$ cp logos/email_settings-dist.py logos/email_settings.py
+If you want to use the email registration edit this file and
+put in valid settings.
 $ python manage.py syncdb
 $ python manage.py syncdb --database=bibles
 $ python manage.py syncdb --database=game-data
@@ -53,6 +56,9 @@ $ source ~\venvs\logos2\bin\activate
 $ git clone https://github.com/kiwiheretic/logos-v2.git ~/logos2
 $ cd ~/logos2
 $ pip install -r requirements.txt
+$ cp logos/email_settings-dist.py logos/email_settings.py
+If you want to use the email registration edit this file and
+put in valid settings.
 $ python manage.py syncdb
 $ python manage.py syncdb --database=bibles
 $ python manage.py syncdb --database=settings
@@ -75,6 +81,10 @@ virtualenv ..\venvs\logos2
 ..\venvs\logos2\Scripts\activate
 
 pip install -r requirements.txt
+copy logos/email_settings-dist.py logos/email_settings.py
+rem * If you want to use the email registration edit this file and
+rem * put in valid settings.
+
 manage.py syncdb
 manage.py syncdb --database=bibles
 manage.py syncdb --database=settings
