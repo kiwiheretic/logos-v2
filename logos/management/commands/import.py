@@ -69,8 +69,11 @@ class Command(BaseCommand):
         else:
             # don't bother repopulating the strongs tables if we are just
             # replacing a single translation
-            import_strongs_tables() 
-            
+            try:
+                import_strongs_tables() 
+            except IOError:
+                # If dict folder doesn't exist then just carry on
+                pass
         import_trans(options)
         import_concordance(options)
        

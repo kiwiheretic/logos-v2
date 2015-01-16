@@ -658,7 +658,7 @@ class BibleBot(Plugin):
         msg = kwargs['clean_line']
         
         result = self._get_verses(chan, nick, user, msg)
-        print result
+#        print result
         for resp in result:
             reply = ' '.join(resp)
             self.say(chan, str(reply))
@@ -666,7 +666,7 @@ class BibleBot(Plugin):
     def next(self, regex, chan, nick, **kwargs):
         
         result = self._next_reading(chan, nick)
-        print result
+#        print result
         if result:
             for resp in result:
                 reply = ' '.join(resp)
