@@ -82,9 +82,24 @@ class RoomOptions(models.Model):
 class Settings(models.Model):
     option = models.TextField()
     value = models.TextField(null=True, blank=True)
-    
-    
 
+class NetworkPermissions(models.Model):    
+    network = models.TextField()
+    class Meta:
+        permissions = (
+            ('join_room', 'Join or part bot to rooms'),
+        )
+                
+class RoomPermissions(models.Model):
+    network = models.TextField()
+    room = models.TextField()
+    class Meta:
+        permissions = (
+            ('change_trigger', 'Change trigger'),
+            ('set_default_translation', 'Set default room translation'),
+            ('set_verse_limits', 'Set room verse limits'),
+        )
+        
 class Plugins(models.Model):
     name = models.TextField()
     active = models.BooleanField(default=False)

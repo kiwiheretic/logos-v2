@@ -180,6 +180,13 @@ MIDDLEWARE_CLASSES = (
     # 'django.middleware.clickjacking.XFrameOptionsMiddleware',
 )
 
+AUTHENTICATION_BACKENDS = (
+    'django.contrib.auth.backends.ModelBackend', # this is default
+    'guardian.backends.ObjectPermissionBackend',
+)
+
+ANONYMOUS_USER_ID = None  # Disable Anonymous Users
+
 ROOT_URLCONF = 'logos.urls'
 
 # Python dotted path to the WSGI application used by Django's runserver.
@@ -209,6 +216,7 @@ INSTALLED_APPS = (
     'django.contrib.staticfiles',
     'django.contrib.humanize',
     'registration',
+    'guardian',
 
     'logos',
     # Uncomment the next line to enable the admin:
