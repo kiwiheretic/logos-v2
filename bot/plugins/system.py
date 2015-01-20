@@ -3,8 +3,12 @@ import re
 import pdb
 
 import django
+from django.contrib.auth.models import User
+from django.contrib.auth import authenticate
+
 import twisted
 import sys
+import types
 from logos.constants import VERSION
 
 from bot.pluginDespatch import Plugin
@@ -21,30 +25,32 @@ from logos.models import Settings
 logger = logging.getLogger(__name__)
 logging.config.dictConfig(LOGGING)
 
+
+                
 class SystemCoreCommands(Plugin):
     plugin = ("system", "System Module")
     
+
+    
     def __init__(self, *args):
         super(SystemCoreCommands, self).__init__(*args)
-        self.commands = ((r'auth\s+#(#?[a-zA-Z0-9_-]+)\s+(.+)',self.auth, \
-                          "Authorise access to a room"),
-                         (r'logout', self.logout, "Log out of bot"),
-                         (r'sysauth\s(.+)', self.sysauth, "Perform a system login"),
+        self.commands = ( \
+                         (r'login\s+(?P<password>\w+)', self.login, 'Login into the bot'),
+#                         (r'logout', self.logout, "Log out of bot"),
                          (r'version\s*$', self.version, "Show this bot's version info"),
                          (r'cmd\s+(.*)', self.cmd, "Have bot perform an IRC command"),
-                         (r'say\s+(.*)', self.say, "Say something into a room"),
-                         (r'set\s+(?:activation|trigger)\s+\"(.)\"', self.set_trigger,
+                         (r'say\s+(?P<room>#[a-zA-z0-9-]+)\s+(.*)', self.speak, "Say something into a room"),
+                         (r'set\s+(?P<room>#[a-zA-z0-9-]+)\s+(?:activation|trigger)\s+\"(.)\"', self.set_trigger,
                            "Set the trigger used by the bot"),
-                         (r'set\s+greet\s+message\s+\"(.*)\"', self.set_greet, 
+                         (r'set\s+(?P<room>#[a-zA-z0-9-]+)\s+greet\s+message\s+\"(.*)\"', self.set_greet, 
                            "Set the autogreet message"),
-                         (r'set\s+errors\s+(.*)', self.set_errors, 
-                          "Set whether errors go to room or not"),
-                         (r'set\s+password\s+\"([^"]+)\"', self.set_password, "Set your password"),
-                         (r'syslogout', self.syslogout, "Perform a system logout"),
-#                         (r'help', self.help, "test"),
+                         (r'set\s+password\s+([^\s]+)', self.set_password, "Set your password"),
         )
+        
+        
         Registry.sys_authorized = []   # List of system authorized nicks - ie owner
         Registry.authorized = {}  
+    
     
     def privmsg(self, user, channel, message):
         pass
@@ -52,41 +58,58 @@ class SystemCoreCommands(Plugin):
 #    def help(self, regex, chan, nick, **kwargs):
 #        pass
     
-    def set_errors(self, regex, chan, nick, **kwargs):
+    def login(self, regex, chan, nick, **kwargs):
+        password = regex.group('password')
+        host = self.get_host(nick)
+        
+        try:
+            user = User.objects.get(username = nick.lower())
+        except User.DoesNotExist:
+            self.say(chan, "Invalid Nick")
+            return
+        
+        if authenticate(username= nick.lower(), password= password):
+            self.get_authenticated_users().add(nick, host, user)
+            self.say(chan, "Login successful")
+        else:
+            self.say(chan, "Login failed")
 
-        if Registry.authorized.has_key(nick):
-            error_status = regex.group(1).strip().lower()
-            if error_status in ( "on", "off" ):
-                ch = Registry.authorized[nick]['channel']
-                set_room_option(self.factory.network, ch, \
-                    'error_status', error_status)
-                self.msg(chan, "Error status for %s set to %s " % (ch,error_status))
-            else:
-                self.msg(chan, "Unknown status \"%s\", expected 'on' or 'off' " % (errors_status,))            
+#    def set_errors(self, regex, chan, nick, **kwargs):
+
+#        if Registry.authorized.has_key(nick):
+#            error_status = regex.group(1).strip().lower()
+#            if error_status in ( "on", "off" ):
+#                ch = Registry.authorized[nick]['channel']
+#                set_room_option(self.factory.network, ch, \
+#                    'error_status', error_status)
+#                self.msg(chan, "Error status for %s set to %s " % (ch,error_status))
+#            else:
+#                self.msg(chan, "Unknown status \"%s\", expected 'on' or 'off' " % (errors_status,))            
             
-    def say(self, regex, chan, nick, **kwargs):
+    def speak(self, regex, chan, nick, **kwargs):
 
-        if Registry.authorized.has_key(nick):
-            ch = Registry.authorized[nick]['channel']
-            text = regex.group(1)
+        ch = regex.group('room')
+        if self.get_authenticated_users().is_authorised(nick, self.network, ch, 'speak'):
+
+            text = regex.group(2)
             self.msg(ch, text)
 
     def set_greet(self, regex, chan, nick, **kwargs):
-
-        if Registry.authorized.has_key(nick):
-            ch = Registry.authorized[nick]['channel']
-            greet_msg = regex.group(1)
+        ch = regex.group('room')
+        if self.get_authenticated_users().is_authorised(nick, self.network, ch, 'set_greeting'):
+            greet_msg = regex.group(2)
             set_room_option(self.factory.network, ch, \
                     'greet_message', greet_msg)
             self.msg(chan, "Greet message for %s set to \"%s\" " % (ch,greet_msg))  
                   
     def set_trigger(self, regex, chan, nick, **kwargs):
-
-        if Registry.authorized.has_key(nick): 
+        ch = regex.group('room')
+        if self.get_authenticated_users().is_authorised(nick, self.network, ch, 
+                                                  'change_trigger'):
             # Command issued to bot to change the default activation
             # character.
-            arg = regex.group(1)
-            ch = Registry.authorized[nick]['channel'].lower()
+            arg = regex.group(2)
+            ch = regex.group('room')
             set_room_option(self.factory.network, ch, \
                 'activation', arg)  
 
@@ -94,10 +117,12 @@ class SystemCoreCommands(Plugin):
             # Don't send this message twice if chan,ch are same room
             if chan != ch:
                 self.msg(ch, "Trigger has been changed to \"%s\"" % (arg,)) 
-                                  
+        else:
+            self.notice(nick, "You are not authorised to change trigger for this room")
+                                      
     def cmd(self, regex, chan, nick, **kwargs):
 
-        if nick in Registry.sys_authorized:
+        if self.get_authenticated_users().is_authorised(nick, self.network, chan, 'any_cmd'):
             # Have the bot issue any IRC command
             
             line = regex.group(1)
@@ -117,88 +142,16 @@ class SystemCoreCommands(Plugin):
 
         self.msg(chan, "\x1f\x0312https://github.com/kiwiheretic/logos-v2/")        
         
-    def auth(self, regex, chan, nick, **kwargs):
-
-        ch = "#" + regex.group(1).lower()
-        pw = regex.group(2).strip()
-        db_pw = get_room_option(self.factory.network, ch, 'password')
-        nicks_in_room = self.irc_conn.get_room_nicks(ch)                                                               
-        if not nicks_in_room: # if it is None then we are not in room
-            self.msg(chan, 'The bot must be in room %s to authorize' % (ch,))
-            return
-        # room password for the bot
-        # You can only authorize into the bot if you 
-        # are currently in the room you are authorizing for
-        if nick in nicks_in_room:
-            # check password matches the one in database
-            if db_pw == pw:
-                if Registry.authorized.has_key(nick):
-                    Registry.authorized[nick]['channel'] = ch
-                else:
-                    Registry.authorized[nick]={'channel':ch}
-                
-                self.msg(chan, '** Authorized **')
-                return True
-            else:
-                self.msg(chan, 'Authorization Failure')
-        else:
-            self.msg(chan, 'You must be in room %s to authorize' % (ch,))
-    
-    def logout(self, regex, chan, nick, **kwargs):
-
-        if nick in Registry.authorized:
-            del Registry.authorized[nick]
-            self.msg(chan, 'You have logged out')
-        else:
-            self.msg(chan, 'You were not logged in')
-            
-    def sysauth(self, regex, chan, nick, **kwargs):
-
-        pw = regex.group(1).strip()
-        
-        if pw == self.factory.sys_password:
-            # check to see whether nick is in control room.  You
-            # can only system administrator authorise if in the 
-            # engine room.
-            if nick in self.get_room_nicks(self.factory.channel):
-                self.msg(chan, '** Authorized **')
-                logger.info( "%s sys authorized the bot" % (nick,))
-
-                if nick not in Registry.sys_authorized:
-                    Registry.sys_authorized.append(nick)
-            else:
-                self.msg(chan, "** You must be in the control room to system authorize **")
-        else:
-            self.msg(chan, 'Authorization Failure' )
-
-            logger.info( "%s failed to sys authorize the bot" % (user,))
-
-    def syslogout(self, regex, chan, nick, **kwargs):
-
-        if nick in Registry.sys_authorized:
-            Registry.sys_authorized.remove(nick)
-            self.msg(chan, 'You have logged out')
-            logger.info( "%s logged out from the bot" % (nick,))
-        else:
-            self.msg(chan, 'You were not logged in')
-
     def set_password(self, regex, chan, nick, **kwargs):
 
-        if nick in Registry.authorized:
+        if self.get_authenticated_users().is_authenticated(nick):
             pw = regex.group(1)
-            ch = Registry.authorized[nick]['channel']
-            set_room_option(self.factory.network, ch, \
-                'password', pw)                    
-
-            self.msg(chan, "Password for room %s set to %s " % (ch, pw))
+            self.get_authenticated_users().set_password(nick, pw)
+            self.msg(chan, "Password set to %s " % (pw,))
                                  
-    def signedOn(self):
-        pass
-
     def joined(self, channel):
         # Add basic options to room setup
         defaults = ( ('activation', '!'),
-                ( 'password', 'password' ),
                 ( 'active', 1 ) )        
         set_room_defaults(self.factory.network, channel, defaults)
         set_room_option(self.factory.network, channel, 'active', 1)
@@ -213,3 +166,6 @@ class SystemCoreCommands(Plugin):
             self.notice(nick, str(greet_msg))
             logger.info("Greet message sent to " + nick)
         
+    def userRenamed(self, oldname, newname):
+        self.get_authenticated_users().rename(oldname, newname)
+        logger.info("renamed: {}".format(str(self.get_authenticated_users().users)))

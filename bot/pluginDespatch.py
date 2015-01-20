@@ -6,7 +6,9 @@ import logging
 import bot
 import pdb
 from django.conf import settings
-#from logos.settings import BASE_DIR, LOGGING
+
+from logos.models import NetworkPermissions, RoomPermissions
+from guardian.shortcuts import get_objects_for_user
 
 logger = logging.getLogger(__name__)
 logging.config.dictConfig(settings.LOGGING)
@@ -19,7 +21,78 @@ class CommandException(Exception):
     def __str__(self):
         return repr(self.user + ':' + self.chan + ':' + self.msg)
 
+class AuthenticatedUsers(object):
+    def __init__(self):
+        self.users = []
+    
+    def set_password(self, nick, pw):
+        user = None
+        for d in self.users:
+            if nick.lower() == d['nick']:
+                user = d['object']
+                break
+        if user:
+            user.set_password(pw)
+            user.save()
+            return True
+        else:
+            return False
+        
+    def is_authenticated(self, nick):
+        user = None
+        for d in self.users:
+            if nick.lower() == d['nick']:
+                user = d['object']
+                break
+        if user:
+            return True
+        else:
+            return False
+        
+    def is_authorised(self, nick, network, chan, capability):
+        user = None
+        for d in self.users:
+            if nick.lower() == d['nick']:
+                user = d['object']
+                break
+        if not user:
+            return False
+        
+        try:
+            net_perm = NetworkPermissions.objects.get(network=network)
+        except NetworkPermissions.DoesNotExist:
+            net_perm = None
+        qs = get_objects_for_user(user, capability, NetworkPermissions)
+        permission = qs.filter(network=network).exists()
+        if permission: return True
+        
+        try:
+            room_perm = RoomPermissions.objects.get(network=network, room=chan)
+        except RoomPermissions.DoesNotExist:
+            return False
+        qs = get_objects_for_user(user, capability, RoomPermissions)
+        permission = qs.filter(network=network, room=chan).exists()
+        return permission
+          
+    def add(self, nick, host, user):
+        self.remove(nick)
+        self.users.append({'nick':nick.lower(), 'host':host, 'object':user})
+    
+    def remove(self, nick):
+        new_list = []
+        for d in self.users:
+            if nick.lower() != d['nick']:
+                new_list.append(d)
+        self.users = new_list
 
+    def rename(self, old, new):
+        new_list = []
+        for d in self.users:
+            if old.lower() == d['nick']:
+                d['nick'] = new.lower()
+                new_list.append(d)
+        self.users = new_list
+        
 class Plugin(object):
     """ Base Class for all plugins """
     def __init__(self, dispatcher, irc_conn):
@@ -39,6 +112,9 @@ class Plugin(object):
     def get_room_nicks(self, room):
         return self.irc_conn.get_room_nicks(room)
 
+    def get_authenticated_users(self):
+        return self.dispatcher.authenticated_users
+    
     def signal(self, scope, message_id, *args):
         self.dispatcher.signal_plugins(self, scope, message_id, *args)
         
@@ -116,6 +192,7 @@ class PluginDespatcher(object):
         the plugins folder """
         
         self.irc_conn = irc_conn
+        self.authenticated_users = AuthenticatedUsers()
                 
         dirs = os.listdir(settings.BASE_DIR + os.sep + os.path.join('bot', 'plugins'))
         for m in dirs:

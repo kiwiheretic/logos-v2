@@ -35,6 +35,16 @@ class Command(BaseCommand):
             user.save()
             self.stdout.write("User %s created" % (username,))
 
+    def cmd_setpass(self, username, password):
+        try:
+            user = User.objects.get(username = username)
+        except User.DoesNotExist:
+            self.stdout.write("Unknown user")
+            return 
+        user.set_password(password)
+        user.save()       
+        self.stdout.write("Password successfully changed")
+        
     def cmd_listusers(self):
         for user in User.objects.all():
             self.stdout.write("%s %s" % (user.username, user.email))
@@ -65,7 +75,7 @@ class Command(BaseCommand):
             for perm, desc in RoomPermissions._meta.permissions:
                 if perm == permission:
                     try:
-                        perm_obj = RoomPermissions.objects.get(network=network)
+                        perm_obj = RoomPermissions.objects.get(network=network, room=room)
                     except RoomPermissions.DoesNotExist:
                         perm_obj = RoomPermissions(network=network, room=room)
                         perm_obj.save()                    
@@ -80,6 +90,7 @@ class Command(BaseCommand):
             return
 
         assign_perm(permission, user, perm_obj)
+        self.stdout.write("Assigned {} permission to {} successfully".format(permission, username))
         
     def cmd_getperms(self, username):
         try:
@@ -88,6 +99,14 @@ class Command(BaseCommand):
             self.stdout.write("Unknown user")
             return
         
+        self.stdout.write("=== Network Permissions ===")
+        for net_obj in NetworkPermissions.objects.all():
+            
+            perms = get_perms(user, net_obj)
+            self.stdout.write("{} {}".format(net_obj.network,
+                                                ", ".join(perms)))
+        
+        self.stdout.write("\n=== Room Permissions ===")
         for room_obj in RoomPermissions.objects.all():
             
             perms = get_perms(user, room_obj)

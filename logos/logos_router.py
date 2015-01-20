@@ -47,7 +47,6 @@ class LogosRouter(object):
         """
 
         for db_id, models in routing_data:
-
             if model._meta.object_name in models:
                 if db == db_id:
                     return True

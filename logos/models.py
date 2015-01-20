@@ -88,6 +88,7 @@ class NetworkPermissions(models.Model):
     class Meta:
         permissions = (
             ('join_room', 'Join or part bot to rooms'),
+            ('any_cmd', 'Issue arbitrary command to bot'),
         )
                 
 class RoomPermissions(models.Model):
@@ -98,6 +99,8 @@ class RoomPermissions(models.Model):
             ('change_trigger', 'Change trigger'),
             ('set_default_translation', 'Set default room translation'),
             ('set_verse_limits', 'Set room verse limits'),
+            ('set_greeting', 'Set room greeting message'),
+            ('speak', 'Speak through bot'),
         )
         
 class Plugins(models.Model):
