@@ -373,10 +373,12 @@ def populate_verses(trans_id, book_id, filename):
             if mch:
                 ch = int(mch.group(1))
                 vs = int(mch.group(2))
-                txt = re.sub('\'', '\'\'', mch.group(4))
+                # bug?  causes double quotes in output
+                #txt = re.sub('\'', '\'\'', mch.group(4))
 
-                txt = re.sub(r'\\', r'\\\\', txt)
-                txt = re.sub('[^\x20-\x7F]', '', txt)
+                #txt = re.sub(r'\\', r'\\\\', txt)
+                
+                txt = re.sub('[^\x20-\x7F]', '', mch.group(4))
                 bv = BibleVerses(id = next_id,
                                  trans_id = trans_id,
                                  book = book_id,
