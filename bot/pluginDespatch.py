@@ -57,22 +57,39 @@ class AuthenticatedUsers(object):
                 break
         if not user:
             return False
-        
+
+        # Test if user is a net_admin and if so they always
+        # have the capability
         try:
             net_perm = NetworkPermissions.objects.get(network=network)
         except NetworkPermissions.DoesNotExist:
             net_perm = None
-        qs = get_objects_for_user(user, capability, NetworkPermissions)
-        permission = qs.filter(network=network).exists()
-        if permission: return True
+        if net_perm:
+            qs = get_objects_for_user(user, "net_admin", NetworkPermissions)
+            if qs.filter(network=network).exists():
+                return True
+
         
-        try:
-            room_perm = RoomPermissions.objects.get(network=network, room=chan)
-        except RoomPermissions.DoesNotExist:
-            return False
-        qs = get_objects_for_user(user, capability, RoomPermissions)
-        permission = qs.filter(network=network, room=chan).exists()
-        return permission
+        if chan == '#':
+           
+            qs = get_objects_for_user(user, capability, NetworkPermissions)
+            permission = qs.filter(network=network).exists()
+            return permission
+        else:
+            # Test if user is a room_admin for the room in question
+            # and if so they always have the capability
+            try:
+                room_perm = RoomPermissions.objects.get(network=network, room=chan.lower())
+            except RoomPermissions.DoesNotExist:
+                return False
+            qs = get_objects_for_user(user, 'room_admin', RoomPermissions)
+            permission = qs.filter(network=network, room=chan.lower()).exists()
+            if permission:
+                return True
+            
+            qs = get_objects_for_user(user, capability, RoomPermissions)
+            permission = qs.filter(network=network, room=chan.lower()).exists()
+            return permission
           
     def add(self, nick, host, user):
         self.remove(nick)
@@ -112,7 +129,7 @@ class Plugin(object):
     def get_room_nicks(self, room):
         return self.irc_conn.get_room_nicks(room)
 
-    def get_authenticated_users(self):
+    def get_auth(self):
         return self.dispatcher.authenticated_users
     
     def signal(self, scope, message_id, *args):

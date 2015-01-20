@@ -5,6 +5,7 @@ import pdb
 import django
 from django.contrib.auth.models import User
 from django.contrib.auth import authenticate
+from guardian.shortcuts import assign_perm, get_perms, remove_perm
 
 import twisted
 import sys
@@ -20,7 +21,7 @@ from logos.pluginlib import Registry
 
 import logging
 from logos.settings import LOGGING
-from logos.models import Settings
+from logos.models import Settings, NetworkPermissions, RoomPermissions
 
 logger = logging.getLogger(__name__)
 logging.config.dictConfig(LOGGING)
@@ -38,6 +39,12 @@ class SystemCoreCommands(Plugin):
                          (r'login\s+(?P<password>\w+)', self.login, 'Login into the bot'),
 #                         (r'logout', self.logout, "Log out of bot"),
                          (r'version\s*$', self.version, "Show this bot's version info"),
+                         (r'list\s+(?:perms|permissions)', self.list_perms, "list all permissions available"),
+                         (r'assign\s+(?:perm|permission)\s+(?P<perm>[a-z_]+)\s+for\s+(?P<username>[^\s]+)', self.assign_net_perms, "assign permission to username"),
+                         (r'assign\s+(?:perm|permission)\s+(?P<room>#[a-zA-z0-9-]+)\s+(?P<perm>[a-z_]+)\s+for\s+(?P<username>[^\s]+)', self.assign_room_perms, "assign permission to username"),
+                         (r'unassign\s+(?:perm|permission)\s+(?P<perm>[a-z_]+)\s+for\s+(?P<username>[^\s]+)', self.unassign_net_perms, "assign permission to username"),
+                         (r'unassign\s+(?:perm|permission)\s+(?P<room>#[a-zA-z0-9-]+)\s+(?P<perm>[a-z_]+)\s+for\s+(?P<username>[^\s]+)', self.unassign_room_perms, "assign permission to username"),
+                         (r'(?:perms|permissions)\s+(?P<username>[^\s]+)', self.perms, "list permissions for user"),
                          (r'cmd\s+(.*)', self.cmd, "Have bot perform an IRC command"),
                          (r'say\s+(?P<room>#[a-zA-z0-9-]+)\s+(.*)', self.speak, "Say something into a room"),
                          (r'set\s+(?P<room>#[a-zA-z0-9-]+)\s+(?:activation|trigger)\s+\"(.)\"', self.set_trigger,
@@ -69,42 +76,181 @@ class SystemCoreCommands(Plugin):
             return
         
         if authenticate(username= nick.lower(), password= password):
-            self.get_authenticated_users().add(nick, host, user)
+            self.get_auth().add(nick, host, user)
             self.say(chan, "Login successful")
         else:
             self.say(chan, "Login failed")
 
-#    def set_errors(self, regex, chan, nick, **kwargs):
+    def list_perms(self, regex, chan, nick, **kwargs):
+        self.say(chan, "=== Network Permissions ===")
+        perm_str = ", ".join([p for p,_ in NetworkPermissions._meta.permissions])
+        self.say(chan, perm_str)
 
-#        if Registry.authorized.has_key(nick):
-#            error_status = regex.group(1).strip().lower()
-#            if error_status in ( "on", "off" ):
-#                ch = Registry.authorized[nick]['channel']
-#                set_room_option(self.factory.network, ch, \
-#                    'error_status', error_status)
-#                self.msg(chan, "Error status for %s set to %s " % (ch,error_status))
-#            else:
-#                self.msg(chan, "Unknown status \"%s\", expected 'on' or 'off' " % (errors_status,))            
+        self.say(chan, "=== Room Permissions ===")
+        perm_str = ", ".join([p for p,_ in RoomPermissions._meta.permissions])
+        self.say(chan, perm_str)
+
+    def perms(self, regex, chan, nick, **kwargs):
+        username = regex.group('username').lower()
+        try:
+            user = User.objects.get(username = username)
+        except User.DoesNotExist:
+            self.say(chan, "Unknown user")
+            return
+        
+        self.say(chan, "=== Network Permissions ===")
+        for net_obj in NetworkPermissions.objects.all():
             
+            perms = get_perms(user, net_obj)
+            self.say(chan, "{} {}".format(net_obj.network,
+                                                ", ".join(perms)))
+        last_perms = None
+        for room_obj in RoomPermissions.objects.all():
+            
+            perms = get_perms(user, room_obj)
+            if perms:
+                if last_perms == None:
+                    self.say(chan, "\n=== Room Permissions ===")
+                self.say(chan, "{} {} {}".format(room_obj.network,
+                                            room_obj.room,
+                                            ", ".join(perms))) 
+                last_perms = perms
+
+    def assign_net_perms(self, regex, chan, nick, **kwargs):
+        if self.get_auth().is_authorised(nick, self.network, '#', 'net_admin'):
+            username = regex.group('username').lower()
+            try:
+                user = User.objects.get(username = username)
+            except User.DoesNotExist:
+                self.say(chan, "Unknown user")
+                return
+
+            permission = regex.group('perm')
+            perm_obj = None
+            for perm, desc in NetworkPermissions._meta.permissions:
+                if perm == permission:
+                    try:
+                        perm_obj = NetworkPermissions.objects.get(network=self.network)
+                    except NetworkPermissions.DoesNotExist:
+                        perm_obj = NetworkPermissions(network=self.network)
+                        perm_obj.save()
+                    break
+            if perm_obj:
+                assign_perm(permission, user, perm_obj)
+                self.say(chan, "Permission assigned successfully")
+            else:
+                self.say(chan, "Permission not found")
+        else:
+            self.msg(chan, "You are not authorised or not logged in")
+            
+    def unassign_net_perms(self, regex, chan, nick, **kwargs):
+        if self.get_auth().is_authorised(nick, self.network, '#', 'net_admin'):
+            username = regex.group('username').lower()
+            try:
+                user = User.objects.get(username = username)
+            except User.DoesNotExist:
+                self.say(chan, "Unknown user")
+                return
+
+            permission = regex.group('perm')
+            perm_obj = None
+            for perm, desc in NetworkPermissions._meta.permissions:
+                if perm == permission:
+                    try:
+                        perm_obj = NetworkPermissions.objects.get(network=self.network)
+                    except NetworkPermissions.DoesNotExist:
+                        perm_obj = NetworkPermissions(network=self.network)
+                        perm_obj.save()
+                    break
+            if perm_obj:
+                remove_perm(permission, user, perm_obj)
+                self.say(chan, "Permission removed successfully")
+            else:
+                self.say(chan, "Permission not found")
+        else:
+            self.msg(chan, "You are not authorised or not logged in")
+
+    def assign_room_perms(self, regex, chan, nick, **kwargs):
+        room = regex.group('room')
+        if self.get_auth().is_authorised(nick, self.network, '#', 'net_admin'):
+            username = regex.group('username').lower()
+            try:
+                user = User.objects.get(username = username)
+            except User.DoesNotExist:
+                self.say(chan, "Unknown user")
+                return
+
+            permission = regex.group('perm')
+
+            perm_obj = None
+            for perm, desc in RoomPermissions._meta.permissions:
+                if perm == permission:
+                    try:
+                        perm_obj = RoomPermissions.objects.get(network=self.network, room=room.lower())
+                    except RoomPermissions.DoesNotExist:
+                        perm_obj = RoomPermissions(network=self.network, room=room.lower())
+                        perm_obj.save()                    
+                    break        
+            if perm_obj:
+                assign_perm(permission, user, perm_obj)
+                self.say(chan, "Permission assigned successfully")
+            else:
+                self.say(chan, "Permission not found")
+        else:
+            self.msg(chan, "You are not authorised or not logged in")
+            
+    def unassign_room_perms(self, regex, chan, nick, **kwargs):
+        room = regex.group('room')
+        if self.get_auth().is_authorised(nick, self.network, '#', 'net_admin'):
+            username = regex.group('username').lower()
+            try:
+                user = User.objects.get(username = username)
+            except User.DoesNotExist:
+                self.say(chan, "Unknown user")
+                return
+
+            permission = regex.group('perm')
+
+            perm_obj = None
+            for perm, desc in RoomPermissions._meta.permissions:
+                if perm == permission:
+                    try:
+                        perm_obj = RoomPermissions.objects.get(network=self.network, room=room.lower())
+                    except RoomPermissions.DoesNotExist:
+                        perm_obj = RoomPermissions(network=self.network, room=room.lower())
+                        perm_obj.save()                    
+                    break        
+            if perm_obj:
+                remove_perm(permission, user, perm_obj)
+                self.say(chan, "Permission removed successfully")
+            else:
+                self.say(chan, "Permission not found")
+        else:
+            self.msg(chan, "You are not authorised or not logged in")
+        
     def speak(self, regex, chan, nick, **kwargs):
 
         ch = regex.group('room')
-        if self.get_authenticated_users().is_authorised(nick, self.network, ch, 'speak'):
+        if self.get_auth().is_authorised(nick, self.network, ch, 'can_speak'):
 
             text = regex.group(2)
             self.msg(ch, text)
+        else:
+            self.msg(chan, "You are not authorised or not logged in")
 
     def set_greet(self, regex, chan, nick, **kwargs):
         ch = regex.group('room')
-        if self.get_authenticated_users().is_authorised(nick, self.network, ch, 'set_greeting'):
+        if self.get_auth().is_authorised(nick, self.network, ch, 'set_greeting'):
             greet_msg = regex.group(2)
             set_room_option(self.factory.network, ch, \
                     'greet_message', greet_msg)
             self.msg(chan, "Greet message for %s set to \"%s\" " % (ch,greet_msg))  
-                  
+        else:
+            self.msg(chan, "You are not authorised or not logged in")
+                              
     def set_trigger(self, regex, chan, nick, **kwargs):
         ch = regex.group('room')
-        if self.get_authenticated_users().is_authorised(nick, self.network, ch, 
+        if self.get_auth().is_authorised(nick, self.network, ch, 
                                                   'change_trigger'):
             # Command issued to bot to change the default activation
             # character.
@@ -122,12 +268,14 @@ class SystemCoreCommands(Plugin):
                                       
     def cmd(self, regex, chan, nick, **kwargs):
 
-        if self.get_authenticated_users().is_authorised(nick, self.network, chan, 'any_cmd'):
+        if self.get_auth().is_authorised(nick, self.network, '#', 'irc_cmd'):
             # Have the bot issue any IRC command
             
             line = regex.group(1)
             logger.info("%s issued command '%s' to bot" % (nick, line))
             self.sendLine(line)
+        else:
+            self.msg(chan, "You are not authorised or not logged in")
             
     def version(self, regex, chan, nick, **kwargs):
 
@@ -144,9 +292,9 @@ class SystemCoreCommands(Plugin):
         
     def set_password(self, regex, chan, nick, **kwargs):
 
-        if self.get_authenticated_users().is_authenticated(nick):
+        if self.get_auth().is_authenticated(nick):
             pw = regex.group(1)
-            self.get_authenticated_users().set_password(nick, pw)
+            self.get_auth().set_password(nick, pw)
             self.msg(chan, "Password set to %s " % (pw,))
                                  
     def joined(self, channel):
@@ -167,5 +315,5 @@ class SystemCoreCommands(Plugin):
             logger.info("Greet message sent to " + nick)
         
     def userRenamed(self, oldname, newname):
-        self.get_authenticated_users().rename(oldname, newname)
-        logger.info("renamed: {}".format(str(self.get_authenticated_users().users)))
+        self.get_auth().rename(oldname, newname)
+        logger.info("renamed: {}".format(str(self.get_auth().users)))

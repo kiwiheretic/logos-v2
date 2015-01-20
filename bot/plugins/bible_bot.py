@@ -528,7 +528,7 @@ class BibleBot(Plugin):
                 self.msg(chan, "Private translation set to %s " % (trans,))   
                  
     def set_default_trans(self, regex, chan, nick, **kwargs):
-
+        
         ch = Registry.authorized[nick]['channel']
         def_trans = regex.group(1)
         translations = self._get_translations()                        

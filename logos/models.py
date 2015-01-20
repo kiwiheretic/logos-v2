@@ -87,8 +87,10 @@ class NetworkPermissions(models.Model):
     network = models.TextField()
     class Meta:
         permissions = (
-            ('join_room', 'Join or part bot to rooms'),
-            ('any_cmd', 'Issue arbitrary command to bot'),
+            ('net_admin', 'Create user logins and assign permissions'),
+            ('join_or_part_room', 'Join or part bot to rooms'),
+            ('irc_cmd', 'Issue arbitrary command to bot'),
+            
         )
                 
 class RoomPermissions(models.Model):
@@ -96,11 +98,12 @@ class RoomPermissions(models.Model):
     room = models.TextField()
     class Meta:
         permissions = (
+            ('room_admin', 'Assign permissions to existing users of own room'),
             ('change_trigger', 'Change trigger'),
             ('set_default_translation', 'Set default room translation'),
             ('set_verse_limits', 'Set room verse limits'),
             ('set_greeting', 'Set room greeting message'),
-            ('speak', 'Speak through bot'),
+            ('can_speak', 'Speak through bot'),
         )
         
 class Plugins(models.Model):

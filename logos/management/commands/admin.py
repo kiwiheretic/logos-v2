@@ -4,8 +4,9 @@ from django.db import transaction
 
 from logos.models import NetworkPermissions, RoomPermissions
 from django.contrib.auth.models import User
-from guardian.shortcuts import assign_perm, get_perms
+from guardian.shortcuts import assign_perm, get_perms, remove_perm
 
+import re
 import pdb
 
 class Command(BaseCommand):
@@ -50,34 +51,76 @@ class Command(BaseCommand):
             self.stdout.write("%s %s" % (user.username, user.email))
         
 
-    def cmd_allperms(self):
+    def cmd_listperms(self):
         self.stdout.write("Network Permissions")
         for perm, desc in NetworkPermissions._meta.permissions:
             self.stdout.write("  {}, {}".format(perm, desc))
         self.stdout.write("\nRoom Permissions")
         for perm, desc in RoomPermissions._meta.permissions:
             self.stdout.write("  {}, {}".format(perm, desc))
-    
+
+
     @transaction.atomic                                     
-    def cmd_assignperm(self, network, room, username, permission):
-        perm_obj = None
-        for perm, desc in NetworkPermissions._meta.permissions:
-            if perm == permission:
+    def cmd_unassignperm(self, network, room, username, permission):
+#        if not re.match(r"#[a-zA-Z0-9-]+", room):
+#            self.stdout.write("Invalid room name {} -- cannot assign".format(room))
+#            return
+        
+        try:
+            user = User.objects.get(username = username)
+        except User.DoesNotExist:
+            self.stdout.write("Unknown user")
+            return
+        
+        if room == "#":  # Single hash denotes network permission
+            for perm, desc in NetworkPermissions._meta.permissions:
+                if perm == permission:
 
-                try:
-                    perm_obj = NetworkPermissions.objects.get(network=network)
-                except NetworkPermissions.DoesNotExist:
-                    perm_obj = NetworkPermissions(network=network)
-                    perm_obj.save()
-                break
-
-        if not perm_obj:
+                    try:
+                        perm_obj = NetworkPermissions.objects.get(network=network)
+                        remove_perm(permission, user, perm_obj)
+                        self.stdout.write("Permission unassigned")
+                    except NetworkPermissions.DoesNotExist:
+                        self.stdout.write("Permission not found")
+                    return
+        else: # room permission
             for perm, desc in RoomPermissions._meta.permissions:
                 if perm == permission:
                     try:
-                        perm_obj = RoomPermissions.objects.get(network=network, room=room)
+                        perm_obj = RoomPermissions.objects.get(network=network, room=room.lower())
+                        remove_perm(permission, user, perm_obj)
+                        self.stdout.write("Permission unassigned")
+
                     except RoomPermissions.DoesNotExist:
-                        perm_obj = RoomPermissions(network=network, room=room)
+                        self.stdout.write("Permission not found")
+                    break        
+        
+    @transaction.atomic                                     
+    def cmd_assignperm(self, network, room, username, permission):
+        if not re.match(r"#[a-zA-Z0-9-]*", room):
+            self.stdout.write("Invalid room name {} -- cannot assign".format(room))
+            return
+        
+        perm_obj = None
+        
+        if room == "#":  # if network permission
+            for perm, desc in NetworkPermissions._meta.permissions:
+                if perm == permission:
+
+                    try:
+                        perm_obj = NetworkPermissions.objects.get(network=network)
+                    except NetworkPermissions.DoesNotExist:
+                        perm_obj = NetworkPermissions(network=network)
+                        perm_obj.save()
+                    break
+
+        else:  # else room permission
+            for perm, desc in RoomPermissions._meta.permissions:
+                if perm == permission:
+                    try:
+                        perm_obj = RoomPermissions.objects.get(network=network, room=room.lower())
+                    except RoomPermissions.DoesNotExist:
+                        perm_obj = RoomPermissions(network=network, room=room.lower())
                         perm_obj.save()                    
                     break
         if perm_obj == None:
