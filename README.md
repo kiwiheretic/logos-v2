@@ -103,8 +103,28 @@ manage.py loaddata --database=game-data scriptures.json
 manage.py import
 ```
 
-### Developing or modifying the bot ###
+### Admin Permission System ###
 
+It is now possible to set up individual users with very specific permissions (thanks to [Django Guardian](https://django-guardian.readthedocs.org/en/v1.2/) permission system).
+
+First you will need to add your own nick as user replacing &lt;username&gt;, &lt;email&gt; and &lt;password&gt; with the appropriate information.
+```
+$ python manage.py admin adduser <username> <email> <password>
+$ python manage.py admin <network> '#' <username> net_admin
+```
+(The '#' indicates that this command refers to the whole network, not just any room.)  Now when you login you type on IRC network (preferrable in private window to the bot) something like the following:
+```
+/nick <username>
+!login <password>
+```
+You can change your own password later on with:
+```
+!set password <newpassword>
+```
+Again this should be done in a private window to bot for security reasons.
+See the [wiki](https://github.com/kiwiheretic/logos-v2/wiki) for more details.
+
+### Developing or modifying the bot ###
 See the [wiki](https://github.com/kiwiheretic/logos-v2/wiki) for more details.
 
 
