@@ -5,7 +5,6 @@ import time
 import copy
 
 import pdb
-from logos.pluginlib import Registry
 from logos.constants import PUNCTUATION, STOP_WORDS
 
 from bot.pluginDespatch import Plugin, CommandException
@@ -58,13 +57,13 @@ class BibleBot(Plugin):
                          (r'(?:search|s)\s+((?:\w+\s+)?(?:\w+(?:-\w+)?\s+)?)\"([^"]+)\"\s*$', self.phrase_search, "perform a phrase search"),
 #                         (r'(?:search|s)\s+([^"]+)', self.search, False),
                          (r'(?:search|s)\s*$', self.next_search, "continue a search"),
-                         (r'set\s+default\s+translation\s+([a-zA-Z]+)', self.set_default_trans,\
+                         (r'set\s+(?P<room>#[a-zA-z0-9-]+)\s+default\s+translation\s+([a-zA-Z]+)', self.set_default_trans,\
                           "set default translation for room"),
                          (r'set\s+(?:private|pvt)\s+translation\s+([a-zA-Z]+)', self.set_pvt_translation,
                           "set default translation for private chat window"),
-                         (r'set\s+search\s+limit\s+(\d+)\s*$', self.set_search_limit,
+                         (r'set\s+(?P<room>#[a-zA-z0-9-]+)\s+search\s+limit\s+(\d+)\s*$', self.set_search_limit,
                           "set limit on number of verses searched at once"),
-                         (r'set\s+verse\s+limit\s+(\d+)\s*$', self.set_verse_limit,
+                         (r'set\s+(?P<room>#[a-zA-z0-9-]+)\s+verse\s+limit\s+(\d+)\s*$', self.set_verse_limit,
                           "set limit on number of verses read at once"),
                          (r'(?:translations|versions)\s*$', self.versions, 
                           "display available versions or translations"),
@@ -517,7 +516,7 @@ class BibleBot(Plugin):
                    
     def set_pvt_translation(self, regex, chan, nick, **kwargs):
        
-        if nick in Registry.sys_authorized:
+        if self.get_auth().is_authorised(nick, self.network, '#', 'set_pvt_version'):
             trans = regex.group(1)
             translations = self._get_translations()                        
             if trans not in translations:
@@ -526,49 +525,59 @@ class BibleBot(Plugin):
             else:
                 set_global_option('pvt-translation', trans)
                 self.msg(chan, "Private translation set to %s " % (trans,))   
-                 
+        else:
+            self.msg(chan, "You are not authorised or not logged in")
+                             
     def set_default_trans(self, regex, chan, nick, **kwargs):
-        
-        ch = Registry.authorized[nick]['channel']
-        def_trans = regex.group(1)
-        translations = self._get_translations()                        
-        if def_trans not in translations:
-            self.msg(chan, "Could not locate translation %s " % (def_trans,))
-            return
-        else:
-            set_room_option(self.factory.network, ch, \
-                'default_translation', def_trans)
+        room = regex.group('room')
+        if self.get_auth().is_authorised(nick, self.network, room, 'set_default_translation'):
+            def_trans = regex.group(2)
+            translations = self._get_translations()                        
+            if def_trans not in translations:
+                self.msg(chan, "Could not locate translation %s " % (def_trans,))
+                return
+            else:
+                set_room_option(self.factory.network, room, \
+                    'default_translation', def_trans)
 
-            self.msg(chan, "Default translation for %s set to %s " % (ch,def_trans)) 
-               
+                self.msg(chan, "Default translation for %s set to %s " % (room,def_trans)) 
+        else:
+            self.msg(chan, "You are not authorised or not logged in")
+                           
     def set_search_limit(self, regex, chan, nick, **kwargs):
-       
-        searchlmt = int(regex.group(1))
-        # Get the channel the user is authorised to access
-        ch = Registry.authorized[nick]['channel']
+        room = regex.group('room')
+        if self.get_auth().is_authorised(nick, self.network, room, 'set_verse_limits'):
+      
+            searchlmt = int(regex.group(2))
+            # Get the channel the user is authorised to access
+            
+            if searchlmt > 20:
+                self.msg(chan, "Search limit cannot be set higher than 20")
+            else:
+                set_room_option(self.factory.network, room, \
+                    'searchlimit', searchlmt)                        
 
-        if searchlmt > 20:
-            self.msg(chan, "Search limit cannot be set higher than 20")
+                self.msg(chan, "Search limit for %s set to %s " % (room, searchlmt)) 
         else:
-            set_room_option(self.factory.network, ch, \
-                'searchlimit', searchlmt)                        
-
-            self.msg(chan, "Search limit for %s set to %s " % (ch, searchlmt)) 
+            self.msg(chan, "You are not authorised or not logged in")
                    
     def set_verse_limit(self, regex, chan, nick, **kwargs):
+        room = regex.group('room')
+        if self.get_auth().is_authorised(nick, self.network, room, 'set_verse_limits'):
     
-        verselmt = int(regex.group(1))
-        
-        # Get the channel the user is authorised to access
-        ch = Registry.authorized[nick]['channel']
-        if verselmt > 20:
-            self.msg(chan, "Verse limit cannot be set higher than 20")
-        else:
-            set_room_option(self.factory.network, ch, \
-                'verselimit', verselmt)
+            verselmt = int(regex.group(2))
+            
+            
+            if verselmt > 20:
+                self.msg(chan, "Verse limit cannot be set higher than 20")
+            else:
+                set_room_option(self.factory.network, room, \
+                    'verselimit', verselmt)
 
-            self.msg(chan, "Verse limit for %s set to %s " % (ch,verselmt)) 
-               
+                self.msg(chan, "Verse limit for %s set to %s " % (room,verselmt)) 
+        else:
+            self.msg(chan, "You are not authorised or not logged in")
+                           
     def dict(self, regex, chan, nick, **kwargs):
 
         lookup = regex.group(1)

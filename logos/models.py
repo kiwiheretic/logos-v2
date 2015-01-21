@@ -90,6 +90,8 @@ class NetworkPermissions(models.Model):
             ('net_admin', 'Create user logins and assign permissions'),
             ('join_or_part_room', 'Join or part bot to rooms'),
             ('irc_cmd', 'Issue arbitrary command to bot'),
+            ('set_pvt_version', 'Set bible version default in private chat window'),
+            ('change_pvt_trigger', 'Set trigger used in private chat window'),
             
         )
                 
@@ -104,6 +106,7 @@ class RoomPermissions(models.Model):
             ('set_verse_limits', 'Set room verse limits'),
             ('set_greeting', 'Set room greeting message'),
             ('can_speak', 'Speak through bot'),
+            ('start_game', 'Can start scripture game'),
         )
         
 class Plugins(models.Model):

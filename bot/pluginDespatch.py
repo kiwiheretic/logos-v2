@@ -218,7 +218,7 @@ class PluginDespatcher(object):
             if m[-3:] != '.py': continue  # exclude .pyc and other files
             try:
                 m = re.sub(r'\.py', '', m)
-
+                logger.info('importing module '+'bot.plugins.'+m)
                 m1 = getattr(__import__('bot.plugins.'+m), 'plugins')
                 mod = getattr(m1, m)
 

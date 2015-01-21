@@ -17,7 +17,6 @@ from logos.roomlib import get_room_option, set_room_option, set_room_defaults,\
     set_global_option
     
 
-from logos.pluginlib import Registry
 
 import logging
 from logos.settings import LOGGING
@@ -30,8 +29,6 @@ logging.config.dictConfig(LOGGING)
                 
 class SystemCoreCommands(Plugin):
     plugin = ("system", "System Module")
-    
-
     
     def __init__(self, *args):
         super(SystemCoreCommands, self).__init__(*args)
@@ -49,22 +46,21 @@ class SystemCoreCommands(Plugin):
                          (r'say\s+(?P<room>#[a-zA-z0-9-]+)\s+(.*)', self.speak, "Say something into a room"),
                          (r'set\s+(?P<room>#[a-zA-z0-9-]+)\s+(?:activation|trigger)\s+\"(.)\"', self.set_trigger,
                            "Set the trigger used by the bot"),
+                         (r'set\s+(?:pvt|private)\s+(?:activation|trigger)\s+\"(.)\"', self.set_pvt_trigger,
+                           "Set the trigger used by the bot"),
                          (r'set\s+(?P<room>#[a-zA-z0-9-]+)\s+greet\s+message\s+\"(.*)\"', self.set_greet, 
                            "Set the autogreet message"),
                          (r'set\s+password\s+([^\s]+)', self.set_password, "Set your password"),
         )
         
         
-        Registry.sys_authorized = []   # List of system authorized nicks - ie owner
-        Registry.authorized = {}  
+#        Registry.sys_authorized = []   # List of system authorized nicks - ie owner
+#        Registry.authorized = {}  
     
     
     def privmsg(self, user, channel, message):
         pass
 
-#    def help(self, regex, chan, nick, **kwargs):
-#        pass
-    
     def login(self, regex, chan, nick, **kwargs):
         password = regex.group('password')
         host = self.get_host(nick)
@@ -264,8 +260,20 @@ class SystemCoreCommands(Plugin):
             if chan != ch:
                 self.msg(ch, "Trigger has been changed to \"%s\"" % (arg,)) 
         else:
-            self.notice(nick, "You are not authorised to change trigger for this room")
+            self.msg(chan, "You are not authorised to change trigger for this room")
                                       
+    def set_pvt_trigger(self, regex, chan, nick, **kwargs):
+        if self.get_auth().is_authorised(nick, self.network, '#', 
+                                                  'change_pvt_trigger'):
+            # Command issued to bot to change the default activation
+            # character.
+            arg = regex.group(1)
+            set_global_option('pvt-trigger', arg)
+
+            self.msg(chan, "Private window trigger set to \"%s\"" % (arg,))
+        else:
+            self.msg(chan, "You are not authorised to change trigger for private window")
+                       
     def cmd(self, regex, chan, nick, **kwargs):
 
         if self.get_auth().is_authorised(nick, self.network, '#', 'irc_cmd'):
