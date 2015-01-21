@@ -1,21 +1,23 @@
 # README #
 
-This is the Logos-V2 project, a Django/Twisted IRC bot  originally based (in concept) on the  [CancelBot Project](http://cancelbot.sourceforge.net/home.html), but no longer shares any code (except for a few lines) with the original project.  No longer binds to XChat but is completely self contained.  Is cross platform and supports Centos, Ubuntu & Windows.  (Basically anywhere Django, Twisted and Python 2.7 is supported)  Released under the Apache License.
-
-You can see screenshots on the [official user documentation website](https://biblebot.wordpress.com/).
+This is the Logos-V2 project, a Django/Twisted IRC bot  originally based (in concept) on the [CancelBot Project](http://cancelbot.sourceforge.net/home.html), but no longer shares any code (except for a few lines) with the original project.  No longer binds to XChat but is completely self contained. Is cross platform and supports Centos, Ubuntu & Windows.  (Basically anywhere Django, Twisted and Python 2.7 is supported).  Released under the Apache License.
 
 ### Features ###
 
 Features include:
+  * Written in Python using Twisted and Django frameworks
+  * Compatible with CancelBot bible translations
+  * Easy to customise for your own personalised bot
+  * Optional Django webserver for setup (work in progress)
+  * Fine grained permission system based on Django-guardian (new feature)
+Plugins:
   * Everything (or mostly) is designed as a plugin
-  * Compatible with CancelBot bible translations.
+  * Plugin architecture for extending bot
+Bible Plugin:
   * Simple bible verse lookups
   * Fast concordance searches
   * Strongs number lookups
-  * Optional Django webserver for setup (work in progress)
-  * Plugin architecture for extending bot
-  * Written in Python using Twisted and Django frameworks
-
+  * Screenshots on this plugin on [official user documentation website](https://biblebot.wordpress.com/).
 
 ### Summary of set up for Linux ###
 
@@ -28,16 +30,19 @@ Features include:
 
 As normal user ...
 
-```bash
+```
 $ git clone https://github.com/kiwiheretic/logos-v2.git ~/logos2
 $ cd ~/logos2
 $ virtualenv ~\venvs\logos2
 $ source ~\venvs\logos2\bin\activate
 
 $ pip install -r requirements.txt
+
+```
+If you want to use the email registration edit the email_settings.py file and
+put in valid settings for your email server.  If not, then just copy the file email_settings-dist.py to email_settings.py in order to suppress any errors.
+```
 $ cp logos/email_settings-dist.py logos/email_settings.py
-If you want to use the email registration edit this file and
-put in valid settings.
 $ python manage.py syncdb
 $ python manage.py syncdb --database=bibles
 $ python manage.py syncdb --database=game-data
@@ -56,9 +61,11 @@ $ source ~\venvs\logos2\bin\activate
 $ git clone https://github.com/kiwiheretic/logos-v2.git ~/logos2
 $ cd ~/logos2
 $ pip install -r requirements.txt
+```
+If you want to use the email registration edit the email_settings.py file and
+put in valid settings for your email server.  If not, then just copy the file email_settings-dist.py to email_settings.py in order to suppress any errors.
+```
 $ cp logos/email_settings-dist.py logos/email_settings.py
-If you want to use the email registration edit this file and
-put in valid settings.
 $ python manage.py syncdb
 $ python manage.py syncdb --database=bibles
 $ python manage.py syncdb --database=settings
@@ -81,10 +88,11 @@ virtualenv ..\venvs\logos2
 ..\venvs\logos2\Scripts\activate
 
 pip install -r requirements.txt
+```
+If you want to use the email registration edit the email_settings.py file and
+put in valid settings for your email server.  If not, then just copy the file email_settings-dist.py to email_settings.py in order to suppress any errors.
+```
 copy logos/email_settings-dist.py logos/email_settings.py
-rem * If you want to use the email registration edit this file and
-rem * put in valid settings.
-
 manage.py syncdb
 manage.py syncdb --database=bibles
 manage.py syncdb --database=settings
@@ -92,11 +100,6 @@ manage.py syncdb --database=game-data
 manage.py loaddata --database=game-data scriptures.json
 manage.py import
 ```
-
-The last import command may need to be run several times if a 
-MemoryError results.  Import automatically continues where left off.
-Haven't yet tracked down what causes this.  __I think this is now fixed 
-in commit d87126856e__.
 
 ### Developing or modifying the bot ###
 
