@@ -10,9 +10,11 @@ Features include:
   * Easy to customise for your own personalised bot
   * Optional Django webserver for setup (work in progress)
   * Fine grained permission system based on Django-guardian (new feature)
+
 Plugins:
   * Everything (or mostly) is designed as a plugin
   * Plugin architecture for extending bot
+
 Bible Plugin:
   * Simple bible verse lookups
   * Fast concordance searches
