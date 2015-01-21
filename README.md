@@ -110,7 +110,7 @@ It is now possible to set up individual users with very specific permissions (th
 First you will need to add your own nick as user replacing &lt;username&gt;, &lt;email&gt; and &lt;password&gt; with the appropriate information.
 ```
 $ python manage.py admin adduser <username> <email> <password>
-$ python manage.py admin <network> '#' <username> net_admin
+$ python manage.py admin assignperm <network> '#' <username> net_admin
 ```
 (The '#' indicates that this command refers to the whole network, not just any room.)  Now when you login you type on IRC network (preferrable in private window to the bot) something like the following:
 ```
