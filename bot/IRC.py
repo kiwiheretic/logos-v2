@@ -122,9 +122,13 @@ class NicksDB:
 
             
     def get_host(self, user):
-        if 'ident' in self.nicks_info[user.lower()]:
-            return self.nicks_info[user.lower()]['ident']
-        else:
+        try:
+            if 'ident' in self.nicks_info[user.lower()]:
+                return self.nicks_info[user.lower()]['ident']
+            else:
+                return None
+        except KeyError:
+            # This can fail on slow servers, notably undernet
             return None
 
     def set_ident(self, user, ident):

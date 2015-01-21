@@ -33,10 +33,12 @@ class SystemCoreCommands(Plugin):
     def __init__(self, *args):
         super(SystemCoreCommands, self).__init__(*args)
         self.commands = ( \
-                         (r'login\s+(?P<password>\w+)', self.login, 'Login into the bot'),
+                         (r'login\s+(?P<password>[a-zA-z0-9-]+)', self.login, 'Login into the bot'),
 #                         (r'logout', self.logout, "Log out of bot"),
                          (r'version\s*$', self.version, "Show this bot's version info"),
                          (r'list\s+(?:perms|permissions)', self.list_perms, "list all permissions available"),
+                         (r'add\s+user\s+(?P<username>[a-zA-z0-9-]+)\s+(?P<email>[a-zA-z0-9-]+@[a-zA-z0-9\.-]+)\s+(?P<password>[a-zA-z0-9-]+)',
+                          self.adduser, 'Add user to system'),
                          (r'assign\s+(?:perm|permission)\s+(?P<perm>[a-z_]+)\s+for\s+(?P<username>[^\s]+)', self.assign_net_perms, "assign permission to username"),
                          (r'assign\s+(?:perm|permission)\s+(?P<room>#[a-zA-z0-9-]+)\s+(?P<perm>[a-z_]+)\s+for\s+(?P<username>[^\s]+)', self.assign_room_perms, "assign permission to username"),
                          (r'unassign\s+(?:perm|permission)\s+(?P<perm>[a-z_]+)\s+for\s+(?P<username>[^\s]+)', self.unassign_net_perms, "assign permission to username"),
@@ -53,18 +55,30 @@ class SystemCoreCommands(Plugin):
                          (r'set\s+password\s+([^\s]+)', self.set_password, "Set your password"),
         )
         
-        
-#        Registry.sys_authorized = []   # List of system authorized nicks - ie owner
-#        Registry.authorized = {}  
-    
     
     def privmsg(self, user, channel, message):
         pass
 
+    def adduser(self, regex, chan, nick, **kwargs):
+        username = regex.group('username')
+        password = regex.group('password')
+        email = regex.group('email')        
+        if self.get_auth().is_authorised(nick, self.network, '#', 'net_admin'):
+            try:
+                user = User.objects.get(username = username.lower())
+            except User.DoesNotExist:
+                user = User(username = username.lower(), password = password, email = email)
+                user.save()
+                self.msg(chan, "User successfully created")
+            else:
+                self.msg(chan, "User already exists in databse")
+        else:
+            self.msg(chan, "You are not authorised or not logged in")
+                    
     def login(self, regex, chan, nick, **kwargs):
         password = regex.group('password')
         host = self.get_host(nick)
-        
+
         try:
             user = User.objects.get(username = nick.lower())
         except User.DoesNotExist:
@@ -76,6 +90,7 @@ class SystemCoreCommands(Plugin):
             self.say(chan, "Login successful")
         else:
             self.say(chan, "Login failed")
+
 
     def list_perms(self, regex, chan, nick, **kwargs):
         self.say(chan, "=== Network Permissions ===")

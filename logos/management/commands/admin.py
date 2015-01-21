@@ -38,7 +38,7 @@ class Command(BaseCommand):
 
     def cmd_setpass(self, username, password):
         try:
-            user = User.objects.get(username = username)
+            user = User.objects.get(username = username.lower())
         except User.DoesNotExist:
             self.stdout.write("Unknown user")
             return 
