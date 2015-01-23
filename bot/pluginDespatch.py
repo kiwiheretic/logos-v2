@@ -199,16 +199,15 @@ class Plugin(object):
         
 class PluginDespatcher(object):
     """ Handles method delegation to the .py files in the plugins
-    folder. Its been created with a whole lot of static methods because
-    we want this class to act like a singleton"""
-    _cls_list = []
-    factory = None
+    folder. """
 
     def __init__(self, irc_conn):
         """ This imports all the .py files in
         the plugins folder """
         
         self.irc_conn = irc_conn
+        self._cls_list = []
+
         self.authenticated_users = AuthenticatedUsers()
                 
         dirs = os.listdir(settings.BASE_DIR + os.sep + os.path.join('bot', 'plugins'))
