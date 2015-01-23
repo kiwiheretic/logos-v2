@@ -107,18 +107,23 @@ class RoomPermissions(models.Model):
             ('set_greeting', 'Set room greeting message'),
             ('can_speak', 'Speak through bot'),
             ('start_game', 'Can start scripture game'),
+            ('enable_plugins', 'Can enable room plugins'),
         )
-        
+
 class Plugins(models.Model):
     name = models.TextField()
     description = models.TextField()
+        
+class NetworkPlugins(models.Model):
+    plugin = models.ForeignKey('Plugins')
     # currently each bot instance handles exactly one IRC network
     network = models.TextField()
     loaded = models.BooleanField(default=False)
+    # net_admin disabling overrides room_admin enabling
+    enabled = models.BooleanField(default=True)
     
 class RoomPlugins(models.Model):
-    plugin = models.ForeignKey('Plugins')
-    network = models.TextField()
+    net = models.ForeignKey('NetworkPlugins')
     room = models.TextField()    
     enabled = models.BooleanField(default=False)
     
