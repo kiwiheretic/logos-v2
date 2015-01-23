@@ -273,43 +273,40 @@ class ScriptureChallenge(Plugin):
 
     def start1(self, regex, chan, nick, **kwargs):
         
-        if self.get_auth().is_authorised(nick, self.network, chan, 'start_game'):
-            rooms_hash = self.rooms_hash[chan.lower()]
-            if 'NicksInGame' not in rooms_hash or \
-                len(rooms_hash['NicksInGame']) == 0:
-                self.say(chan, 'No one has yet joined game.')
-                
-            elif not rooms_hash['GameStarted']:
-                
-                NicksInGame = rooms_hash['NicksInGame']
+        rooms_hash = self.rooms_hash[chan.lower()]
+        if 'NicksInGame' not in rooms_hash or \
+            len(rooms_hash['NicksInGame']) == 0:
+            self.say(chan, 'No one has yet joined game.')
+            
+        elif not rooms_hash['GameStarted']:
+            
+            NicksInGame = rooms_hash['NicksInGame']
 
-                if 'NickCurrentTurn' in rooms_hash:
-                    NickCurrentTurn = rooms_hash['NickCurrentTurn']
-                else:
-                    rooms_hash['NickCurrentTurn'] = 0
-                    NickCurrentTurn = 0
-
-                CurrNick = NicksInGame[NickCurrentTurn]
-
-
-                NickCurrentTurn = 0
-                game = self._create_game(NicksInGame)
-
-                self.say(chan, 'Game started...')
-                self.say(chan, ' ')
-                
-                rooms_hash['game'] = game
-                rooms_hash['current_user'] = CurrNick
-                rooms_hash['Round'] = 0
-
-                rooms_hash['GameStarted'] = True
-                rooms_hash['NickCurrentTurn'] = NickCurrentTurn
-                self.start(chan)
-
+            if 'NickCurrentTurn' in rooms_hash:
+                NickCurrentTurn = rooms_hash['NickCurrentTurn']
             else:
-                self.chan(chan, 'Game already started')
+                rooms_hash['NickCurrentTurn'] = 0
+                NickCurrentTurn = 0
+
+            CurrNick = NicksInGame[NickCurrentTurn]
+
+
+            NickCurrentTurn = 0
+            game = self._create_game(NicksInGame)
+
+            self.say(chan, 'Game started...')
+            self.say(chan, ' ')
+            
+            rooms_hash['game'] = game
+            rooms_hash['current_user'] = CurrNick
+            rooms_hash['Round'] = 0
+
+            rooms_hash['GameStarted'] = True
+            rooms_hash['NickCurrentTurn'] = NickCurrentTurn
+            self.start(chan)
+
         else:
-            self.msg(chan, "Sorry, you don't have start_game access to this bot")
+            self.chan(chan, 'Game already started')
         
     def stop(self, regex, chan, nick, **kwargs):
         self.end_game(chan)

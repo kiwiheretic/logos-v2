@@ -106,8 +106,7 @@ class RoomPermissions(models.Model):
             ('set_verse_limits', 'Set room verse limits'),
             ('set_greeting', 'Set room greeting message'),
             ('can_speak', 'Speak through bot'),
-            ('start_game', 'Can start scripture game'),
-            ('enable_plugins', 'Can enable room plugins'),
+            ('enable_plugins', 'Can enable or disable room plugins'),
         )
 
 class Plugins(models.Model):

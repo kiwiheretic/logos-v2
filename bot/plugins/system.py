@@ -45,6 +45,7 @@ class SystemCoreCommands(Plugin):
                          (r'list\s+(?:perms|permissions)', self.list_perms, "list all permissions available"),
                          (r'add\s+user\s+(?P<username>[a-zA-z0-9-]+)\s+(?P<email>[a-zA-z0-9-]+@[a-zA-z0-9\.-]+)\s+(?P<password>[a-zA-z0-9-]+)',
                           self.adduser, 'Add user to system'),
+                         (r'list\s+users', self.listusers, 'List users in system'),
                          (r'assign\s+(?:perm|permission)\s+(?P<perm>[a-z_]+)\s+for\s+(?P<username>[^\s]+)', self.assign_net_perms, "assign permission to username"),
                          (r'assign\s+(?:perm|permission)\s+(?P<room>#[a-zA-z0-9-]+)\s+(?P<perm>[a-z_]+)\s+for\s+(?P<username>[^\s]+)', self.assign_room_perms, "assign permission to username"),
                          (r'unassign\s+(?:perm|permission)\s+(?P<perm>[a-z_]+)\s+for\s+(?P<username>[^\s]+)', self.unassign_net_perms, "assign permission to username"),
@@ -67,14 +68,20 @@ class SystemCoreCommands(Plugin):
 
     def list_plugins(self, regex, chan, nick, **kwargs):
         self.say(chan, "=== Loaded Plugins ===")
+        last_room = None
         for plugin in RoomPlugins.objects.filter(net__loaded = True, 
-                                                 net__network=self.network):
+                                                 net__network=self.network).\
+                                                     order_by('room'):
             name = plugin.net.plugin.name
             room = plugin.room
-            descr = plugin.net.plugin.description
-            enabled = plugin.enabled
-            self.say(chan, "{0:15} {1:>15} {2}".format(room, name, enabled))
-            
+            if self.get_auth().is_authorised(nick, self.network, room, 'enable_plugins'):
+                if room != last_room:
+                    self.say(chan, "Room: {}".format(room))
+                descr = plugin.net.plugin.description
+                enabled = plugin.enabled
+                self.say(chan, "  {0:.<15} {1}".format(name, enabled))
+                last_room = room
+                
     def enable_plugin(self, regex, chan, nick, **kwargs):
         room = regex.group('room')
         if self.get_auth().is_authorised(nick, self.network, room, 'enable_plugins'):
@@ -113,6 +120,10 @@ class SystemCoreCommands(Plugin):
         else:
             self.msg(chan, "You are not authorised or not logged in")
                     
+    def listusers(self, regex, chan, nick, **kwargs):
+        for user in User.objects.all():
+            self.msg(chan, "{} {}".format(user.username, user.email))
+    
     def login(self, regex, chan, nick, **kwargs):
         password = regex.group('password')
         host = self.get_host(nick)

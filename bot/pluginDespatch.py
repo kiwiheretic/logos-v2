@@ -203,15 +203,13 @@ class Plugin(object):
         
 class PluginDespatcher(object):
     """ Handles method delegation to the .py files in the plugins
-    folder. Its been created with a whole lot of static methods because
-    we want this class to act like a singleton"""
-    _cls_list = []
-    factory = None
-
+    folder. """
+    
     def __init__(self, irc_conn):
         """ This imports all the .py files in
         the plugins folder """
         
+        self._obj_list = []  # the plugin object list of all loaded plugins
         self.irc_conn = irc_conn
         self.authenticated_users = AuthenticatedUsers()
         NetworkPlugins.objects.filter(network=self.irc_conn.factory.network).update(loaded=False)
@@ -242,7 +240,7 @@ class PluginDespatcher(object):
                             system = True
                         else:
                             system = False
-                        self._cls_list.append(plugin_object)
+                        self._obj_list.append(plugin_object)
                         
                         with transaction.atomic():
                             plugin_name, descr = plugin_object.plugin
@@ -270,7 +268,7 @@ class PluginDespatcher(object):
             except ImportError, e:
                 logger.error("ImportError: "+str(e))
 
-        logger.debug(str(self._cls_list))
+        logger.debug(str(self._obj_list))
 
     def enable_plugin(self, channel, plugin_name):
         if channel[0] =='#':
@@ -281,6 +279,16 @@ class PluginDespatcher(object):
                     room=channel)
                 room_plugin.enabled = True
                 room_plugin.save()
+                
+                # if we enable a plugin in a room its as if the bot
+                # has just joined this room
+                for plugin_obj in self._obj_list:
+                    plg_name, _ = plugin_obj.plugin
+                    if plg_name == plugin_name:
+                        if hasattr(plugin_obj, 'joined'):
+                            plugin_obj.joined(channel)
+                        break
+                    
                 return True
             except RoomPlugins.DoesNotExist:
                 return False
@@ -298,6 +306,16 @@ class PluginDespatcher(object):
                     return False
                 room_plugin.enabled = False
                 room_plugin.save()
+                
+                # if we enable a plugin in a room its as if the bot
+                # has just left this room
+                for plugin_obj in self._obj_list:
+                    plg_name, _ = plugin_obj.plugin
+                    if plg_name == plugin_name:
+                        if hasattr(plugin_obj, 'left'):
+                            plugin_obj.left(channel)
+                        break
+                
                 return True
             except RoomPlugins.DoesNotExist:
                 return False    
@@ -350,41 +368,41 @@ class PluginDespatcher(object):
     # creating the methods.  What are the advantages?  More DRY.
 
     def signedOn(self):
-        for m in self._cls_list:
+        for m in self._obj_list:
             #m.init(self)
             if hasattr(m, 'signedOn'):
                 m.signedOn()
 
 
     def userJoined(self, user, channel):
-        for m in self._cls_list:
+        for m in self._obj_list:
             if self.is_plugin_enabled(channel, m):
                 if hasattr(m, 'userJoined'):
                     m.userJoined(user, channel)
 
 
     def userLeft(self, user, channel):
-        for m in self._cls_list:
+        for m in self._obj_list:
             if self.is_plugin_enabled(channel, m):
                 if hasattr(m, 'userLeft'):
                     m.userLeft(user, channel)
 
 
     def userQuit(self, user, quitMessage):
-        for m in self._cls_list:
+        for m in self._obj_list:
             if hasattr(m, 'userQuit'):
                 m.userQuit(user, quitMessage)
 
 
     def noticed(self, user, channel, message):
-        for m in self._cls_list:
+        for m in self._obj_list:
             if self.is_plugin_enabled(channel, m):
                 if hasattr(m, 'noticed'):
                     m.noticed(user, channel, message)
 
 
     def privmsg(self, user, channel, message):
-        for m in self._cls_list:
+        for m in self._obj_list:
             if self.is_plugin_enabled(channel, m): 
                 if hasattr(m, 'privmsg'):
                     logger.debug("Invoking privmsg of module " + str(m))
@@ -400,7 +418,7 @@ class PluginDespatcher(object):
                       }
             
             matched_fn = []
-            for m in self._cls_list:
+            for m in self._obj_list:
                 if self.is_plugin_enabled(chan, m): 
                     if hasattr(m, 'commands'):
                         for rgx_s, f, _ in m.commands:
@@ -451,7 +469,7 @@ class PluginDespatcher(object):
 
 
     def joined(self, channel):
-        for m in self._cls_list:
+        for m in self._obj_list:
             plugin_name, _ = m.plugin
             if hasattr(m, 'system') and m.system:
                 self.install_plugin(channel, plugin_name, enabled=True)
@@ -467,14 +485,14 @@ class PluginDespatcher(object):
 
 
     def left(self, channel):
-        for m in self._cls_list:
+        for m in self._obj_list:
             if self.is_plugin_enabled(channel, m):
                 if hasattr(m, 'left'):
                     m.left(channel)
 
 
     def userRenamed(self, oldname, newname):
-        for m in self._cls_list:
+        for m in self._obj_list:
             if self.is_plugin_enabled(channel, m):
                 if hasattr(m, 'userRenamed'):
                     m.userRenamed(oldname, newname)
