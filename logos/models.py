@@ -113,6 +113,7 @@ class RoomPermissions(models.Model):
 class Plugins(models.Model):
     name = models.TextField()
     description = models.TextField()
+    system = models.BooleanField(default=False)
         
 class NetworkPlugins(models.Model):
     plugin = models.ForeignKey('Plugins')

@@ -6,6 +6,7 @@ import logging
 import bot
 import pdb
 from django.conf import settings
+from django.db import transaction
 
 from logos.models import NetworkPermissions, RoomPermissions, \
     Plugins, NetworkPlugins, RoomPlugins
@@ -237,25 +238,33 @@ class PluginDespatcher(object):
                     hasattr(a1, 'plugin'):  
                         logger.info('loading module '+'bot.plugins.'+m)
                         plugin_object = a1(self, irc_conn)
-                        self._cls_list.append(plugin_object)
-                        plugin_name, descr = plugin_object.plugin
-                        plugin, created = Plugins.objects.\
-                            get_or_create(name=plugin_name,
-                                          description=descr)
-                        net_plugin, created = NetworkPlugins.objects.\
-                            get_or_create(plugin=plugin,
-                                network=self.irc_conn.factory.network,
-                                defaults={'loaded': True})
-                        
-                        if hasattr(plugin_object,'system') and \
-                            plugin_object.system:
-                            net_plugin.enabled = True
+                        if hasattr(plugin_object, 'system') and plugin_object.system:
+                            system = True
                         else:
-                            if created:
-                                net_plugin.enabled = False
+                            system = False
+                        self._cls_list.append(plugin_object)
+                        
+                        with transaction.atomic():
+                            plugin_name, descr = plugin_object.plugin
+                            plugin, created = Plugins.objects.\
+                                get_or_create(name=plugin_name,
+                                              description=descr)
+                            plugin.system = system
+                            plugin.save()
+                            net_plugin, created = NetworkPlugins.objects.\
+                                get_or_create(plugin=plugin,
+                                    network=self.irc_conn.factory.network,
+                                    defaults={'loaded': True})
+                            
+                            if hasattr(plugin_object,'system') and \
+                                plugin_object.system:
+                                net_plugin.enabled = True
+                            else:
+                                if created:
+                                    net_plugin.enabled = False
 
-                        net_plugin.loaded = True
-                        net_plugin.save()    
+                            net_plugin.loaded = True
+                            net_plugin.save()    
                         
                         break
             except ImportError, e:
@@ -280,25 +289,18 @@ class PluginDespatcher(object):
         
     def disable_plugin(self, channel, plugin_name):
         if channel[0] =='#':
-            for m in self._cls_list:
-                m_plugin_name, _ = m.plugin
-                if plugin_name == m_plugin_name:
-                    if hasattr(m, 'system') and m.system:
-                        # cannot disable a system plugin
-                        return False
-                    else:
-                        try:
-                            room_plugin = RoomPlugins.objects.get(\
-                                net__plugin__name=plugin_name,
-                                net__network = self.irc_conn.factory.network,
-                                room=channel)
-                            room_plugin.enabled = False
-                            room_plugin.save()
-                            return True
-                        except RoomPlugins.DoesNotExist:
-                            return False    
-
-                    break
+            try:
+                room_plugin = RoomPlugins.objects.get(\
+                    net__plugin__name=plugin_name,
+                    net__network = self.irc_conn.factory.network,
+                    room=channel)
+                if room_plugin.net.plugin.system:
+                    return False
+                room_plugin.enabled = False
+                room_plugin.save()
+                return True
+            except RoomPlugins.DoesNotExist:
+                return False    
         else:
             return False            
     
@@ -313,7 +315,10 @@ class PluginDespatcher(object):
                                         net=net_plugin,
                                         room=channel.lower())
             if created:
-                room_plugin.enabled = enabled
+                if room_plugin.net.plugin.system:
+                    room_plugin.enabled = True
+                else:
+                    room_plugin.enabled = enabled
                 room_plugin.save()
     
     def is_plugin_enabled(self, channel, plugin_module):
