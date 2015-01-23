@@ -111,7 +111,16 @@ class RoomPermissions(models.Model):
         
 class Plugins(models.Model):
     name = models.TextField()
-    active = models.BooleanField(default=False)
+    description = models.TextField()
+    # currently each bot instance handles exactly one IRC network
+    network = models.TextField()
+    loaded = models.BooleanField(default=False)
+    
+class RoomPlugins(models.Model):
+    plugin = models.ForeignKey('Plugins')
+    network = models.TextField()
+    room = models.TextField()    
+    enabled = models.BooleanField(default=False)
     
 class Scriptures(models.Model):
     ref = models.TextField()

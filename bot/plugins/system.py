@@ -4,6 +4,7 @@ import pdb
 
 import django
 from django.contrib.auth.models import User
+from logos.models import RoomPlugins
 from django.contrib.auth import authenticate
 from guardian.shortcuts import assign_perm, get_perms, remove_perm
 
@@ -29,13 +30,14 @@ logging.config.dictConfig(LOGGING)
                 
 class SystemCoreCommands(Plugin):
     plugin = ("system", "System Module")
-    
+    system = True
     def __init__(self, *args):
         super(SystemCoreCommands, self).__init__(*args)
         self.commands = ( \
                          (r'login\s+(?P<password>[a-zA-z0-9-]+)', self.login, 'Login into the bot'),
 #                         (r'logout', self.logout, "Log out of bot"),
                          (r'version\s*$', self.version, "Show this bot's version info"),
+                         (r'list\s+plugins', self.list_plugins, "list all plugins available"),
                          (r'list\s+(?:perms|permissions)', self.list_perms, "list all permissions available"),
                          (r'add\s+user\s+(?P<username>[a-zA-z0-9-]+)\s+(?P<email>[a-zA-z0-9-]+@[a-zA-z0-9\.-]+)\s+(?P<password>[a-zA-z0-9-]+)',
                           self.adduser, 'Add user to system'),
@@ -91,7 +93,16 @@ class SystemCoreCommands(Plugin):
         else:
             self.say(chan, "Login failed")
 
-
+    def list_plugins(self, regex, chan, nick, **kwargs):
+        self.say(chan, "=== Loaded Plugins ===")
+        for plugin in RoomPlugins.objects.filter(plugin__loaded = True, 
+                                                 network=self.network):
+            name = plugin.plugin.name
+            room = plugin.room
+            descr = plugin.plugin.description
+            enabled = plugin.enabled
+            self.say(chan, "{0:15} {1:>15} {2}".format(room, name, enabled))
+        
     def list_perms(self, regex, chan, nick, **kwargs):
         self.say(chan, "=== Network Permissions ===")
         perm_str = ", ".join([p for p,_ in NetworkPermissions._meta.permissions])

@@ -7,7 +7,7 @@ import bot
 import pdb
 from django.conf import settings
 
-from logos.models import NetworkPermissions, RoomPermissions
+from logos.models import NetworkPermissions, RoomPermissions, Plugins, RoomPlugins
 from guardian.shortcuts import get_objects_for_user
 
 logger = logging.getLogger(__name__)
@@ -210,7 +210,7 @@ class PluginDespatcher(object):
         
         self.irc_conn = irc_conn
         self.authenticated_users = AuthenticatedUsers()
-                
+        Plugins.objects.filter(network=self.irc_conn.factory.network).update(loaded=False)
         dirs = os.listdir(settings.BASE_DIR + os.sep + os.path.join('bot', 'plugins'))
         for m in dirs:
             if m == '__init__.py' : continue
@@ -233,14 +233,66 @@ class PluginDespatcher(object):
                     issubclass(a1, Plugin) and \
                     hasattr(a1, 'plugin'):  
                         logger.info('loading module '+'bot.plugins.'+m)
-                        self._cls_list.append(a1(self, irc_conn))
+                        plugin_object = a1(self, irc_conn)
+                        self._cls_list.append(plugin_object)
+                        plugin_name, descr = plugin_object.plugin
+                        obj, created = Plugins.objects.\
+                            get_or_create(name=plugin_name,
+                                          network=self.irc_conn.factory.network,
+                            defaults={'loaded': True})
+                        obj.loaded = True
+                        obj.description = descr
+                        obj.save()    
+                        
                         break
             except ImportError, e:
                 logger.error("ImportError: "+str(e))
 
         logger.debug(str(self._cls_list))
 
-    
+    def enable_plugin(self, channel, plugin_module):
+        if channel[0] =='#':
+            plugin_name, _ = plugin_module.plugin
+            plugin = Plugins.objects.get(name=plugin_name) 
+            room_plugin, created = RoomPlugins.objects.get_or_create(plugin=plugin,
+                                             network=self.irc_conn.factory.network,
+                                             room=channel)
+            room_plugin.enabled = True
+            room_plugin.save()
+
+    def disable_plugin(self, channel, plugin_module):
+        if channel[0] =='#':
+            plugin_name, _ = plugin_module.plugin
+            plugin = Plugins.objects.get(name=plugin_name) 
+            room_plugin, created = RoomPlugins.objects.get_or_create(plugin=plugin,
+                                             network=self.irc_conn.factory.network,
+                                             room=channel)
+            room_plugin.enabled = False
+            room_plugin.save()         
+               
+    def is_plugin_enabled(self, channel, plugin_module):
+        if channel[0]=='#':
+            plugin_name, _ = plugin_module.plugin
+            plugin = Plugins.objects.get(name=plugin_name)
+            
+            try:
+                obj = RoomPlugins.\
+                    objects.get(network = self.irc_conn.factory.network,
+                                room = channel.lower(),
+                                plugin = plugin)
+                        
+                # system plugins are always enabled
+                if obj.enabled or \
+                    (hasattr(plugin_module, 'system') and plugin_module.system):
+                    return True
+                else:
+                    return False
+            except RoomPlugins.DoesNotExist:
+                return False
+        else:
+            # currently all loaded modules are enabled in pm
+            return True
+
     def signal_plugins(self, sender, scope, msg_id, *args):
         # currently not used
         for cls in self._cls_list:
@@ -264,14 +316,16 @@ class PluginDespatcher(object):
 
     def userJoined(self, user, channel):
         for m in self._cls_list:
-            if hasattr(m, 'userJoined'):
-                m.userJoined(user, channel)
+            if self.is_plugin_enabled(channel, m):
+                if hasattr(m, 'userJoined'):
+                    m.userJoined(user, channel)
 
 
     def userLeft(self, user, channel):
         for m in self._cls_list:
-            if hasattr(m, 'userLeft'):
-                m.userLeft(user, channel)
+            if self.is_plugin_enabled(channel, m):
+                if hasattr(m, 'userLeft'):
+                    m.userLeft(user, channel)
 
 
     def userQuit(self, user, quitMessage):
@@ -282,15 +336,17 @@ class PluginDespatcher(object):
 
     def noticed(self, user, channel, message):
         for m in self._cls_list:
-            if hasattr(m, 'noticed'):
-                m.noticed(user, channel, message)
+            if self.is_plugin_enabled(channel, m):
+                if hasattr(m, 'noticed'):
+                    m.noticed(user, channel, message)
 
 
     def privmsg(self, user, channel, message):
         for m in self._cls_list:
-            if hasattr(m, 'privmsg'):
-                logger.debug("Invoking privmsg of module " + str(m))
-                m.privmsg(user, channel, message)
+            if self.is_plugin_enabled(channel, m): 
+                if hasattr(m, 'privmsg'):
+                    logger.debug("Invoking privmsg of module " + str(m))
+                    m.privmsg(user, channel, message)
 
 
     def command(self, nick, user, chan, orig_msg, msg, act):
@@ -303,22 +359,23 @@ class PluginDespatcher(object):
             
             matched_fn = []
             for m in self._cls_list:
-                if hasattr(m, 'commands'):
-                    for rgx_s, f, _ in m.commands:
-                        regex = re.match(rgx_s, msg)
-                        plugin_id = m.plugin[0]
-                        s = plugin_id + "\s+" + rgx_s
-                        regex2 = re.match(s, msg)
-                        if regex2:
-                            # clean_line is line without the plugin id
-                            kwargs['clean_line'] = re.sub(plugin_id + "\s+", "", msg)
-                            f(regex2, chan, nick, **kwargs)
-                            return
-                        elif regex:
-                            kwargs['clean_line'] = msg
-                            logger.debug('matching %s regex = %s' % (str(m.plugin), s))
-                            matched_fn.append((f, regex, m.plugin))
-                            
+                if self.is_plugin_enabled(chan, m): 
+                    if hasattr(m, 'commands'):
+                        for rgx_s, f, _ in m.commands:
+                            regex = re.match(rgx_s, msg)
+                            plugin_id = m.plugin[0]
+                            s = plugin_id + "\s+" + rgx_s
+                            regex2 = re.match(s, msg)
+                            if regex2:
+                                # clean_line is line without the plugin id
+                                kwargs['clean_line'] = re.sub(plugin_id + "\s+", "", msg)
+                                f(regex2, chan, nick, **kwargs)
+                                return
+                            elif regex:
+                                kwargs['clean_line'] = msg
+                                logger.debug('matching %s regex = %s' % (str(m.plugin), s))
+                                matched_fn.append((f, regex, m.plugin))
+                                
             # === Undernet Hack? ====
             # IRC servers seems to pass chan as nickname of bot's name
             # so we try to reverse this here.
@@ -353,17 +410,22 @@ class PluginDespatcher(object):
 
     def joined(self, channel):
         for m in self._cls_list:
-            if hasattr(m, 'joined'):
-                m.joined(channel)
+            if hasattr(m, 'system') and m.system:
+                self.enable_plugin(channel, m)
+            if self.is_plugin_enabled(channel, m):         
+                if hasattr(m, 'joined'):
+                    m.joined(channel)
 
 
     def left(self, channel):
         for m in self._cls_list:
-            if hasattr(m, 'left'):
-                m.left(channel)
+            if self.is_plugin_enabled(channel, m):
+                if hasattr(m, 'left'):
+                    m.left(channel)
 
 
     def userRenamed(self, oldname, newname):
         for m in self._cls_list:
-            if hasattr(m, 'userRenamed'):
-                m.userRenamed(oldname, newname)
+            if self.is_plugin_enabled(channel, m):
+                if hasattr(m, 'userRenamed'):
+                    m.userRenamed(oldname, newname)
