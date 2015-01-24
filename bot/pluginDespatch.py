@@ -51,7 +51,14 @@ class AuthenticatedUsers(object):
         else:
             return False
         
+    def _perm_exists(self, model, perm):
+        for permission, _ in model._meta.permissions:
+            if perm == permission:
+                return True
+        return False
+    
     def is_authorised(self, nick, network, chan, capability):
+
         user = None
         for d in self.users:
             if nick.lower() == d['nick']:
@@ -59,6 +66,19 @@ class AuthenticatedUsers(object):
                 break
         if not user:
             return False
+        
+        
+        # do a quick assert to make sure we have a valid permissions,
+        #if not the code is broken.
+        if chan == '#':
+            assert self._perm_exists(NetworkPermissions, capability)
+        else:
+            # Permissions don't make sense with regard to
+            # a private message window so we shouldn't be 
+            # asking...
+            assert chan[0] == '#'
+            assert self._perm_exists(RoomPermissions, capability)
+
 
         # Test if user is a net_admin and if so they always
         # have the capability
@@ -156,6 +176,12 @@ class Plugin(object):
                     
                 
             
+    def join(self,channel):
+        self.irc_conn.join(channel)
+    
+    def part(self,channel):
+        self.irc_conn.part(channel)
+    
     def say(self, channel, message):
         if channel[0] == '#':
             self.irc_conn.queue_message('say', channel, message)

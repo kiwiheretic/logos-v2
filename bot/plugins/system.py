@@ -51,6 +51,10 @@ class SystemCoreCommands(Plugin):
                          (r'unassign\s+(?:perm|permission)\s+(?P<perm>[a-z_]+)\s+to\s+(?P<username>[^\s]+)', self.unassign_net_perms, "assign permission to username"),
                          (r'unassign\s+(?:perm|permission)\s+(?P<room>#[a-zA-z0-9-]+)\s+(?P<perm>[a-z_]+)\s+to\s+(?P<username>[^\s]+)', self.unassign_room_perms, "assign permission to username"),
                          (r'(?:perms|permissions)\s+(?P<username>[^\s]+)', self.perms, "list permissions for user"),
+                         (r'join\s+room\s+(?P<room>#[a-zA-z0-9-]+)', self.join_room,
+                          "Request bot to join a room"),
+                         (r'part\s+room\s+(?P<room>#[a-zA-z0-9-]+)', self.part_room,
+                          "Request bot to part a room"), 
                          (r'cmd\s+(.*)', self.cmd, "Have bot perform an IRC command"),
                          (r'say\s+(?P<room>#[a-zA-z0-9-]+)\s+(.*)', self.speak, "Say something into a room"),
                          (r'set\s+(?P<room>#[a-zA-z0-9-]+)\s+(?:activation|trigger)\s+\"(.)\"', self.set_trigger,
@@ -286,7 +290,23 @@ class SystemCoreCommands(Plugin):
                 self.say(chan, "Permission not found")
         else:
             self.msg(chan, "You are not authorised or not logged in")
+
+    def join_room(self, regex, chan, nick, **kwargs):
+        if self.get_auth().is_authorised(nick, self.network, '#', 'join_or_part_room'):
+            room = regex.group('room')
+            self.join(room)
+        else:
+            self.msg(chan, "You are not authorised or not logged in")
         
+    
+    def part_room(self, regex, chan, nick, **kwargs):
+        if self.get_auth().is_authorised(nick, self.network, '#', 'join_or_part_room'):
+            room = regex.group('room')
+            self.part(room)
+        else:
+            self.msg(chan, "You are not authorised or not logged in")
+    
+           
     def speak(self, regex, chan, nick, **kwargs):
 
         ch = regex.group('room')
