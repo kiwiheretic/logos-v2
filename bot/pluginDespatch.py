@@ -24,8 +24,9 @@ class CommandException(Exception):
         return repr(self.user + ':' + self.chan + ':' + self.msg)
 
 class AuthenticatedUsers(object):
-    def __init__(self):
+    def __init__(self, network):
         self.users = []
+        self.network = network
     
     def set_password(self, nick, pw):
         user = None
@@ -57,7 +58,7 @@ class AuthenticatedUsers(object):
                 return True
         return False
     
-    def is_authorised(self, nick, network, chan, capability):
+    def is_authorised(self, nick, chan, capability):
 
         user = None
         for d in self.users:
@@ -244,7 +245,7 @@ class PluginDespatcher(object):
         
         self._obj_list = []  # the plugin object list of all loaded plugins
         self.irc_conn = irc_conn
-        self.authenticated_users = AuthenticatedUsers()
+        self.authenticated_users = AuthenticatedUsers(self.irc_conn.factory.network)
         NetworkPlugins.objects.filter(network=self.irc_conn.factory.network).update(loaded=False)
         dirs = os.listdir(settings.BASE_DIR + os.sep + os.path.join('bot', 'plugins'))
         for m in dirs:

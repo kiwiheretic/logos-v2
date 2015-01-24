@@ -78,7 +78,7 @@ class SystemCoreCommands(Plugin):
                                                      order_by('room'):
             name = plugin.net.plugin.name
             room = plugin.room
-            if self.get_auth().is_authorised(nick, self.network, room, 'enable_plugins'):
+            if self.get_auth().is_authorised(nick, room, 'enable_plugins'):
                 if room != last_room:
                     self.say(chan, "Room: {}".format(room))
                 descr = plugin.net.plugin.description
@@ -88,7 +88,7 @@ class SystemCoreCommands(Plugin):
                 
     def enable_plugin(self, regex, chan, nick, **kwargs):
         room = regex.group('room')
-        if self.get_auth().is_authorised(nick, self.network, room, 'enable_plugins'):
+        if self.get_auth().is_authorised(nick,  room, 'enable_plugins'):
             plugin_name = re.sub('-','_',regex.group('plugin'))
             if super(SystemCoreCommands, self).enable_plugin(chan, plugin_name):
                 self.say(chan, "plugin enabled successfully")
@@ -99,7 +99,7 @@ class SystemCoreCommands(Plugin):
                 
     def disable_plugin(self, regex, chan, nick, **kwargs):
         room = regex.group('room')
-        if self.get_auth().is_authorised(nick, self.network, room, 'enable_plugins'):
+        if self.get_auth().is_authorised(nick,  room, 'enable_plugins'):
             plugin_name = re.sub('-','_',regex.group('plugin'))
             if super(SystemCoreCommands, self).disable_plugin(chan, plugin_name):
                 self.say(chan, "plugin disabled successfully")
@@ -112,7 +112,7 @@ class SystemCoreCommands(Plugin):
         username = regex.group('username')
         password = regex.group('password')
         email = regex.group('email')        
-        if self.get_auth().is_authorised(nick, self.network, '#', 'net_admin'):
+        if self.get_auth().is_authorised(nick,  '#', 'net_admin'):
             try:
                 user = User.objects.get(username = username.lower())
             except User.DoesNotExist:
@@ -180,7 +180,7 @@ class SystemCoreCommands(Plugin):
                 last_perms = perms
 
     def assign_net_perms(self, regex, chan, nick, **kwargs):
-        if self.get_auth().is_authorised(nick, self.network, '#', 'net_admin'):
+        if self.get_auth().is_authorised(nick,  '#', 'net_admin'):
             username = regex.group('username').lower()
             try:
                 user = User.objects.get(username = username)
@@ -207,7 +207,7 @@ class SystemCoreCommands(Plugin):
             self.msg(chan, "You are not authorised or not logged in")
             
     def unassign_net_perms(self, regex, chan, nick, **kwargs):
-        if self.get_auth().is_authorised(nick, self.network, '#', 'net_admin'):
+        if self.get_auth().is_authorised(nick,  '#', 'net_admin'):
             username = regex.group('username').lower()
             try:
                 user = User.objects.get(username = username)
@@ -235,7 +235,7 @@ class SystemCoreCommands(Plugin):
 
     def assign_room_perms(self, regex, chan, nick, **kwargs):
         room = regex.group('room')
-        if self.get_auth().is_authorised(nick, self.network, '#', 'net_admin'):
+        if self.get_auth().is_authorised(nick,  '#', 'net_admin'):
             username = regex.group('username').lower()
             try:
                 user = User.objects.get(username = username)
@@ -264,7 +264,7 @@ class SystemCoreCommands(Plugin):
             
     def unassign_room_perms(self, regex, chan, nick, **kwargs):
         room = regex.group('room')
-        if self.get_auth().is_authorised(nick, self.network, '#', 'net_admin'):
+        if self.get_auth().is_authorised(nick,  '#', 'net_admin'):
             username = regex.group('username').lower()
             try:
                 user = User.objects.get(username = username)
@@ -292,7 +292,7 @@ class SystemCoreCommands(Plugin):
             self.msg(chan, "You are not authorised or not logged in")
 
     def join_room(self, regex, chan, nick, **kwargs):
-        if self.get_auth().is_authorised(nick, self.network, '#', 'join_or_part_room'):
+        if self.get_auth().is_authorised(nick,  '#', 'join_or_part_room'):
             room = regex.group('room')
             self.join(room)
         else:
@@ -300,7 +300,7 @@ class SystemCoreCommands(Plugin):
         
     
     def part_room(self, regex, chan, nick, **kwargs):
-        if self.get_auth().is_authorised(nick, self.network, '#', 'join_or_part_room'):
+        if self.get_auth().is_authorised(nick,  '#', 'join_or_part_room'):
             room = regex.group('room')
             self.part(room)
         else:
@@ -310,7 +310,7 @@ class SystemCoreCommands(Plugin):
     def speak(self, regex, chan, nick, **kwargs):
 
         ch = regex.group('room')
-        if self.get_auth().is_authorised(nick, self.network, ch, 'can_speak'):
+        if self.get_auth().is_authorised(nick,  ch, 'can_speak'):
 
             text = regex.group(2)
             self.msg(ch, text)
@@ -319,7 +319,7 @@ class SystemCoreCommands(Plugin):
 
     def set_greet(self, regex, chan, nick, **kwargs):
         ch = regex.group('room')
-        if self.get_auth().is_authorised(nick, self.network, ch, 'set_greeting'):
+        if self.get_auth().is_authorised(nick,  ch, 'set_greeting'):
             greet_msg = regex.group(2)
             set_room_option(self.factory.network, ch, \
                     'greet_message', greet_msg)
@@ -329,7 +329,7 @@ class SystemCoreCommands(Plugin):
                               
     def set_trigger(self, regex, chan, nick, **kwargs):
         ch = regex.group('room')
-        if self.get_auth().is_authorised(nick, self.network, ch, 
+        if self.get_auth().is_authorised(nick,  ch, 
                                                   'change_trigger'):
             # Command issued to bot to change the default activation
             # character.
@@ -346,7 +346,7 @@ class SystemCoreCommands(Plugin):
             self.msg(chan, "You are not authorised to change trigger for this room")
                                       
     def set_pvt_trigger(self, regex, chan, nick, **kwargs):
-        if self.get_auth().is_authorised(nick, self.network, '#', 
+        if self.get_auth().is_authorised(nick,  '#', 
                                                   'change_pvt_trigger'):
             # Command issued to bot to change the default activation
             # character.
@@ -359,7 +359,7 @@ class SystemCoreCommands(Plugin):
                        
     def cmd(self, regex, chan, nick, **kwargs):
 
-        if self.get_auth().is_authorised(nick, self.network, '#', 'irc_cmd'):
+        if self.get_auth().is_authorised(nick,  '#', 'irc_cmd'):
             # Have the bot issue any IRC command
             
             line = regex.group(1)

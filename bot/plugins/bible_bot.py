@@ -516,7 +516,7 @@ class BibleBot(Plugin):
                    
     def set_pvt_translation(self, regex, chan, nick, **kwargs):
        
-        if self.get_auth().is_authorised(nick, self.network, '#', 'set_pvt_version'):
+        if self.get_auth().is_authorised(nick,  '#', 'set_pvt_version'):
             trans = regex.group(1)
             translations = self._get_translations()                        
             if trans not in translations:
@@ -530,7 +530,7 @@ class BibleBot(Plugin):
                              
     def set_default_trans(self, regex, chan, nick, **kwargs):
         room = regex.group('room')
-        if self.get_auth().is_authorised(nick, self.network, room, 'set_default_translation'):
+        if self.get_auth().is_authorised(nick,  room, 'set_default_translation'):
             def_trans = regex.group(2)
             translations = self._get_translations()                        
             if def_trans not in translations:
@@ -546,7 +546,7 @@ class BibleBot(Plugin):
                            
     def set_search_limit(self, regex, chan, nick, **kwargs):
         room = regex.group('room')
-        if self.get_auth().is_authorised(nick, self.network, room, 'set_verse_limits'):
+        if self.get_auth().is_authorised(nick,  room, 'set_verse_limits'):
       
             searchlmt = int(regex.group(2))
             # Get the channel the user is authorised to access
@@ -563,7 +563,7 @@ class BibleBot(Plugin):
                    
     def set_verse_limit(self, regex, chan, nick, **kwargs):
         room = regex.group('room')
-        if self.get_auth().is_authorised(nick, self.network, room, 'set_verse_limits'):
+        if self.get_auth().is_authorised(nick,  room, 'set_verse_limits'):
     
             verselmt = int(regex.group(2))
             
