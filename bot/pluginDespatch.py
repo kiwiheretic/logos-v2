@@ -527,6 +527,6 @@ class PluginDespatcher(object):
 
     def userRenamed(self, oldname, newname):
         for m in self._obj_list:
-            if self.is_plugin_enabled(channel, m):
-                if hasattr(m, 'userRenamed'):
-                    m.userRenamed(oldname, newname)
+            # nick changes are not channel specific
+            if hasattr(m, 'userRenamed'):
+                m.userRenamed(oldname, newname)
