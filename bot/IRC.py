@@ -60,6 +60,14 @@ class NicksDB:
         # when we get a RPL_NAMREPLY response as to who is actually in room.
         self.nicks_in_room[channel.lower()] = []
         
+    def nick_in_any_room(self, nick):
+        """ Is nick in any room that the bot knows about, not
+        any room on the entire network """
+        for room in self.nicks_in_room.keys():
+            if self.nick_in_room(nick, room):
+                return True
+        return False
+            
     def nick_in_room(self, user, channel):
         if channel.lower() in self.nicks_in_room:
             for nick_info in self.nicks_in_room[channel.lower()]:

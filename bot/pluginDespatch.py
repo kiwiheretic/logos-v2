@@ -132,6 +132,8 @@ class AuthenticatedUsers(object):
                 new_list.append(d)
         self.users = new_list
         
+
+
 class Plugin(object):
     """ Base Class for all plugins """
     def __init__(self, despatcher, irc_conn):
@@ -151,6 +153,11 @@ class Plugin(object):
     def get_room_nicks(self, room):
         return self.irc_conn.get_room_nicks(room)
 
+    def is_nick_in_rooms(self, nick):
+        """ Is nick in any room that the bot knows
+        about """
+        return self.irc_conn.nicks_db.nick_in_any_room(nick)
+        
     def get_auth(self):
         return self.despatcher.authenticated_users
     

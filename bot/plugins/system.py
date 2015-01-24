@@ -404,6 +404,13 @@ class SystemCoreCommands(Plugin):
             greet_msg = re.sub("%nick%", nick, greet_msg)
             self.notice(nick, str(greet_msg))
             logger.info("Greet message sent to " + nick)
+
+    def userLeft(self, user, channel):
+        if not self.is_nick_in_rooms(user):
+            self.get_auth().remove(user)
+        
+    def userQuit(self, user, quitMessage):
+        self.get_auth().remove(user)
         
     def userRenamed(self, oldname, newname):
         self.get_auth().rename(oldname, newname)
