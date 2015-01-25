@@ -151,7 +151,8 @@ class SystemCoreCommands(Plugin):
             try:
                 user = User.objects.get(username = username.lower())
             except User.DoesNotExist:
-                user = User(username = username.lower(), password = password, email = email)
+                user = User(username = username.lower(), email = email)
+                user.set_password(password)
                 user.save()
                 self.msg(chan, "User successfully created")
             else:
