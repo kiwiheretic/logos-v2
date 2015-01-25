@@ -167,8 +167,17 @@ class Plugin(object):
         
 
     def disable_plugin(self, channel, plugin_name):
-        return self.despatcher.disable_plugin(channel, plugin_name)        
+        return self.despatcher.disable_plugin(channel, plugin_name)
         
+    def net_enable_plugin(self, plugin_name):
+        return self.despatcher.net_enable_plugin(plugin_name)
+        
+
+    def net_disable_plugin(self, plugin_name):
+        return self.despatcher.net_disable_plugin(plugin_name)                
+        
+#       Enabling this method causes epic fail
+#
 #    def __getattr__(self, name):
 #        if hasattr(self.irc_conn, name):
 #            attr = getattr(self.irc_conn, name)
@@ -356,7 +365,35 @@ class PluginDespatcher(object):
         else:
             return False            
     
-                                   
+    def net_enable_plugin(self, plugin_name):
+        try:
+            net_plugin = NetworkPlugins.objects.get(\
+                plugin__name=plugin_name,
+                network = self.irc_conn.factory.network,
+                )
+            net_plugin.enabled = True
+            net_plugin.save()
+            
+            return True
+        except NetworkPlugins.DoesNotExist:
+            return False
+
+        
+    def net_disable_plugin(self, plugin_name):
+        try:
+                net_plugin = NetworkPlugins.objects.get(\
+                    plugin__name=plugin_name,
+                    network = self.irc_conn.factory.network,
+                    )
+                net_plugin.enabled = False
+                net_plugin.save()
+                
+                return True
+
+        except NetworkPlugins.DoesNotExist:
+            return False   
+            
+                                       
     def install_plugin(self, channel, plugin_name, enabled=False):
         if channel[0] =='#':
             net_plugin = NetworkPlugins.objects.get(\
@@ -378,6 +415,17 @@ class PluginDespatcher(object):
             plugin_name, _ = plugin_module.plugin
            
             try:
+                # Make sure the plugin is not disabled at the network plugin
+                # level
+                try:
+                    net_obj = NetworkPlugins.objects.get(\
+                                    network=self.irc_conn.factory.network,
+                                    plugin__name = plugin_name)
+                    if net_obj.enabled == False:
+                        return False
+                except NetworkPlugins.DoesNotExist:
+                    return False
+                
                 obj = RoomPlugins.\
                     objects.get(net__network = self.irc_conn.factory.network,
                                 room = channel.lower(),

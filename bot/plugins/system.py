@@ -4,7 +4,7 @@ import pdb
 
 import django
 from django.contrib.auth.models import User
-from logos.models import RoomPlugins
+from logos.models import NetworkPlugins, RoomPlugins
 from django.contrib.auth import authenticate
 from guardian.shortcuts import assign_perm, get_perms, remove_perm
 
@@ -40,8 +40,12 @@ class SystemCoreCommands(Plugin):
                          (r'list\s+plugins', self.list_plugins, "list all plugins available"),
                          (r'enable\s+plugin\s+(?P<room>#[a-zA-z0-9-]+)\s+(?P<plugin>[a-z_-]+)',
                           self.enable_plugin, "Enable specified plugin for room"),
-                          (r'disable\s+plugin\s+(?P<room>#[a-zA-z0-9-]+)\s+(?P<plugin>[a-z_-]+)',
+                         (r'disable\s+plugin\s+(?P<room>#[a-zA-z0-9-]+)\s+(?P<plugin>[a-z_-]+)',
                           self.disable_plugin, "Disable specified plugin for room"),
+                         (r'net\s+enable\s+plugin\s+(?P<plugin>[a-z_-]+)',
+                          self.net_enable_plugin, "Enable specified plugin for room"),
+                         (r'net\s+disable\s+plugin\s+(?P<plugin>[a-z_-]+)',
+                          self.net_disable_plugin, "Disable specified plugin for room"),
                          (r'list\s+(?:perms|permissions)', self.list_perms, "list all permissions available"),
                          (r'add\s+user\s+(?P<username>[a-zA-z0-9-]+)\s+(?P<email>[a-zA-z0-9-]+@[a-zA-z0-9\.-]+)\s+(?P<password>[a-zA-z0-9-]+)',
                           self.adduser, 'Add user to system'),
@@ -71,21 +75,33 @@ class SystemCoreCommands(Plugin):
         pass
 
     def list_plugins(self, regex, chan, nick, **kwargs):
-        self.say(chan, "=== Loaded Plugins ===")
-        last_room = None
-        for plugin in RoomPlugins.objects.filter(net__loaded = True, 
+        self.say(chan, "=== Plugins ===")
+        self.say(chan, "  === Network Level ===")
+
+        for net_plugin in NetworkPlugins.objects.filter(network=self.network,\
+                                                        loaded=True):
+            plugin_name = net_plugin.plugin.name
+            enabled = net_plugin.enabled
+            self.say(chan, "    {0:.<15} {1}".format(plugin_name, enabled))
+        
+        
+        last_room = None            
+        for plugin in RoomPlugins.objects.filter(net__loaded = True,
+                                                 net__enabled = True, 
                                                  net__network=self.network).\
                                                      order_by('room'):
             name = plugin.net.plugin.name
             room = plugin.room
             if self.get_auth().is_authorised(nick, room, 'enable_plugins'):
                 if room != last_room:
-                    self.say(chan, "Room: {}".format(room))
+                    if last_room == None:
+                        self.say(chan, "  === Room Level ===")
+                    self.say(chan, "    Room: {}".format(room))
                 descr = plugin.net.plugin.description
                 enabled = plugin.enabled
-                self.say(chan, "  {0:.<15} {1}".format(name, enabled))
+                self.say(chan, "      {0:.<15} {1}".format(name, enabled))
                 last_room = room
-                
+        self.say(chan, "*** End of List ***")        
     def enable_plugin(self, regex, chan, nick, **kwargs):
         room = regex.group('room')
         if self.get_auth().is_authorised(nick,  room, 'enable_plugins'):
@@ -98,11 +114,30 @@ class SystemCoreCommands(Plugin):
             self.msg(chan, "You are not authorised or not logged in")
                 
     def disable_plugin(self, regex, chan, nick, **kwargs):
-        room = regex.group('room')
         if self.get_auth().is_authorised(nick,  room, 'enable_plugins'):
             plugin_name = re.sub('-','_',regex.group('plugin'))
             if super(SystemCoreCommands, self).disable_plugin(chan, plugin_name):
                 self.say(chan, "plugin disabled successfully")
+            else:
+                self.say(chan, "plugin could not be disabled")
+        else:
+            self.msg(chan, "You are not authorised or not logged in")
+
+    def net_enable_plugin(self, regex, chan, nick, **kwargs):
+        if self.get_auth().is_authorised(nick,  '#', 'net_disable_plugins'):
+            plugin_name = re.sub('-','_',regex.group('plugin'))
+            if super(SystemCoreCommands, self).net_enable_plugin(plugin_name):
+                self.say(chan, "plugin enabled at network level successfully")
+            else:
+                self.say(chan, "plugin could not be enabled")
+        else:
+            self.msg(chan, "You are not authorised or not logged in")
+                
+    def net_disable_plugin(self, regex, chan, nick, **kwargs):
+        if self.get_auth().is_authorised(nick,  '#', 'net_disable_plugins'):
+            plugin_name = re.sub('-','_',regex.group('plugin'))
+            if super(SystemCoreCommands, self).net_disable_plugin(plugin_name):
+                self.say(chan, "plugin disabled at network level successfully")
             else:
                 self.say(chan, "plugin could not be disabled")
         else:

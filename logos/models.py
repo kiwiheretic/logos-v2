@@ -88,6 +88,7 @@ class NetworkPermissions(models.Model):
     class Meta:
         permissions = (
             ('net_admin', 'Create user logins and assign permissions'),
+            ('net_disable_plugins', 'Can disable plugins network wide'),
             ('join_or_part_room', 'Join or part bot to rooms'),
             ('irc_cmd', 'Issue arbitrary command to bot'),
             ('set_pvt_version', 'Set bible version default in private chat window'),
