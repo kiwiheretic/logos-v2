@@ -84,34 +84,34 @@ class AuthenticatedUsers(object):
         # Test if user is a net_admin and if so they always
         # have the capability
         try:
-            net_perm = NetworkPermissions.objects.get(network=network)
+            net_perm = NetworkPermissions.objects.get(network=self.network)
         except NetworkPermissions.DoesNotExist:
             net_perm = None
         if net_perm:
             qs = get_objects_for_user(user, "net_admin", NetworkPermissions)
-            if qs.filter(network=network).exists():
+            if qs.filter(network=self.network).exists():
                 return True
 
         
         if chan == '#':
            
             qs = get_objects_for_user(user, capability, NetworkPermissions)
-            permission = qs.filter(network=network).exists()
+            permission = qs.filter(network=self.network).exists()
             return permission
         else:
             # Test if user is a room_admin for the room in question
             # and if so they always have the capability
             try:
-                room_perm = RoomPermissions.objects.get(network=network, room=chan.lower())
+                room_perm = RoomPermissions.objects.get(network=self.network, room=chan.lower())
             except RoomPermissions.DoesNotExist:
                 return False
             qs = get_objects_for_user(user, 'room_admin', RoomPermissions)
-            permission = qs.filter(network=network, room=chan.lower()).exists()
+            permission = qs.filter(network=self.network, room=chan.lower()).exists()
             if permission:
                 return True
             
             qs = get_objects_for_user(user, capability, RoomPermissions)
-            permission = qs.filter(network=network, room=chan.lower()).exists()
+            permission = qs.filter(network=self.network, room=chan.lower()).exists()
             return permission
           
     def add(self, nick, host, user):
