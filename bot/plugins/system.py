@@ -169,12 +169,12 @@ class SystemCoreCommands(Plugin):
         host = self.get_host(nick)
 
         try:
-            user = User.objects.get(username = nick.lower())
+            user = User.objects.get(username__iexact = nick.lower())
         except User.DoesNotExist:
             self.say(chan, "Invalid Nick")
             return
         
-        if authenticate(username= nick.lower(), password= password):
+        if user.check_password(password):
             self.get_auth().add(nick, host, user)
             self.say(chan, "Login successful")
         else:
