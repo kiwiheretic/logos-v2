@@ -38,7 +38,7 @@ class Command(BaseCommand):
 
     def cmd_setpass(self, username, password):
         try:
-            user = User.objects.get(username = username.lower())
+            user = User.objects.get(username__iexact = username.lower())
         except User.DoesNotExist:
             self.stdout.write("Unknown user")
             return 
@@ -67,7 +67,7 @@ class Command(BaseCommand):
 #            return
         
         try:
-            user = User.objects.get(username = username)
+            user = User.objects.get(username__iexact = username)
         except User.DoesNotExist:
             self.stdout.write("Unknown user")
             return
@@ -127,7 +127,7 @@ class Command(BaseCommand):
             self.stdout.write("Unknown permission type")
             return
         try:
-            user = User.objects.get(username = username)
+            user = User.objects.get(username__iexact = username)
         except User.DoesNotExist:
             self.stdout.write("Unknown user")
             return
@@ -137,7 +137,7 @@ class Command(BaseCommand):
         
     def cmd_getperms(self, username):
         try:
-            user = User.objects.get(username = username)
+            user = User.objects.get(username__iexact = username)
         except User.DoesNotExist:
             self.stdout.write("Unknown user")
             return
