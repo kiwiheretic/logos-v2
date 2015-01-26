@@ -35,7 +35,7 @@ class SystemCoreCommands(Plugin):
         super(SystemCoreCommands, self).__init__(*args)
         self.commands = ( \
                          (r'login\s+(?P<password>[a-zA-z0-9-]+)', self.login, 'Login into the bot'),
-#                         (r'logout', self.logout, "Log out of bot"),
+                         (r'logout', self.logout, "Log out of bot"),
                          (r'version\s*$', self.version, "Show this bot's version info"),
                          (r'list\s+plugins', self.list_plugins, "list all plugins available"),
                          (r'enable\s+plugin\s+(?P<room>#[a-zA-z0-9-]+)\s+(?P<plugin>[a-z_-]+)',
@@ -156,7 +156,7 @@ class SystemCoreCommands(Plugin):
                 user.save()
                 self.msg(chan, "User successfully created")
             else:
-                self.msg(chan, "User already exists in databse")
+                self.msg(chan, "User already exists in database")
         else:
             self.msg(chan, "You are not authorised or not logged in")
                     
@@ -179,6 +179,10 @@ class SystemCoreCommands(Plugin):
             self.say(chan, "Login successful")
         else:
             self.say(chan, "Login failed")
+
+    def logout(self, regex, chan, nick, **kwargs):
+        self.get_auth().remove(nick)
+        self.say(chan, "Logged out")
 
     def list_perms(self, regex, chan, nick, **kwargs):
         self.say(chan, "=== Network Permissions ===")
