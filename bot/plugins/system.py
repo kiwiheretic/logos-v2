@@ -149,7 +149,7 @@ class SystemCoreCommands(Plugin):
         email = regex.group('email')        
         if self.get_auth().is_authorised(nick,  '#', 'net_admin'):
             try:
-                user = User.objects.get(username = username.lower())
+                user = User.objects.get(username__iexact = username.lower())
             except User.DoesNotExist:
                 user = User(username = username.lower(), email = email)
                 user.set_password(password)
@@ -196,7 +196,7 @@ class SystemCoreCommands(Plugin):
     def perms(self, regex, chan, nick, **kwargs):
         username = regex.group('username').lower()
         try:
-            user = User.objects.get(username = username)
+            user = User.objects.get(username__iexact = username)
         except User.DoesNotExist:
             self.say(chan, "Unknown user")
             return
@@ -223,7 +223,7 @@ class SystemCoreCommands(Plugin):
         if self.get_auth().is_authorised(nick,  '#', 'net_admin'):
             username = regex.group('username').lower()
             try:
-                user = User.objects.get(username = username)
+                user = User.objects.get(username__iexact = username)
             except User.DoesNotExist:
                 self.say(chan, "Unknown user")
                 return
@@ -250,7 +250,7 @@ class SystemCoreCommands(Plugin):
         if self.get_auth().is_authorised(nick,  '#', 'net_admin'):
             username = regex.group('username').lower()
             try:
-                user = User.objects.get(username = username)
+                user = User.objects.get(username__iexact = username)
             except User.DoesNotExist:
                 self.say(chan, "Unknown user")
                 return
@@ -278,7 +278,7 @@ class SystemCoreCommands(Plugin):
         if self.get_auth().is_authorised(nick,  '#', 'net_admin'):
             username = regex.group('username').lower()
             try:
-                user = User.objects.get(username = username)
+                user = User.objects.get(username__iexact = username)
             except User.DoesNotExist:
                 self.say(chan, "Unknown user")
                 return
@@ -307,7 +307,7 @@ class SystemCoreCommands(Plugin):
         if self.get_auth().is_authorised(nick,  '#', 'net_admin'):
             username = regex.group('username').lower()
             try:
-                user = User.objects.get(username = username)
+                user = User.objects.get(username__iexact = username)
             except User.DoesNotExist:
                 self.say(chan, "Unknown user")
                 return
