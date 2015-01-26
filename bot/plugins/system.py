@@ -106,7 +106,7 @@ class SystemCoreCommands(Plugin):
         room = regex.group('room')
         if self.get_auth().is_authorised(nick,  room, 'enable_plugins'):
             plugin_name = re.sub('-','_',regex.group('plugin'))
-            if super(SystemCoreCommands, self).enable_plugin(chan, plugin_name):
+            if super(SystemCoreCommands, self).enable_plugin(room, plugin_name):
                 self.say(chan, "plugin enabled successfully")
             else:
                 self.say(chan, "plugin could not be enabled")
@@ -114,9 +114,10 @@ class SystemCoreCommands(Plugin):
             self.msg(chan, "You are not authorised or not logged in")
                 
     def disable_plugin(self, regex, chan, nick, **kwargs):
+        room = regex.group('room')
         if self.get_auth().is_authorised(nick,  room, 'enable_plugins'):
             plugin_name = re.sub('-','_',regex.group('plugin'))
-            if super(SystemCoreCommands, self).disable_plugin(chan, plugin_name):
+            if super(SystemCoreCommands, self).disable_plugin(room, plugin_name):
                 self.say(chan, "plugin disabled successfully")
             else:
                 self.say(chan, "plugin could not be disabled")
