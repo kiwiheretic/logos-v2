@@ -6,8 +6,10 @@ import logging
 import bot
 import pdb
 from django.conf import settings
+from django.db import transaction
 
-from logos.models import NetworkPermissions, RoomPermissions
+from logos.models import NetworkPermissions, RoomPermissions, \
+    Plugins, NetworkPlugins, RoomPlugins
 from guardian.shortcuts import get_objects_for_user
 
 logger = logging.getLogger(__name__)
@@ -22,8 +24,9 @@ class CommandException(Exception):
         return repr(self.user + ':' + self.chan + ':' + self.msg)
 
 class AuthenticatedUsers(object):
-    def __init__(self):
+    def __init__(self, network):
         self.users = []
+        self.network = network
     
     def set_password(self, nick, pw):
         user = None
@@ -49,7 +52,14 @@ class AuthenticatedUsers(object):
         else:
             return False
         
-    def is_authorised(self, nick, network, chan, capability):
+    def _perm_exists(self, model, perm):
+        for permission, _ in model._meta.permissions:
+            if perm == permission:
+                return True
+        return False
+    
+    def is_authorised(self, nick, chan, capability):
+
         user = None
         for d in self.users:
             if nick.lower() == d['nick']:
@@ -57,38 +67,51 @@ class AuthenticatedUsers(object):
                 break
         if not user:
             return False
+        
+        
+        # do a quick assert to make sure we have a valid permissions,
+        #if not the code is broken.
+        if chan == '#':
+            assert self._perm_exists(NetworkPermissions, capability)
+        else:
+            # Permissions don't make sense with regard to
+            # a private message window so we shouldn't be 
+            # asking...
+            assert chan[0] == '#'
+            assert self._perm_exists(RoomPermissions, capability)
+
 
         # Test if user is a net_admin and if so they always
         # have the capability
         try:
-            net_perm = NetworkPermissions.objects.get(network=network)
+            net_perm = NetworkPermissions.objects.get(network=self.network)
         except NetworkPermissions.DoesNotExist:
             net_perm = None
         if net_perm:
             qs = get_objects_for_user(user, "net_admin", NetworkPermissions)
-            if qs.filter(network=network).exists():
+            if qs.filter(network=self.network).exists():
                 return True
 
         
         if chan == '#':
            
             qs = get_objects_for_user(user, capability, NetworkPermissions)
-            permission = qs.filter(network=network).exists()
+            permission = qs.filter(network=self.network).exists()
             return permission
         else:
             # Test if user is a room_admin for the room in question
             # and if so they always have the capability
             try:
-                room_perm = RoomPermissions.objects.get(network=network, room=chan.lower())
+                room_perm = RoomPermissions.objects.get(network=self.network, room=chan.lower())
             except RoomPermissions.DoesNotExist:
                 return False
             qs = get_objects_for_user(user, 'room_admin', RoomPermissions)
-            permission = qs.filter(network=network, room=chan.lower()).exists()
+            permission = qs.filter(network=self.network, room=chan.lower()).exists()
             if permission:
                 return True
             
             qs = get_objects_for_user(user, capability, RoomPermissions)
-            permission = qs.filter(network=network, room=chan.lower()).exists()
+            permission = qs.filter(network=self.network, room=chan.lower()).exists()
             return permission
           
     def add(self, nick, host, user):
@@ -110,11 +133,13 @@ class AuthenticatedUsers(object):
                 new_list.append(d)
         self.users = new_list
         
+
+
 class Plugin(object):
     """ Base Class for all plugins """
-    def __init__(self, dispatcher, irc_conn):
+    def __init__(self, despatcher, irc_conn):
         self.irc_conn = irc_conn
-        self.dispatcher = dispatcher
+        self.despatcher = despatcher
         self.factory = irc_conn.factory
         self.reactor = self.factory.reactor
         self.network = irc_conn.factory.network
@@ -129,14 +154,30 @@ class Plugin(object):
     def get_room_nicks(self, room):
         return self.irc_conn.get_room_nicks(room)
 
+    def is_nick_in_rooms(self, nick):
+        """ Is nick in any room that the bot knows
+        about """
+        return self.irc_conn.nicks_db.nick_in_any_room(nick)
+        
     def get_auth(self):
-        return self.dispatcher.authenticated_users
+        return self.despatcher.authenticated_users
     
-    def signal(self, scope, message_id, *args):
-        self.dispatcher.signal_plugins(self, scope, message_id, *args)
+    def enable_plugin(self, channel, plugin_name):
+        return self.despatcher.enable_plugin(channel, plugin_name)
         
 
-    
+    def disable_plugin(self, channel, plugin_name):
+        return self.despatcher.disable_plugin(channel, plugin_name)
+        
+    def net_enable_plugin(self, plugin_name):
+        return self.despatcher.net_enable_plugin(plugin_name)
+        
+
+    def net_disable_plugin(self, plugin_name):
+        return self.despatcher.net_disable_plugin(plugin_name)                
+        
+#       Enabling this method causes epic fail
+#
 #    def __getattr__(self, name):
 #        if hasattr(self.irc_conn, name):
 #            attr = getattr(self.irc_conn, name)
@@ -152,6 +193,12 @@ class Plugin(object):
                     
                 
             
+    def join(self,channel):
+        self.irc_conn.join(channel)
+    
+    def part(self,channel):
+        self.irc_conn.part(channel)
+    
     def say(self, channel, message):
         if channel[0] == '#':
             self.irc_conn.queue_message('say', channel, message)
@@ -205,11 +252,10 @@ class PluginDespatcher(object):
         """ This imports all the .py files in
         the plugins folder """
         
+        self._obj_list = []  # the plugin object list of all loaded plugins
         self.irc_conn = irc_conn
-        self._cls_list = []
-
-        self.authenticated_users = AuthenticatedUsers()
-                
+        self.authenticated_users = AuthenticatedUsers(self.irc_conn.factory.network)
+        NetworkPlugins.objects.filter(network=self.irc_conn.factory.network).update(loaded=False)
         dirs = os.listdir(settings.BASE_DIR + os.sep + os.path.join('bot', 'plugins'))
         for m in dirs:
             if m == '__init__.py' : continue
@@ -232,22 +278,171 @@ class PluginDespatcher(object):
                     issubclass(a1, Plugin) and \
                     hasattr(a1, 'plugin'):  
                         logger.info('loading module '+'bot.plugins.'+m)
-                        self._cls_list.append(a1(self, irc_conn))
+                        plugin_object = a1(self, irc_conn)
+                        if hasattr(plugin_object, 'system') and plugin_object.system:
+                            system = True
+                        else:
+                            system = False
+                        self._obj_list.append(plugin_object)
+                        
+                        with transaction.atomic():
+                            plugin_name, descr = plugin_object.plugin
+                            plugin, created = Plugins.objects.\
+                                get_or_create(name=plugin_name,
+                                              description=descr)
+                            plugin.system = system
+                            plugin.save()
+                            net_plugin, created = NetworkPlugins.objects.\
+                                get_or_create(plugin=plugin,
+                                    network=self.irc_conn.factory.network,
+                                    defaults={'loaded': True})
+                            
+                            if hasattr(plugin_object,'system') and \
+                                plugin_object.system:
+                                net_plugin.enabled = True
+                            else:
+                                if created:
+                                    net_plugin.enabled = False
+
+                            net_plugin.loaded = True
+                            net_plugin.save()    
+                        
                         break
             except ImportError, e:
                 logger.error("ImportError: "+str(e))
 
-        logger.debug(str(self._cls_list))
+        logger.debug(str(self._obj_list))
 
+    def enable_plugin(self, channel, plugin_name):
+        if channel[0] =='#':
+            try:
+                room_plugin = RoomPlugins.objects.get(\
+                    net__plugin__name=plugin_name,
+                    net__network = self.irc_conn.factory.network,
+                    room=channel)
+                room_plugin.enabled = True
+                room_plugin.save()
+                
+                # if we enable a plugin in a room its as if the bot
+                # has just joined this room
+                for plugin_obj in self._obj_list:
+                    plg_name, _ = plugin_obj.plugin
+                    if plg_name == plugin_name:
+                        if hasattr(plugin_obj, 'joined'):
+                            plugin_obj.joined(channel)
+                        break
+                    
+                return True
+            except RoomPlugins.DoesNotExist:
+                return False
+        else:
+            return False
+        
+    def disable_plugin(self, channel, plugin_name):
+        if channel[0] =='#':
+            try:
+                room_plugin = RoomPlugins.objects.get(\
+                    net__plugin__name=plugin_name,
+                    net__network = self.irc_conn.factory.network,
+                    room=channel)
+                if room_plugin.net.plugin.system:
+                    return False
+                room_plugin.enabled = False
+                room_plugin.save()
+                
+                # if we enable a plugin in a room its as if the bot
+                # has just left this room
+                for plugin_obj in self._obj_list:
+                    plg_name, _ = plugin_obj.plugin
+                    if plg_name == plugin_name:
+                        if hasattr(plugin_obj, 'left'):
+                            plugin_obj.left(channel)
+                        break
+                
+                return True
+            except RoomPlugins.DoesNotExist:
+                return False    
+        else:
+            return False            
     
-    def signal_plugins(self, sender, scope, msg_id, *args):
-        # currently not used
-        for cls in self._cls_list:
-            if cls != sender:
-                if hasattr(cls, 'onSignal'):
-                    cls.onSignal(scope, msg_id, *args)
+    def net_enable_plugin(self, plugin_name):
+        try:
+            net_plugin = NetworkPlugins.objects.get(\
+                plugin__name=plugin_name,
+                network = self.irc_conn.factory.network,
+                )
+            net_plugin.enabled = True
+            net_plugin.save()
             
+            return True
+        except NetworkPlugins.DoesNotExist:
+            return False
+
+        
+    def net_disable_plugin(self, plugin_name):
+        try:
+                net_plugin = NetworkPlugins.objects.get(\
+                    plugin__name=plugin_name,
+                    network = self.irc_conn.factory.network,
+                    )
+                net_plugin.enabled = False
+                net_plugin.save()
+                
+                return True
+
+        except NetworkPlugins.DoesNotExist:
+            return False   
+            
+                                       
+    def install_plugin(self, channel, plugin_name, enabled=False):
+        if channel[0] =='#':
+            net_plugin = NetworkPlugins.objects.get(\
+                            plugin__name=plugin_name,
+                            network=self.irc_conn.factory.network)
+                                                    
+            room_plugin, created = RoomPlugins.objects.get_or_create(\
+                                        net=net_plugin,
+                                        room=channel.lower())
+            if created:
+                if room_plugin.net.plugin.system:
+                    room_plugin.enabled = True
+                else:
+                    room_plugin.enabled = enabled
+                room_plugin.save()
     
+    def is_plugin_enabled(self, channel, plugin_module):
+        if channel[0]=='#':
+            plugin_name, _ = plugin_module.plugin
+           
+            try:
+                # Make sure the plugin is not disabled at the network plugin
+                # level
+                try:
+                    net_obj = NetworkPlugins.objects.get(\
+                                    network=self.irc_conn.factory.network,
+                                    plugin__name = plugin_name)
+                    if net_obj.enabled == False:
+                        return False
+                except NetworkPlugins.DoesNotExist:
+                    return False
+                
+                obj = RoomPlugins.\
+                    objects.get(net__network = self.irc_conn.factory.network,
+                                room = channel.lower(),
+                                net__plugin__name = plugin_name)
+                        
+                # system plugins are always enabled
+                if obj.enabled or \
+                    (hasattr(plugin_module, 'system') and plugin_module.system):
+                    return True
+                else:
+                    return False
+            except RoomPlugins.DoesNotExist:
+                return False
+        else:
+            # currently all loaded modules are enabled in pm
+            return True
+
     # ---- delegate methods below --------
 
     # Possible TODO
@@ -255,41 +450,45 @@ class PluginDespatcher(object):
     # creating the methods.  What are the advantages?  More DRY.
 
     def signedOn(self):
-        for m in self._cls_list:
+        for m in self._obj_list:
             #m.init(self)
             if hasattr(m, 'signedOn'):
                 m.signedOn()
 
 
     def userJoined(self, user, channel):
-        for m in self._cls_list:
-            if hasattr(m, 'userJoined'):
-                m.userJoined(user, channel)
+        for m in self._obj_list:
+            if self.is_plugin_enabled(channel, m):
+                if hasattr(m, 'userJoined'):
+                    m.userJoined(user, channel)
 
 
     def userLeft(self, user, channel):
-        for m in self._cls_list:
-            if hasattr(m, 'userLeft'):
-                m.userLeft(user, channel)
+        for m in self._obj_list:
+            if self.is_plugin_enabled(channel, m):
+                if hasattr(m, 'userLeft'):
+                    m.userLeft(user, channel)
 
 
     def userQuit(self, user, quitMessage):
-        for m in self._cls_list:
+        for m in self._obj_list:
             if hasattr(m, 'userQuit'):
                 m.userQuit(user, quitMessage)
 
 
     def noticed(self, user, channel, message):
-        for m in self._cls_list:
-            if hasattr(m, 'noticed'):
-                m.noticed(user, channel, message)
+        for m in self._obj_list:
+            if self.is_plugin_enabled(channel, m):
+                if hasattr(m, 'noticed'):
+                    m.noticed(user, channel, message)
 
 
     def privmsg(self, user, channel, message):
-        for m in self._cls_list:
-            if hasattr(m, 'privmsg'):
-                logger.debug("Invoking privmsg of module " + str(m))
-                m.privmsg(user, channel, message)
+        for m in self._obj_list:
+            if self.is_plugin_enabled(channel, m): 
+                if hasattr(m, 'privmsg'):
+                    logger.debug("Invoking privmsg of module " + str(m))
+                    m.privmsg(user, channel, message)
 
 
     def command(self, nick, user, chan, orig_msg, msg, act):
@@ -301,23 +500,24 @@ class PluginDespatcher(object):
                       }
             
             matched_fn = []
-            for m in self._cls_list:
-                if hasattr(m, 'commands'):
-                    for rgx_s, f, _ in m.commands:
-                        regex = re.match(rgx_s, msg)
-                        plugin_id = m.plugin[0]
-                        s = plugin_id + "\s+" + rgx_s
-                        regex2 = re.match(s, msg)
-                        if regex2:
-                            # clean_line is line without the plugin id
-                            kwargs['clean_line'] = re.sub(plugin_id + "\s+", "", msg)
-                            f(regex2, chan, nick, **kwargs)
-                            return
-                        elif regex:
-                            kwargs['clean_line'] = msg
-                            logger.debug('matching %s regex = %s' % (str(m.plugin), s))
-                            matched_fn.append((f, regex, m.plugin))
-                            
+            for m in self._obj_list:
+                if self.is_plugin_enabled(chan, m): 
+                    if hasattr(m, 'commands'):
+                        for rgx_s, f, _ in m.commands:
+                            regex = re.match(rgx_s, msg)
+                            plugin_id = m.plugin[0]
+                            s = plugin_id + "\s+" + rgx_s
+                            regex2 = re.match(s, msg)
+                            if regex2:
+                                # clean_line is line without the plugin id
+                                kwargs['clean_line'] = re.sub(plugin_id + "\s+", "", msg)
+                                f(regex2, chan, nick, **kwargs)
+                                return
+                            elif regex:
+                                kwargs['clean_line'] = msg
+                                logger.debug('matching %s regex = %s' % (str(m.plugin), s))
+                                matched_fn.append((f, regex, m.plugin))
+                                
             # === Undernet Hack? ====
             # IRC servers seems to pass chan as nickname of bot's name
             # so we try to reverse this here.
@@ -351,18 +551,30 @@ class PluginDespatcher(object):
 
 
     def joined(self, channel):
-        for m in self._cls_list:
+        for m in self._obj_list:
+            plugin_name, _ = m.plugin
+            if hasattr(m, 'system') and m.system:
+                self.install_plugin(channel, plugin_name, enabled=True)
+            else:
+                if NetworkPlugins.objects.\
+                    filter(plugin__name=plugin_name,
+                           network=self.irc_conn.factory.network).exists():
+                    self.install_plugin(channel, plugin_name, enabled=False)
+                    
             if hasattr(m, 'joined'):
-                m.joined(channel)
+                if self.is_plugin_enabled(channel, m):         
+                    m.joined(channel)
 
 
     def left(self, channel):
-        for m in self._cls_list:
-            if hasattr(m, 'left'):
-                m.left(channel)
+        for m in self._obj_list:
+            if self.is_plugin_enabled(channel, m):
+                if hasattr(m, 'left'):
+                    m.left(channel)
 
 
     def userRenamed(self, oldname, newname):
-        for m in self._cls_list:
+        for m in self._obj_list:
+            # nick changes are not channel specific
             if hasattr(m, 'userRenamed'):
                 m.userRenamed(oldname, newname)

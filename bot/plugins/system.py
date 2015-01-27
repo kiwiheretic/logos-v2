@@ -4,6 +4,7 @@ import pdb
 
 import django
 from django.contrib.auth.models import User
+from logos.models import NetworkPlugins, RoomPlugins
 from django.contrib.auth import authenticate
 from guardian.shortcuts import assign_perm, get_perms, remove_perm
 
@@ -29,21 +30,35 @@ logging.config.dictConfig(LOGGING)
                 
 class SystemCoreCommands(Plugin):
     plugin = ("system", "System Module")
-    
+    system = True
     def __init__(self, *args):
         super(SystemCoreCommands, self).__init__(*args)
         self.commands = ( \
                          (r'login\s+(?P<password>[a-zA-z0-9-]+)', self.login, 'Login into the bot'),
-#                         (r'logout', self.logout, "Log out of bot"),
+                         (r'logout', self.logout, "Log out of bot"),
                          (r'version\s*$', self.version, "Show this bot's version info"),
+                         (r'list\s+plugins', self.list_plugins, "list all plugins available"),
+                         (r'enable\s+plugin\s+(?P<room>#[a-zA-z0-9-]+)\s+(?P<plugin>[a-z_-]+)',
+                          self.enable_plugin, "Enable specified plugin for room"),
+                         (r'disable\s+plugin\s+(?P<room>#[a-zA-z0-9-]+)\s+(?P<plugin>[a-z_-]+)',
+                          self.disable_plugin, "Disable specified plugin for room"),
+                         (r'net\s+enable\s+plugin\s+(?P<plugin>[a-z_-]+)',
+                          self.net_enable_plugin, "Enable specified plugin for room"),
+                         (r'net\s+disable\s+plugin\s+(?P<plugin>[a-z_-]+)',
+                          self.net_disable_plugin, "Disable specified plugin for room"),
                          (r'list\s+(?:perms|permissions)', self.list_perms, "list all permissions available"),
                          (r'add\s+user\s+(?P<username>[a-zA-z0-9-]+)\s+(?P<email>[a-zA-z0-9-]+@[a-zA-z0-9\.-]+)\s+(?P<password>[a-zA-z0-9-]+)',
                           self.adduser, 'Add user to system'),
-                         (r'assign\s+(?:perm|permission)\s+(?P<perm>[a-z_]+)\s+for\s+(?P<username>[^\s]+)', self.assign_net_perms, "assign permission to username"),
-                         (r'assign\s+(?:perm|permission)\s+(?P<room>#[a-zA-z0-9-]+)\s+(?P<perm>[a-z_]+)\s+for\s+(?P<username>[^\s]+)', self.assign_room_perms, "assign permission to username"),
-                         (r'unassign\s+(?:perm|permission)\s+(?P<perm>[a-z_]+)\s+for\s+(?P<username>[^\s]+)', self.unassign_net_perms, "assign permission to username"),
-                         (r'unassign\s+(?:perm|permission)\s+(?P<room>#[a-zA-z0-9-]+)\s+(?P<perm>[a-z_]+)\s+for\s+(?P<username>[^\s]+)', self.unassign_room_perms, "assign permission to username"),
+                         (r'list\s+users', self.listusers, 'List users in system'),
+                         (r'assign\s+(?:perm|permission)\s+(?P<perm>[a-z_]+)\s+to\s+(?P<username>[^\s]+)', self.assign_net_perms, "assign permission to username"),
+                         (r'assign\s+(?:perm|permission)\s+(?P<room>#[a-zA-z0-9-]+)\s+(?P<perm>[a-z_]+)\s+to\s+(?P<username>[^\s]+)', self.assign_room_perms, "assign permission to username"),
+                         (r'unassign\s+(?:perm|permission)\s+(?P<perm>[a-z_]+)\s+from\s+(?P<username>[^\s]+)', self.unassign_net_perms, "assign permission to username"),
+                         (r'unassign\s+(?:perm|permission)\s+(?P<room>#[a-zA-z0-9-]+)\s+(?P<perm>[a-z_]+)\s+from\s+(?P<username>[^\s]+)', self.unassign_room_perms, "assign permission to username"),
                          (r'(?:perms|permissions)\s+(?P<username>[^\s]+)', self.perms, "list permissions for user"),
+                         (r'join\s+room\s+(?P<room>#[a-zA-z0-9-]+)', self.join_room,
+                          "Request bot to join a room"),
+                         (r'part\s+room\s+(?P<room>#[a-zA-z0-9-]+)', self.part_room,
+                          "Request bot to part a room"), 
                          (r'cmd\s+(.*)', self.cmd, "Have bot perform an IRC command"),
                          (r'say\s+(?P<room>#[a-zA-z0-9-]+)\s+(.*)', self.speak, "Say something into a room"),
                          (r'set\s+(?P<room>#[a-zA-z0-9-]+)\s+(?:activation|trigger)\s+\"(.)\"', self.set_trigger,
@@ -59,38 +74,116 @@ class SystemCoreCommands(Plugin):
     def privmsg(self, user, channel, message):
         pass
 
+    def list_plugins(self, regex, chan, nick, **kwargs):
+        self.say(chan, "=== Plugins ===")
+        self.say(chan, "  === Network Level ===")
+
+        for net_plugin in NetworkPlugins.objects.filter(network=self.network,\
+                                                        loaded=True):
+            plugin_name = net_plugin.plugin.name
+            enabled = net_plugin.enabled
+            self.say(chan, "    {0:.<15} {1}".format(plugin_name, enabled))
+        
+        
+        last_room = None            
+        for plugin in RoomPlugins.objects.filter(net__loaded = True,
+                                                 net__enabled = True, 
+                                                 net__network=self.network).\
+                                                     order_by('room'):
+            name = plugin.net.plugin.name
+            room = plugin.room
+            if self.get_auth().is_authorised(nick, room, 'enable_plugins'):
+                if room != last_room:
+                    if last_room == None:
+                        self.say(chan, "  === Room Level ===")
+                    self.say(chan, "    Room: {}".format(room))
+                descr = plugin.net.plugin.description
+                enabled = plugin.enabled
+                self.say(chan, "      {0:.<15} {1}".format(name, enabled))
+                last_room = room
+        self.say(chan, "*** End of List ***")        
+    def enable_plugin(self, regex, chan, nick, **kwargs):
+        room = regex.group('room')
+        if self.get_auth().is_authorised(nick,  room, 'enable_plugins'):
+            plugin_name = re.sub('-','_',regex.group('plugin'))
+            if super(SystemCoreCommands, self).enable_plugin(room, plugin_name):
+                self.say(chan, "plugin enabled successfully")
+            else:
+                self.say(chan, "plugin could not be enabled")
+        else:
+            self.msg(chan, "You are not authorised or not logged in")
+                
+    def disable_plugin(self, regex, chan, nick, **kwargs):
+        room = regex.group('room')
+        if self.get_auth().is_authorised(nick,  room, 'enable_plugins'):
+            plugin_name = re.sub('-','_',regex.group('plugin'))
+            if super(SystemCoreCommands, self).disable_plugin(room, plugin_name):
+                self.say(chan, "plugin disabled successfully")
+            else:
+                self.say(chan, "plugin could not be disabled")
+        else:
+            self.msg(chan, "You are not authorised or not logged in")
+
+    def net_enable_plugin(self, regex, chan, nick, **kwargs):
+        if self.get_auth().is_authorised(nick,  '#', 'net_disable_plugins'):
+            plugin_name = re.sub('-','_',regex.group('plugin'))
+            if super(SystemCoreCommands, self).net_enable_plugin(plugin_name):
+                self.say(chan, "plugin enabled at network level successfully")
+            else:
+                self.say(chan, "plugin could not be enabled")
+        else:
+            self.msg(chan, "You are not authorised or not logged in")
+                
+    def net_disable_plugin(self, regex, chan, nick, **kwargs):
+        if self.get_auth().is_authorised(nick,  '#', 'net_disable_plugins'):
+            plugin_name = re.sub('-','_',regex.group('plugin'))
+            if super(SystemCoreCommands, self).net_disable_plugin(plugin_name):
+                self.say(chan, "plugin disabled at network level successfully")
+            else:
+                self.say(chan, "plugin could not be disabled")
+        else:
+            self.msg(chan, "You are not authorised or not logged in")
+            
     def adduser(self, regex, chan, nick, **kwargs):
         username = regex.group('username')
         password = regex.group('password')
         email = regex.group('email')        
-        if self.get_auth().is_authorised(nick, self.network, '#', 'net_admin'):
+        if self.get_auth().is_authorised(nick,  '#', 'net_admin'):
             try:
-                user = User.objects.get(username = username.lower())
+                user = User.objects.get(username__iexact = username.lower())
             except User.DoesNotExist:
-                user = User(username = username.lower(), password = password, email = email)
+                user = User(username = username.lower(), email = email)
+                user.set_password(password)
                 user.save()
                 self.msg(chan, "User successfully created")
             else:
-                self.msg(chan, "User already exists in databse")
+                self.msg(chan, "User already exists in database")
         else:
             self.msg(chan, "You are not authorised or not logged in")
                     
+    def listusers(self, regex, chan, nick, **kwargs):
+        for user in User.objects.all():
+            self.msg(chan, "{} {}".format(user.username, user.email))
+    
     def login(self, regex, chan, nick, **kwargs):
         password = regex.group('password')
         host = self.get_host(nick)
 
         try:
-            user = User.objects.get(username = nick.lower())
+            user = User.objects.get(username__iexact = nick.lower())
         except User.DoesNotExist:
             self.say(chan, "Invalid Nick")
             return
         
-        if authenticate(username= nick.lower(), password= password):
+        if user.check_password(password):
             self.get_auth().add(nick, host, user)
             self.say(chan, "Login successful")
         else:
             self.say(chan, "Login failed")
 
+    def logout(self, regex, chan, nick, **kwargs):
+        self.get_auth().remove(nick)
+        self.say(chan, "Logged out")
 
     def list_perms(self, regex, chan, nick, **kwargs):
         self.say(chan, "=== Network Permissions ===")
@@ -104,7 +197,7 @@ class SystemCoreCommands(Plugin):
     def perms(self, regex, chan, nick, **kwargs):
         username = regex.group('username').lower()
         try:
-            user = User.objects.get(username = username)
+            user = User.objects.get(username__iexact = username)
         except User.DoesNotExist:
             self.say(chan, "Unknown user")
             return
@@ -128,10 +221,10 @@ class SystemCoreCommands(Plugin):
                 last_perms = perms
 
     def assign_net_perms(self, regex, chan, nick, **kwargs):
-        if self.get_auth().is_authorised(nick, self.network, '#', 'net_admin'):
+        if self.get_auth().is_authorised(nick,  '#', 'net_admin'):
             username = regex.group('username').lower()
             try:
-                user = User.objects.get(username = username)
+                user = User.objects.get(username__iexact = username)
             except User.DoesNotExist:
                 self.say(chan, "Unknown user")
                 return
@@ -155,10 +248,10 @@ class SystemCoreCommands(Plugin):
             self.msg(chan, "You are not authorised or not logged in")
             
     def unassign_net_perms(self, regex, chan, nick, **kwargs):
-        if self.get_auth().is_authorised(nick, self.network, '#', 'net_admin'):
+        if self.get_auth().is_authorised(nick,  '#', 'net_admin'):
             username = regex.group('username').lower()
             try:
-                user = User.objects.get(username = username)
+                user = User.objects.get(username__iexact = username)
             except User.DoesNotExist:
                 self.say(chan, "Unknown user")
                 return
@@ -183,10 +276,10 @@ class SystemCoreCommands(Plugin):
 
     def assign_room_perms(self, regex, chan, nick, **kwargs):
         room = regex.group('room')
-        if self.get_auth().is_authorised(nick, self.network, '#', 'net_admin'):
+        if self.get_auth().is_authorised(nick,  '#', 'net_admin'):
             username = regex.group('username').lower()
             try:
-                user = User.objects.get(username = username)
+                user = User.objects.get(username__iexact = username)
             except User.DoesNotExist:
                 self.say(chan, "Unknown user")
                 return
@@ -212,10 +305,10 @@ class SystemCoreCommands(Plugin):
             
     def unassign_room_perms(self, regex, chan, nick, **kwargs):
         room = regex.group('room')
-        if self.get_auth().is_authorised(nick, self.network, '#', 'net_admin'):
+        if self.get_auth().is_authorised(nick,  '#', 'net_admin'):
             username = regex.group('username').lower()
             try:
-                user = User.objects.get(username = username)
+                user = User.objects.get(username__iexact = username)
             except User.DoesNotExist:
                 self.say(chan, "Unknown user")
                 return
@@ -238,11 +331,27 @@ class SystemCoreCommands(Plugin):
                 self.say(chan, "Permission not found")
         else:
             self.msg(chan, "You are not authorised or not logged in")
+
+    def join_room(self, regex, chan, nick, **kwargs):
+        if self.get_auth().is_authorised(nick,  '#', 'join_or_part_room'):
+            room = regex.group('room')
+            self.join(room)
+        else:
+            self.msg(chan, "You are not authorised or not logged in")
         
+    
+    def part_room(self, regex, chan, nick, **kwargs):
+        if self.get_auth().is_authorised(nick,  '#', 'join_or_part_room'):
+            room = regex.group('room')
+            self.part(room)
+        else:
+            self.msg(chan, "You are not authorised or not logged in")
+    
+           
     def speak(self, regex, chan, nick, **kwargs):
 
         ch = regex.group('room')
-        if self.get_auth().is_authorised(nick, self.network, ch, 'can_speak'):
+        if self.get_auth().is_authorised(nick,  ch, 'can_speak'):
 
             text = regex.group(2)
             self.msg(ch, text)
@@ -251,7 +360,7 @@ class SystemCoreCommands(Plugin):
 
     def set_greet(self, regex, chan, nick, **kwargs):
         ch = regex.group('room')
-        if self.get_auth().is_authorised(nick, self.network, ch, 'set_greeting'):
+        if self.get_auth().is_authorised(nick,  ch, 'set_greeting'):
             greet_msg = regex.group(2)
             set_room_option(self.factory.network, ch, \
                     'greet_message', greet_msg)
@@ -261,7 +370,7 @@ class SystemCoreCommands(Plugin):
                               
     def set_trigger(self, regex, chan, nick, **kwargs):
         ch = regex.group('room')
-        if self.get_auth().is_authorised(nick, self.network, ch, 
+        if self.get_auth().is_authorised(nick,  ch, 
                                                   'change_trigger'):
             # Command issued to bot to change the default activation
             # character.
@@ -278,7 +387,7 @@ class SystemCoreCommands(Plugin):
             self.msg(chan, "You are not authorised to change trigger for this room")
                                       
     def set_pvt_trigger(self, regex, chan, nick, **kwargs):
-        if self.get_auth().is_authorised(nick, self.network, '#', 
+        if self.get_auth().is_authorised(nick,  '#', 
                                                   'change_pvt_trigger'):
             # Command issued to bot to change the default activation
             # character.
@@ -291,7 +400,7 @@ class SystemCoreCommands(Plugin):
                        
     def cmd(self, regex, chan, nick, **kwargs):
 
-        if self.get_auth().is_authorised(nick, self.network, '#', 'irc_cmd'):
+        if self.get_auth().is_authorised(nick,  '#', 'irc_cmd'):
             # Have the bot issue any IRC command
             
             line = regex.group(1)
@@ -336,6 +445,13 @@ class SystemCoreCommands(Plugin):
             greet_msg = re.sub("%nick%", nick, greet_msg)
             self.notice(nick, str(greet_msg))
             logger.info("Greet message sent to " + nick)
+
+    def userLeft(self, user, channel):
+        if not self.is_nick_in_rooms(user):
+            self.get_auth().remove(user)
+        
+    def userQuit(self, user, quitMessage):
+        self.get_auth().remove(user)
         
     def userRenamed(self, oldname, newname):
         self.get_auth().rename(oldname, newname)

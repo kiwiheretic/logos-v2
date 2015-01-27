@@ -88,6 +88,7 @@ class NetworkPermissions(models.Model):
     class Meta:
         permissions = (
             ('net_admin', 'Create user logins and assign permissions'),
+            ('net_disable_plugins', 'Can disable plugins network wide'),
             ('join_or_part_room', 'Join or part bot to rooms'),
             ('irc_cmd', 'Issue arbitrary command to bot'),
             ('set_pvt_version', 'Set bible version default in private chat window'),
@@ -106,12 +107,26 @@ class RoomPermissions(models.Model):
             ('set_verse_limits', 'Set room verse limits'),
             ('set_greeting', 'Set room greeting message'),
             ('can_speak', 'Speak through bot'),
-            ('start_game', 'Can start scripture game'),
+            ('enable_plugins', 'Can enable or disable room plugins'),
         )
-        
+
 class Plugins(models.Model):
     name = models.TextField()
-    active = models.BooleanField(default=False)
+    description = models.TextField()
+    system = models.BooleanField(default=False)
+        
+class NetworkPlugins(models.Model):
+    plugin = models.ForeignKey('Plugins')
+    # currently each bot instance handles exactly one IRC network
+    network = models.TextField()
+    loaded = models.BooleanField(default=False)
+    # net_admin disabling overrides room_admin enabling
+    enabled = models.BooleanField(default=True)
+    
+class RoomPlugins(models.Model):
+    net = models.ForeignKey('NetworkPlugins')
+    room = models.TextField()    
+    enabled = models.BooleanField(default=False)
     
 class Scriptures(models.Model):
     ref = models.TextField()
