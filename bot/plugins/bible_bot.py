@@ -13,7 +13,7 @@ from logos.roomlib import get_room_option, set_room_option, set_global_option, \
 from logos.pluginlib import CommandDecodeException
 from logos.models import BibleTranslations, BibleBooks, BibleVerses, \
     BibleConcordance, BibleDict
-from _booktbl import book_table
+from logos.management.commands._booktbl import book_table
 
 import logging
 from logos.settings import LOGGING
@@ -208,7 +208,7 @@ class BibleBot(Plugin):
         resp = []
         for q in qual_verses:
             resp.append((version.upper(),
-                        long_book_name.capitalize() + " " + str(q.chapter) \
+                        long_book_name + " " + str(q.chapter) \
                             + ":" + str(q.verse),
                         q.verse_text))
         timestamp = datetime.datetime.now()
@@ -496,7 +496,6 @@ class BibleBot(Plugin):
         self.msg(chan, "Help can be found at https://biblebot.wordpress.com/user-instructions/")
         
     def book_names(self, regex, chan, nick, **kwargs):
- 
         version = regex.group(1)
         trans = BibleTranslations.objects.get(name=version)
         book_names = []
@@ -506,7 +505,6 @@ class BibleBot(Plugin):
                 self.notice(nick, str(book_names)) 
                 book_names = []
         self.notice(nick, str(book_names)) 
-                
               
     def versions(self, regex, chan, nick, **kwargs):
  
@@ -667,7 +665,6 @@ class BibleBot(Plugin):
         msg = kwargs['clean_line']
         
         result = self._get_verses(chan, nick, user, msg)
-#        print result
         for resp in result:
             reply = ' '.join(resp)
             self.say(chan, str(reply))
@@ -675,7 +672,6 @@ class BibleBot(Plugin):
     def next(self, regex, chan, nick, **kwargs):
         
         result = self._next_reading(chan, nick)
-#        print result
         if result:
             for resp in result:
                 reply = ' '.join(resp)
@@ -760,7 +756,8 @@ class BibleBot(Plugin):
         bl = len(book)
         
         book_found = None
-        for smallbk, bigbk in book_table:
+        for smallbk, bigbk1 in book_table:
+            bigbk = re.sub("\s+", "", bigbk1).lower()
             if smallbk == book:
                 book_found = smallbk
                 break
