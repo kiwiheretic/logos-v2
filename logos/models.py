@@ -93,6 +93,7 @@ class NetworkPermissions(models.Model):
             ('irc_cmd', 'Issue arbitrary command to bot'),
             ('set_pvt_version', 'Set bible version default in private chat window'),
             ('change_pvt_trigger', 'Set trigger used in private chat window'),
+            ('change_nick', 'Can issue a bot nick change command'),
             
         )
                 

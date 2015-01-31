@@ -68,6 +68,7 @@ class SystemCoreCommands(Plugin):
                          (r'set\s+(?P<room>#[a-zA-z0-9-]+)\s+greet\s+message\s+\"(.*)\"', self.set_greet, 
                            "Set the autogreet message"),
                          (r'set\s+password\s+([^\s]+)', self.set_password, "Set your password"),
+                         (r'nick\s+(?P<nick>[a-zA-z0-9-_]+)', self.set_nick, "Set the bot nick"),
         )
         
     
@@ -101,7 +102,9 @@ class SystemCoreCommands(Plugin):
                 enabled = plugin.enabled
                 self.say(chan, "      {0:.<15} {1}".format(name, enabled))
                 last_room = room
-        self.say(chan, "*** End of List ***")        
+        self.say(chan, "*** End of List ***")  
+        
+        
     def enable_plugin(self, regex, chan, nick, **kwargs):
         room = regex.group('room')
         if self.get_auth().is_authorised(nick,  room, 'enable_plugins'):
@@ -397,7 +400,15 @@ class SystemCoreCommands(Plugin):
             self.msg(chan, "Private window trigger set to \"%s\"" % (arg,))
         else:
             self.msg(chan, "You are not authorised to change trigger for private window")
-                       
+
+    def set_nick(self, regex, chan, nick, **kwargs):
+        nick_to_set = regex.group('nick')
+        if self.get_auth().is_authorised(nick,  '#', 'change_nick'):
+            self.msg(chan, "Attempting to set nick to %s" % nick_to_set)
+            self.irc_conn.setNick(nick_to_set)
+        else:
+            self.msg(chan, "You are not authorised to change bot nick")
+            
     def cmd(self, regex, chan, nick, **kwargs):
 
         if self.get_auth().is_authorised(nick,  '#', 'irc_cmd'):
