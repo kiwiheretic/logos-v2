@@ -1,6 +1,6 @@
 #! /usr/bin/env python
 
-import psutil # Used to determine available RAM
+#import psutil # Used to determine available RAM
 import sys
 import gc
 import os
@@ -46,18 +46,18 @@ class Command(BaseCommand):
         logger.debug ("args = "+str(args))
         logger.debug ("options = "+ str(options))
 
-        if DATABASES['bibles']['ENGINE'].endswith('sqlite3'):
-            vm = psutil.virtual_memory()
-            cursor = connection.cursor()
-            cursor.execute("PRAGMA Journal_mode = MEMORY")
-            cursor.execute("PRAGMA Page_size")
-            row = cursor.fetchone()
-            page_size = row[0]
-            # use 75% of available VM for cache
-            cache_size = int(.75 * vm.available / page_size)
-            cursor.execute("PRAGMA Cache_Size = "+str(cache_size))
-            print "page_size = " + str(page_size) + " bytes"
-            print "cache_size = " + str(cache_size) + " pages"
+#        if DATABASES['bibles']['ENGINE'].endswith('sqlite3'):
+#            vm = psutil.virtual_memory()
+#            cursor = connection.cursor()
+#            cursor.execute("PRAGMA Journal_mode = MEMORY")
+#            cursor.execute("PRAGMA Page_size")
+#            row = cursor.fetchone()
+#            page_size = row[0]
+#            # use 75% of available VM for cache
+#            cache_size = int(.75 * vm.available / page_size)
+#            cursor.execute("PRAGMA Cache_Size = "+str(cache_size))
+#            print "page_size = " + str(page_size) + " bytes"
+#            print "cache_size = " + str(cache_size) + " pages"
 
         
         if options['replace_version']:
@@ -197,7 +197,7 @@ def purge_concordance(version):
         trans = BibleTranslations.objects.get(name=version)
     except ObjectDoesNotExist:
         return
-    BibleConcordance.objects.filter(trans_id=trans)      
+    BibleConcordance.objects.filter(trans=trans)      
 
 def populate_concordance(options):
     """ Run through the bible verse database looking up all verses
@@ -213,26 +213,26 @@ def populate_concordance(options):
         if BibleConcordance.objects.exists():
             next_id = BibleConcordance.objects.all().\
                 aggregate(Max('id'))['id__max']+1
-            last_rec = BibleConcordance.objects.filter(trans_id=trans).last()
+            last_rec = BibleConcordance.objects.filter(trans=trans).last()
             if last_rec:
 
                 lbook = last_rec.book
                 lchapter = last_rec.chapter
                 lverse = last_rec.verse
                 print "continuing from %s %d:%d" % (lbook.long_book_name, lchapter, lverse)
-                bv_id = BibleVerses.objects.filter(trans_id=trans, \
+                bv_id = BibleVerses.objects.filter(trans=trans, \
                                 book = lbook, chapter = lchapter, \
                                 verse=lverse).first().id
-                bv = BibleVerses.objects.filter(trans_id = trans, pk__gt = bv_id).iterator()  # iterator uses less memory
+                bv = BibleVerses.objects.filter(trans = trans, pk__gt = bv_id).iterator()  # iterator uses less memory
             else:
                 print "No records for this translation yet"
-                bv = BibleVerses.objects.filter(trans_id = trans).iterator()
+                bv = BibleVerses.objects.filter(trans = trans).iterator()
 
 
 
         else:
             next_id = 1
-            bv = BibleVerses.objects.filter(trans_id=trans).iterator()  # iterator uses less memory
+            bv = BibleVerses.objects.filter(trans=trans).iterator()  # iterator uses less memory
 
         idx = 0
         iidx = 0
@@ -250,7 +250,7 @@ def populate_concordance(options):
                 if wd_lower not in STOP_WORDS:
 
                     if BibleConcordance.objects.\
-                    filter(trans_id = vs.trans_id,
+                    filter(trans = vs.trans,
                            book = vs.book,
                            chapter = vs.chapter,
                            verse = vs.verse,
@@ -259,7 +259,7 @@ def populate_concordance(options):
 
                     else:
                         conc = BibleConcordance(id = next_id,
-                                                trans_id = vs.trans_id,
+                                                trans = vs.trans,
                                                 book = vs.book,
                                                 chapter = vs.chapter,
                                                 verse = vs.verse,
@@ -311,8 +311,8 @@ def purge_translation(translation):
         trans = BibleTranslations.objects.get(name=translation)
     except ObjectDoesNotExist:
         return
-    BibleVerses.objects.filter(trans_id = trans).delete()
-    BibleBooks.objects.filter(trans_id = trans).delete()
+    BibleVerses.objects.filter(trans = trans).delete()
+    BibleBooks.objects.filter(trans = trans).delete()
     trans.delete()
 
 
@@ -328,10 +328,10 @@ def add_book_to_db(translation, book_path, long_name = None):
         new_trans = BibleTranslations(name = translation)
         new_trans.save()
         print "saved new trans " + translation
-        trans_id = new_trans.pk
+        trans = new_trans.pk
 
     if long_name:
-        max_bb = BibleBooks.objects.filter(trans_id = new_trans).aggregate(Max('book_idx'))
+        max_bb = BibleBooks.objects.filter(trans = new_trans).aggregate(Max('book_idx'))
         idx = max_bb['book_idx__max']+1
         long_book = long_name
     else:
@@ -342,9 +342,9 @@ def add_book_to_db(translation, book_path, long_name = None):
     assert base_book
 
     if not BibleBooks.objects.\
-        filter(trans_id = new_trans, canonical = base_book).exists():
+        filter(trans = new_trans, canonical = base_book).exists():
         print "adding book ", long_book
-        bib_book = BibleBooks(trans_id = new_trans,
+        bib_book = BibleBooks(trans = new_trans,
                               long_book_name= long_book,
                               book_idx = int(idx),
                               canonical = base_book)
@@ -356,7 +356,7 @@ def add_book_to_db(translation, book_path, long_name = None):
 
     gc.collect()
 
-def populate_verses(trans_id, book_id, filename):
+def populate_verses(trans, book_id, filename):
     """ Add a book (of the bible) file in CancelBot 
     format to the database """
     book_cache = []
@@ -380,7 +380,7 @@ def populate_verses(trans_id, book_id, filename):
                 
                 txt = re.sub('[^\x20-\x7F]', '', mch.group(4))
                 bv = BibleVerses(id = next_id,
-                                 trans_id = trans_id,
+                                 trans = trans,
                                  book = book_id,
                                  chapter = ch,
                                  verse = vs,

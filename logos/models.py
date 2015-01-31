@@ -20,7 +20,7 @@ class BibleTranslations(models.Model):
         db_table = 'bible_translations'
 
 class BibleBooks(models.Model):
-    trans_id = models.ForeignKey('BibleTranslations')
+    trans = models.ForeignKey('BibleTranslations')
     book_idx = models.IntegerField()
     long_book_name = models.TextField()
     canonical = models.TextField(blank=True)
@@ -28,7 +28,7 @@ class BibleBooks(models.Model):
         db_table = 'bible_books'
 
 class BibleVerses(models.Model):
-    trans_id = models.ForeignKey('BibleTranslations')
+    trans = models.ForeignKey('BibleTranslations')
     book = models.ForeignKey('BibleBooks')
     chapter = models.IntegerField()
     verse = models.IntegerField()
@@ -36,11 +36,11 @@ class BibleVerses(models.Model):
     class Meta:
         db_table = 'bible_verses'
         index_together = [
-            ["trans_id", "book", "chapter", "verse"],
+            ["trans", "book", "chapter", "verse"],
         ]
 
 class BibleConcordance(models.Model):
-    trans_id = models.ForeignKey('BibleTranslations')
+    trans = models.ForeignKey('BibleTranslations')
     book = models.ForeignKey('BibleBooks')
     chapter = models.IntegerField()
     verse = models.IntegerField()
@@ -49,10 +49,10 @@ class BibleConcordance(models.Model):
     class Meta:
         db_table = 'bible_concordance'
         index_together = [
-            ["trans_id", "book", "chapter", "verse", "word_id"],
-            ["trans_id", "word"],
-            ["trans_id", "word", "chapter"],
-            ["trans_id", "word", "chapter", "verse"],
+            ["trans", "book", "chapter", "verse", "word_id"],
+            ["trans", "word"],
+            ["trans", "word", "chapter"],
+            ["trans", "word", "chapter", "verse"],
         ]
 
 class BibleDict(models.Model):

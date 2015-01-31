@@ -154,7 +154,7 @@ class BibleBot(Plugin):
             bookwork = mch.group(2)
             versework = mch.group(3)
         try:
-            trans_id = BibleTranslations.objects.get(name = version).pk
+            trans = BibleTranslations.objects.get(name = version).pk
         except BibleTranslations.DoesNotExist:
             raise CommandException(nick, user, "Unknown translation %s" % (version,))
 
@@ -188,14 +188,14 @@ class BibleBot(Plugin):
 
              
 
-        book_db = BibleBooks.objects.get(trans_id = trans_id,
+        book_db = BibleBooks.objects.get(trans = trans,
                                          canonical = book)
         book_id = book_db.pk
         long_book_name = book_db.long_book_name
         
 
         # get qualifying verses
-        qual_verses = BibleVerses.objects.filter(trans_id = trans_id,
+        qual_verses = BibleVerses.objects.filter(trans = trans,
                                    book = book_id,
                                    chapter = int(chapter),
                                    verse__gte = firstverse,
@@ -234,7 +234,7 @@ class BibleBot(Plugin):
         resp = []
         qual_verses_next_pk = None
         for q in qual_verses[0:verselimit]:
-            resp.append((q.trans_id.name.upper(),
+            resp.append((q.trans.name.upper(),
                         q.book.long_book_name.capitalize() + " " + str(q.chapter) \
                             + ":" + str(q.verse),
                         q.verse_text))
@@ -256,13 +256,13 @@ class BibleBot(Plugin):
         
         if book_range[0]:
             bk = self._get_book(trans.name, book_range[0])
-            br0 = BibleBooks.objects.filter(trans_id = trans, canonical=bk)\
+            br0 = BibleBooks.objects.filter(trans = trans, canonical=bk)\
                 .first()
         else:
             br0 = None
         if book_range[1]:
             bk = self._get_book(trans.name, book_range[1])
-            br1 = BibleBooks.objects.filter(trans_id = trans, canonical=bk)\
+            br1 = BibleBooks.objects.filter(trans = trans, canonical=bk)\
                 .first()
         else:
             br1 = None
@@ -315,10 +315,10 @@ class BibleBot(Plugin):
             
             if br0 and br1:
                 q_results = BibleConcordance.objects.\
-                    filter(trans_id = trans, book__gte = br0, 
+                    filter(trans = trans, book__gte = br0, 
                            book__lte = br1)
             else:
-                q_results = BibleConcordance.objects.filter(trans_id = trans)
+                q_results = BibleConcordance.objects.filter(trans = trans)
             
             if len(normal_words) > 0:
                 s = "word in (" + ", ".join('\'{0}\''.format(w) for w in normal_words) +")"
@@ -371,24 +371,24 @@ class BibleBot(Plugin):
             if mch:
                 w = mch.group(1)
                 conc_words = BibleConcordance.objects.\
-                    filter(trans_id = trans, book__gte = br0, book__lte = br1)\
+                    filter(trans = trans, book__gte = br0, book__lte = br1)\
                     .extra(where=["word like '%s%%'" % w])\
                     .order_by('book', 'chapter', 'verse')
             else:
                 conc_words = BibleConcordance.objects.\
-                    filter(trans_id = trans, book__gte = br0, book__lte = br1,\
+                    filter(trans = trans, book__gte = br0, book__lte = br1,\
                     word = wrd).order_by('book', 'chapter', 'verse')
         # Otherwise 
         else:
             # Is this word a wildcard word?
             if mch: 
                 w = mch.group(1)
-                conc_words = BibleConcordance.objects.filter(trans_id = trans)\
+                conc_words = BibleConcordance.objects.filter(trans = trans)\
                     .extra(where=["word like '%s%%'" % w])\
                     .order_by('book', 'chapter', 'verse')
 
             else:           
-                conc_words = BibleConcordance.objects.filter(trans_id = trans,
+                conc_words = BibleConcordance.objects.filter(trans = trans,
                     word = wrd).order_by('book', 'chapter', 'verse')
         logger.debug("Number of concordance occurrences of word %s = %d" % (wrd, len(conc_words),))
         
@@ -401,7 +401,7 @@ class BibleBot(Plugin):
 
             for wrd in normal_words:
                 if br0 and br1:
-                    if not BibleConcordance.objects.filter(trans_id = trans,\
+                    if not BibleConcordance.objects.filter(trans = trans,\
                                                  word = wrd,\
                                                  book = wrd_rec.book,\
                                                  chapter = wrd_rec.chapter,\
@@ -410,7 +410,7 @@ class BibleBot(Plugin):
                         break
 
                 else:
-                    if not BibleConcordance.objects.filter(trans_id = trans,\
+                    if not BibleConcordance.objects.filter(trans = trans,\
                                                  word = wrd,\
                                                  book = wrd_rec.book,\
                                                  chapter = wrd_rec.chapter,\
@@ -428,7 +428,7 @@ class BibleBot(Plugin):
                 last_verse = wrd_rec.verse
                 
                 if mode=="phrase":
-                    verse_text = BibleVerses.objects.filter(trans_id = trans,
+                    verse_text = BibleVerses.objects.filter(trans = trans,
                          book=wrd_rec.book,
                          chapter = wrd_rec.chapter,
                          verse = wrd_rec.verse).first().verse_text
@@ -449,7 +449,7 @@ class BibleBot(Plugin):
                         for wrd in wild_words:
                             mch = re.match("([a-zA-Z']+)\*$",wrd)
                             w = mch.group(1)
-                            if not BibleConcordance.objects.filter(trans_id = trans,\
+                            if not BibleConcordance.objects.filter(trans = trans,\
                                      book = wrd_rec.book,\
                                      chapter = wrd_rec.chapter,\
                                      verse = wrd_rec.verse )\
@@ -499,7 +499,7 @@ class BibleBot(Plugin):
         version = regex.group(1)
         trans = BibleTranslations.objects.get(name=version)
         book_names = []
-        for bb in BibleBooks.objects.filter(trans_id = trans):
+        for bb in BibleBooks.objects.filter(trans = trans):
             book_names.append((str(bb.canonical), str(bb.long_book_name)))
             if len(book_names) >= 10:
                 self.notice(nick, str(book_names)) 
@@ -734,7 +734,7 @@ class BibleBot(Plugin):
                 idx = res['index']
                 chptr = res['chapter']
                 vrse = res['verse']
-                verse_txt = BibleVerses.objects.get(trans_id = trans,
+                verse_txt = BibleVerses.objects.get(trans = trans,
                                 book = book, chapter = chptr,
                                 verse = vrse).verse_text
                             
@@ -767,7 +767,7 @@ class BibleBot(Plugin):
         
         if not book_found:
             trans = BibleTranslations.objects.get(name=version)
-            if BibleBooks.objects.filter(trans_id=trans, canonical = book).exists():
+            if BibleBooks.objects.filter(trans=trans, canonical = book).exists():
                 return book
             else:
                 return None
