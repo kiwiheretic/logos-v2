@@ -1,4 +1,5 @@
 {% extends "base_nav.html" %}
+{% load static from staticfiles %}
 
 {% block style %}
 #div-logos-colours {
@@ -127,7 +128,7 @@
 {% block javascripts %}
 
 // Taken from https://docs.djangoproject.com/en/dev/ref/csrf/
-var csrftoken = $.cookie('csrftoken');
+var csrftoken = getCookie('csrftoken');
 $.ajaxSetup({
     beforeSend: function(xhr, settings) {
         if (!csrfSafeMethod(settings.type) && !this.crossDomain) {
@@ -135,7 +136,40 @@ $.ajaxSetup({
         }
     }
 });
+
 // ---- end snippet ----
+
+// Based on http://stackoverflow.com/questions/5524045/jquery-non-ajax-post
+// Used for dynamically creating a form to submit in a non-ajax way
+function myFormSubmit(action, method, input) {
+    'use strict';
+    var form;
+    form = $('<form />', {
+        action: action,
+        method: method,
+        style: 'display: none;'
+    });
+    if (typeof input !== 'undefined' && input !== null) {
+        $.each(input, function (name, value) {
+            $('<input />', {
+                type: 'hidden',
+                name: name,
+                value: value
+            }).appendTo(form);
+        });
+    }
+    var csrf_input;
+    csrf_input = $('<input />', {
+                type: 'hidden',
+                name: 'csrfmiddlewaretoken',
+                value: csrftoken
+            });
+    
+    form.append(csrf_input);
+    form.appendTo('body').submit();
+}
+// ---- end snippet ----
+
 
 $( document ).ready(function() {
 
@@ -186,12 +220,13 @@ $( document ).ready(function() {
   });
   
   $( "#apply" ).click(function() {
-      var clr_str = "";
+      var data_obj = {};
       $("#verse-example").children().each( function (idx, elmt) {
         if ($(elmt).is("span") || $(elmt).is("div")) {
           clr = $(elmt).data("colour");
           if (clr) {
-            clr_str += "normal-" + $(elmt).attr('class') + ' = ' + clr + ";";
+            key = "normal-" + $(elmt).attr('class');
+            data_obj[key] = clr;
           }
         };
         
@@ -200,7 +235,8 @@ $( document ).ready(function() {
         if ($(elmt).is("span") || $(elmt).is("div")) {
           clr = $(elmt).data("colour");
           if (clr) {
-            clr_str += "search-" + $(elmt).attr('class') + ' = ' + clr + ";";
+            key = "search-" + $(elmt).attr('class');
+            data_obj[key] = clr;
           }
         };
         
@@ -208,11 +244,15 @@ $( document ).ready(function() {
       // Now the search word
       clr = $("#search-example u").data("colour");
       if (clr) {
-         clr_str += "search-words" + ' = ' + clr + ";";
+         data_obj["search-words"] = clr;
       };
       
-      
-      alert(clr_str); 
+      selected_room = $("#room-buttons").find("button.selected-rm-btn").attr("data-value");
+      data_obj["network"] = "{{network}}";
+      data_obj["room"] = selected_room;
+      s1 = JSON.stringify(data_obj);
+      myFormSubmit('/bots/colours/', 'post', data_obj);
+      //$.post('/bots/colours/', data_obj); 
   });  
 });
 
@@ -229,7 +269,7 @@ $( document ).ready(function() {
 
 <div id="room-buttons">
 {% for rm in rooms %}
-<button id='btn-{{rm|slice:"1:"}}'>{{rm}}</button>
+<button data-value="{{rm|slice:'1:'}}" id='btn-{{rm|slice:"1:"}}'>{{rm}}</button>
 {% endfor %}
 </div>
 

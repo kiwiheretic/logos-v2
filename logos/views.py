@@ -3,6 +3,8 @@ import pdb
 
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import render, redirect
+from django.http import HttpResponse
+
 from forms import SettingsForm
 from models import BibleColours, Settings
 import copy
@@ -103,24 +105,41 @@ def bot_deny(request, req_id):
     pass
 
 
-#class BibleColours(models.Model):
-#    network = models.TextField()
-#    room = models.TextField()
-#    element = models.TextField()
-#    mirc_colour = models.TextField()
-
 @login_required()
 def bot_colours(request):
-    url = _get_rpc_url()
-    srv = xmlrpclib.Server(url)
-    network = srv.get_network_name()
-    nicks_pickle = srv.get_nicks_db()
-    nicks_db = pickle.loads(nicks_pickle)
-        
-    rooms = nicks_db.get_rooms() 
-       
-    context = {'network':network, 'rooms':rooms}
-    return render(request, 'logos/logos_colours.html', context)
+    if request.method == "POST":
+        room = "#" + request.POST["room"]
+        network = request.POST["network"]
+        data = []
+        for k in request.POST.keys():
+            if k not in ("room", "network", "csrfmiddlewaretoken"):
+                v = request.POST[k]
+                try:
+                    obj = BibleColours.objects.get\
+                        (network=network, room=room,
+                         element=k)
+                except BibleColours.DoesNotExist:
+                    obj = BibleColours(network=network, room=room,
+                         element=k, mirc_colour=v)
+                else:
+                    obj.mirc_colour = v
+                obj.save()
+                
+                
+        print "*******"
+        return HttpResponse("Success")
+
+    else:
+        url = _get_rpc_url()
+        srv = xmlrpclib.Server(url)
+        network = srv.get_network_name()
+        nicks_pickle = srv.get_nicks_db()
+        nicks_db = pickle.loads(nicks_pickle)
+            
+        rooms = nicks_db.get_rooms() 
+           
+        context = {'network':network, 'rooms':rooms}
+        return render(request, 'logos/logos_colours.html', context)
 
 @login_required()
 def nicks_css(request):
