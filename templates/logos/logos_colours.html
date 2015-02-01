@@ -119,143 +119,17 @@
 
 {% endblock %}
 
+{% block head_javascript %}
+  var network = "{{network}}";
+  var currRoom = "{{rooms.0|slice:'1:'}}";
+{% endblock %}
+
+
 {% block assets %}
 {{ block.super }}
 <script type="text/javascript" src="{% static 'cookie.js' %}"></script>
 <script type="text/javascript" src="{% static 'csrf.js' %}"></script>
-{% endblock %}
-
-{% block javascripts %}
-
-// Taken from https://docs.djangoproject.com/en/dev/ref/csrf/
-var csrftoken = getCookie('csrftoken');
-$.ajaxSetup({
-    beforeSend: function(xhr, settings) {
-        if (!csrfSafeMethod(settings.type) && !this.crossDomain) {
-            xhr.setRequestHeader("X-CSRFToken", csrftoken);
-        }
-    }
-});
-
-// ---- end snippet ----
-
-// Based on http://stackoverflow.com/questions/5524045/jquery-non-ajax-post
-// Used for dynamically creating a form to submit in a non-ajax way
-function myFormSubmit(action, method, input) {
-    'use strict';
-    var form;
-    form = $('<form />', {
-        action: action,
-        method: method,
-        style: 'display: none;'
-    });
-    if (typeof input !== 'undefined' && input !== null) {
-        $.each(input, function (name, value) {
-            $('<input />', {
-                type: 'hidden',
-                name: name,
-                value: value
-            }).appendTo(form);
-        });
-    }
-    var csrf_input;
-    csrf_input = $('<input />', {
-                type: 'hidden',
-                name: 'csrfmiddlewaretoken',
-                value: csrftoken
-            });
-    
-    form.append(csrf_input);
-    form.appendTo('body').submit();
-}
-// ---- end snippet ----
-
-
-$( document ).ready(function() {
-
-  function getColourCode(colour_str) {
-  
-    var re = /mirc-col(\d+)/g;
-    var text = re.exec(colour_str);
-    if (text) {
-      var colour_code = text[1];
-      return colour_code;
-    } else {
-      return null;
-    }; 
-     
-  };
-  
-  var currRoom = "{{rooms.0|slice:'1:'}}";
-  btn = "#btn-" + currRoom;
-  $(btn).addClass("selected-rm-btn");
-  
-  $("#room-buttons").find("button").click(function(evt) {
-    $("#room-buttons").find("button").removeClass('selected-rm-btn');
-    $(evt.target).addClass('selected-rm-btn');
-  });
-  
-  // Change the default selected colour
-  $( ".mirc-colour" ).click(function(evt) {
-    tab = $(evt.target).parents('.colour-tab');
-    $(tab).find("td").removeClass('colour-selected');
-    $(evt.target).addClass('colour-selected');
-  });
-
-  $( ".translation,.verse-ref,.verse-text" ).click(function(evt) {
-    fg = $("#foreground-table").find('.colour-selected').css('background-color');
-    bg = $("#background-table").find('.colour-selected').css('background-color');
-    if (typeof bg != 'undefined' && typeof fg != 'undefined') {
-       $(evt.target).css('background-color', bg);
-       $(evt.target).css('color', fg);
-       var class_str;
-       class_str = $("#foreground-table").find('.colour-selected').attr('class');
-       var clr1 = getColourCode(class_str);
-       class_str = $("#background-table").find('.colour-selected').attr('class');
-       var clr2 = getColourCode(class_str);
-       $(evt.target).data("colour", clr1+","+clr2);
-    } else {
-       alert('colour not valid');
-    }
-  });
-  
-  $( "#apply" ).click(function() {
-      var data_obj = {};
-      $("#verse-example").children().each( function (idx, elmt) {
-        if ($(elmt).is("span") || $(elmt).is("div")) {
-          clr = $(elmt).data("colour");
-          if (clr) {
-            key = "normal-" + $(elmt).attr('class');
-            data_obj[key] = clr;
-          }
-        };
-        
-      });
-      $("#search-example").children().each( function (idx, elmt) {
-        if ($(elmt).is("span") || $(elmt).is("div")) {
-          clr = $(elmt).data("colour");
-          if (clr) {
-            key = "search-" + $(elmt).attr('class');
-            data_obj[key] = clr;
-          }
-        };
-        
-      }); 
-      // Now the search word
-      clr = $("#search-example u").data("colour");
-      if (clr) {
-         data_obj["search-words"] = clr;
-      };
-      
-      selected_room = $("#room-buttons").find("button.selected-rm-btn").attr("data-value");
-      data_obj["network"] = "{{network}}";
-      data_obj["room"] = selected_room;
-      s1 = JSON.stringify(data_obj);
-      myFormSubmit('/bots/colours/', 'post', data_obj);
-      //$.post('/bots/colours/', data_obj); 
-  });  
-});
-
+<script type="text/javascript" src="{% static 'logos_colours.js' %}"></script>
 {% endblock %}
 
 {% block content %}
@@ -339,18 +213,18 @@ $( document ).ready(function() {
 <div id="samples">
 <div id="verse-example" class="sample-verse">
 <p>Normal Verse Display</p>
-<span class="translation">&nbsp;KJV&nbsp;</span>
-<span class="verse-ref">&nbsp;John 3:16&nbsp;</span>
-<div class="verse-text">For God so loved the world that he gave his only begotten son,
+<span class="colour-elmt translation">&nbsp;KJV&nbsp;</span>
+<span class="colour-elmt verse-ref">&nbsp;John 3:16&nbsp;</span>
+<div class="colour-elmt verse-text">For God so loved the world that he gave his only begotten son,
 that whosoever believeth in Him shall not perish but have everlasting life.</div>
 </div>
 
 <div id="search-example" class="sample-verse">
 <p>Search Results Display</p>
-<span class="translation">&nbsp;KJV&nbsp;</span>
-<span class="verse-ref">&nbsp;John 3:16&nbsp;</span>
-<div class="verse-text">For God so loved the world that he gave his only begotten son,
-that whosoever <u>believeth</u> in Him shall not perish but have everlasting life.</div>
+<span class="colour-elmt translation">&nbsp;KJV&nbsp;</span>
+<span class="colour-elmt verse-ref">&nbsp;John 3:16&nbsp;</span>
+<div class="colour-elmt verse-text">For God so loved the world that he gave his only begotten son,
+that whosoever <u class="colour-elmt">believeth</u> in Him shall not perish but have everlasting life.</div>
 </div>
 </div> <!-- samples -->
 <div id='submit-buttons'>
