@@ -19,8 +19,7 @@ Bible Plugin:
   * Simple bible verse lookups
   * Fast concordance searches
   * Strongs number lookups
-  * Screenshots on this plugin on [official user documentation website](https://biblebot.wordpress.com/).
-
+  
 ### Summary of set up for Linux ###
 
 #### Centos ####
