@@ -11,7 +11,8 @@ $.ajaxSetup({
 // ---- end snippet ----
 
 // Based on http://stackoverflow.com/questions/5524045/jquery-non-ajax-post
-// Used for dynamically creating a form to submit in a non-ajax way
+// Used for dynamically creating a form to submit data to the server 
+// in a non-ajax way
 function myFormSubmit(action, method, input) {
     'use strict';
     var form;
@@ -56,10 +57,10 @@ $( document ).ready(function() {
      
   }; // getColourCode
   
-  function setSampleColours(room) {
-  
-  }; // setSampleColours
-
+  // Create a colour array (clrArray) which contains all the mIRC
+  // colour information and indexed by the mIRC colour integer number.  
+  // This is dynamically derived from the cssRules 'mirc-col0' .. 'mirc-col15'
+  // to auto discover the assigned rgb colour.  
   var clrArray = new Array();
   var patt = new RegExp("^\.mirc-col(\\d+)");
   for (var sheet_idx in document.styleSheets) {
@@ -71,14 +72,18 @@ $( document ).ready(function() {
              var match = patt.exec(sheet.cssText);
              var mirc_idx = parseInt(match[1]);
              clrArray[mirc_idx] = sheet.style.background;
-//             console.log(mirc_idx);
-//             console.log(sheet);
-//             console.log(sheet.cssText);
+
          };
       }; 
   };
   console.log(clrArray);
+  // ---- end clrArray section ----------
   
+  
+  // setRoomColours:
+  //  Set the web widget colours that display the sample verse
+  //  and sample search verse from an ajax request to the server
+  //  (which in turn gets the preset colour codes from the database).
   function setRoomColours(room) {
       var url = "/bots/colours/get-room-colours/" + network + "/" + room + "/";
       var normal_patt = new RegExp("^normal-([^\\s]+)");
@@ -118,14 +123,14 @@ $( document ).ready(function() {
                    var selector = '#search-example .'+verse_class;
                     
                };
-               console.log(selector);
+//               console.log(selector);
                
                $(selector).css('color', fg_str);
                $(selector).css('background-color', bg_str);
 
              }             
-             console.log(elmt);
-             console.log(clr);             
+//             console.log(elmt);
+//             console.log(clr);             
              
           };
           
@@ -143,7 +148,8 @@ $( document ).ready(function() {
     setRoomColours(currRoom);
   });
   
-  // Change the default selected colour
+  // Change the default selected colour in the colour tables
+  // (puts a coloured hilighter rectangle around the selected colour.)
   $( ".mirc-colour" ).click(function(evt) {
     tab = $(evt.target).parents('.colour-tab');
     $(tab).find("td").removeClass('colour-selected');
@@ -167,6 +173,10 @@ $( document ).ready(function() {
     }
   });
   
+  // If the 'apply' button is clicked...then send all the colour information,
+  // from our verse and search example widgets, to the server.  Its done as 
+  // a dynamic form so it can be sent as a full browser post (not an ajax post).
+  // (Means less custom javascript work for me.)
   $( "#apply" ).click(function() {
       var data_obj = {};
       $("#verse-example").children().each( function (idx, elmt) {
