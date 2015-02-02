@@ -12,7 +12,7 @@ from logos.roomlib import get_room_option, set_room_option, set_global_option, \
     get_global_option
 from logos.pluginlib import CommandDecodeException
 from logos.models import BibleTranslations, BibleBooks, BibleVerses, \
-    BibleConcordance, BibleDict
+    BibleConcordance, BibleDict, BibleColours
 from logos.management.commands._booktbl import book_table
 
 import logging
@@ -659,14 +659,36 @@ class BibleBot(Plugin):
             self.pending_searches[chan.lower()][nick.lower()] = gen
             self._format_search_results(chan, gen)
     
+    
+    def _get_colour(self, chan, elmt):
+        try:
+            clr = BibleColours.objects.get(network=self.network, room=chan,
+                                    element=elmt)
+            return clr.mirc_colour
+        except BibleColours.DoesNotExist:
+            return None
+
     def verse_lookup(self, regex, chan, nick, **kwargs):
 
         user = kwargs['user']
         msg = kwargs['clean_line']
         
+        normal_colours = []
+        normal_colours.append(self._get_colour(chan, "normal-translation"))
+        normal_colours.append(self._get_colour(chan, "normal-verse-ref"))
+        normal_colours.append(self._get_colour(chan, "normal-verse-text"))
+        
         result = self._get_verses(chan, nick, user, msg)
+        clr_reply = []
         for resp in result:
-            reply = ' '.join(resp)
+            for elmt in resp:
+                clr = normal_colours.pop(0)
+                if clr == None:
+                    clr_reply.append(elmt)
+                else:
+                    fg,bg = clr.split(",")
+                    clr_reply.append("\x03{},{}".format(fg,bg)+elmt+"\x03")
+            reply = ' '.join(clr_reply)
             self.say(chan, str(reply))
 
     def next(self, regex, chan, nick, **kwargs):
