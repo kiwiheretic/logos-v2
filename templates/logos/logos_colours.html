@@ -8,6 +8,7 @@
 
 #room-buttons {
    float: left;
+   margin: 15px 0 20px 0;
 
 }
 #colour-tables {
@@ -15,13 +16,23 @@
    clear: left;
 }
 
+.colour-table {
+    border: #666 solid 1px;
+    border-radius: 10px;
+    padding: 10px;
+    background: #ddd;
+    width:150px;
+}
+
 #foreground-table {
     margin: 5px;
     float: left;
+    text-align: center;
 }
 #background-table {
     margin: 5px;
     float: left;
+    text-align: center;
 }
 
 #samples {
@@ -68,6 +79,10 @@
    cursor: pointer;   
 }
 
+.colour-table-title {
+   font-family: serif;
+}
+
 .colour-tab {
    border-style: dotted;
    border-width: 1px;
@@ -79,6 +94,7 @@
    border-spacing: 4px;
    border-collapse: separate;
    background: #666;
+   display: inline-table;
 }
 
 .mirc-colour {
@@ -118,9 +134,44 @@
 }
 
 .selected-rm-btn {
-    background-color: yellow;
+    color: yellow;
+}
+.unselected-rm-btn {
+   color: #f2f2f2;
 }
 
+.button {
+   border-top: 1px solid #96d1f8;
+   background: #65a9d7;
+   background: -webkit-gradient(linear, left top, left bottom, from(#1a3d54), to(#65a9d7));
+   background: -webkit-linear-gradient(top, #1a3d54, #65a9d7);
+   background: -moz-linear-gradient(top, #1a3d54, #65a9d7);
+   background: -ms-linear-gradient(top, #1a3d54, #65a9d7);
+   background: -o-linear-gradient(top, #1a3d54, #65a9d7);
+   padding: 10.5px 21px;
+   -webkit-border-radius: 27px;
+   -moz-border-radius: 27px;
+   border-radius: 27px;
+   -webkit-box-shadow: rgba(0,0,0,1) 0 1px 0;
+   -moz-box-shadow: rgba(0,0,0,1) 0 1px 0;
+   box-shadow: rgba(0,0,0,1) 0 1px 0;
+   text-shadow: rgba(0,0,0,.4) 0 1px 0;
+
+   font-size: 19px;
+   font-family: Helvetica, Arial, Sans-Serif;
+   text-decoration: none;
+   vertical-align: middle;
+   }
+.button:hover {
+   border-top-color: #28597a;
+   background: #28597a;
+   }
+   
+.button:active {
+   border-top-color: #3c62a3;
+   background: #3c62a3;
+   }
+   
 {% endblock %}
 
 {% block head_javascript %}
@@ -147,13 +198,13 @@
 
 <div id="room-buttons">
 {% for rm in rooms %}
-<button data-value="{{rm|slice:'1:'}}" id='btn-{{rm|slice:"1:"}}'>{{rm}}</button>
+<button class="button unselected-rm-btn" data-value="{{rm|slice:'1:'}}" id='btn-{{rm|slice:"1:"}}'>{{rm}}</button>
 {% endfor %}
 </div>
 
 <div id="colour-tables" style="float:left;">
-<div id="foreground-table">
-<p>mIRC Foreground<br/>Colour Table</p>
+<div class="colour-table" id="foreground-table">
+<p class="colour-table-title">mIRC Foreground<br/>Colour Table</p>
 <table class="colour-tab">
 <tr>
 <td class="mirc-colour mirc-col0">&nbsp;</td>
@@ -182,8 +233,8 @@
 
 </table>
 </div> <!-- foreground table -->
-<div id="background-table">
-<p>mIRC Background<br/>Colour Table</p>
+<div class="colour-table" id="background-table">
+<p class="colour-table-title">mIRC Background<br/>Colour Table</p>
 <table class="colour-tab">
 <tr>
 <td class="mirc-colour mirc-col0">&nbsp;</td>

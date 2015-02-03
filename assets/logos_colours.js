@@ -139,10 +139,13 @@ $( document ).ready(function() {
 
   var btn = "#btn-" + currRoom;
   $(btn).addClass("selected-rm-btn");
+  $(btn).removeClass("unselected-rm-btn");
   setRoomColours(currRoom);
 
   $("#room-buttons").find("button").click(function(evt) {
     $("#room-buttons").find("button").removeClass('selected-rm-btn');
+    $("#room-buttons").find("button").addClass('unselected-rm-btn');
+    $(evt.target).removeClass('unselected-rm-btn');
     $(evt.target).addClass('selected-rm-btn');
     var currRoom = $(evt.target).attr('data-value');
     setRoomColours(currRoom);
