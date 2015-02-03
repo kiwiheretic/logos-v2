@@ -821,7 +821,7 @@ class BibleBot(Plugin):
                     elif not clr_words:
                         txt += piece2
 
-                resp = "[%d] %s%s%s" % (idx, trans_name, verse_ref, txt)
+                resp = "[%d] %s %s %s" % (idx, trans_name, verse_ref, txt)
                 print repr(resp)
                 self.say(chan, resp)
             except StopIteration:
