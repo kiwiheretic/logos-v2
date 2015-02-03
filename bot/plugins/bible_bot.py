@@ -12,7 +12,7 @@ from logos.roomlib import get_room_option, set_room_option, set_global_option, \
     get_global_option
 from logos.pluginlib import CommandDecodeException
 from logos.models import BibleTranslations, BibleBooks, BibleVerses, \
-    BibleConcordance, BibleDict
+    BibleConcordance, BibleDict, BibleColours
 from logos.management.commands._booktbl import book_table
 
 import logging
@@ -460,8 +460,28 @@ class BibleBot(Plugin):
                                 break
 
                     if found:
+                        # Add some markup around the search words
+
+                        bv = BibleVerses.objects.filter(trans = trans,
+                                                   book=wrd_rec.book,
+                                                   chapter=wrd_rec.chapter,
+                                                   verse=wrd_rec.verse)
+                        verse_text = bv.first().verse_text
+                        for wrd in normal_words:
+                            verse_text = re.sub(r"("+wrd+")", 
+                                                r"<word-match>\1</word-match>", 
+                                                verse_text,
+                                                flags = re.I)
+                        for wrd in wild_words:
+                            wrd = re.sub(r"\*", r"[a-zA-Z]*", wrd)
+                            verse_text = re.sub(r"("+wrd+")", 
+                                                r"<word-match>\1</word-match>", 
+                                                verse_text,
+                                                flags = re.I)
+                            
                         yield {'index': sri, 'trans': trans.id, 'book': wrd_rec.book.id, 
-                           'chapter': wrd_rec.chapter, 'verse': wrd_rec.verse }
+                           'chapter': wrd_rec.chapter, 'verse': wrd_rec.verse,
+                           'verse_text':verse_text }
                         sri += 1
 
             
@@ -659,14 +679,37 @@ class BibleBot(Plugin):
             self.pending_searches[chan.lower()][nick.lower()] = gen
             self._format_search_results(chan, gen)
     
+    
+    def _get_colour(self, chan, elmt):
+        try:
+            clr = BibleColours.objects.get(network=self.network, room=chan,
+                                    element=elmt)
+            return clr.mirc_colour
+        except BibleColours.DoesNotExist:
+            return None
+
     def verse_lookup(self, regex, chan, nick, **kwargs):
 
         user = kwargs['user']
         msg = kwargs['clean_line']
         
+        normal_colours = []
+        normal_colours.append(self._get_colour(chan, "normal-translation"))
+        normal_colours.append(self._get_colour(chan, "normal-verse-ref"))
+        normal_colours.append(self._get_colour(chan, "normal-verse-text"))
+        
         result = self._get_verses(chan, nick, user, msg)
+        clr_reply = []
         for resp in result:
-            reply = ' '.join(resp)
+            for elmt in resp:
+                clr = normal_colours.pop(0)
+                if clr == None:
+                    clr_reply.append(elmt)
+                else:
+                    fg,bg = clr.split(",")
+                    clr_reply.append("\x03{},{} ".format(fg,bg)+elmt+" \x03")
+            reply = ' '.join(clr_reply)
+            print repr(reply)
             self.say(chan, str(reply))
 
     def next(self, regex, chan, nick, **kwargs):
@@ -734,14 +777,53 @@ class BibleBot(Plugin):
                 idx = res['index']
                 chptr = res['chapter']
                 vrse = res['verse']
-                verse_txt = BibleVerses.objects.get(trans = trans,
-                                book = book, chapter = chptr,
-                                verse = vrse).verse_text
-                            
-                str1 = "[%d] %s %s %d:%d : %s " % (idx, trans.name.upper(), book.long_book_name, 
-                                              chptr, vrse, verse_txt)
+                verse_txt = res['verse_text']
                 
-                self.say(chan, str1)
+                verse_ref = "{} {}:{}".format(book.long_book_name, chptr, vrse)
+
+                clr = self._get_colour(chan, "search-translation")
+                if clr:
+                    fg,bg = clr.split(",")
+                    trans_name = "\x03{},{} ".format(fg,bg)+trans.name.upper()+" \x03"
+                else:
+                    trans_name = trans.name.upper()
+                    
+                clr = self._get_colour(chan, "search-verse-ref")
+                if clr:
+                    fg,bg = clr.split(",")
+                    verse_ref = "\x03{},{} ".format(fg,bg)+verse_ref+" \x03"
+                
+                clr = self._get_colour(chan, "search-verse-text")
+                clr_words = self._get_colour(chan,"search-words")
+                if clr:
+                    fg,bg = clr.split(",")
+                    prefix_clr = "\x03{},{}".format(fg,bg)
+                if clr_words:
+                    fgw,bgw = clr_words.split(",")
+                    prefix_clw = "\x03{},{}".format(fg,bg)
+                pieces2 = re.findall(r"<word-match>([^<]+?)</word-match>",verse_txt)
+                if len(pieces2) > 0:
+                    pieces1 = re.split(r"<word-match>[^<]+?</word-match>",verse_txt)
+                pieces2.append("")
+                assert (len(pieces1) == len(pieces2))
+                # Here we rely on re.split returning the first list element
+                # as an empty string if the word match occurs at the beginning
+                # of the string which seems to be the case
+                txt = ""
+
+                for piece1, piece2 in zip(pieces1, pieces2):
+                    if clr and piece1 != '':
+                        txt += "\x03{},{}{}\x03".format(fg,bg,piece1)
+                    elif not clr:
+                        txt += piece1
+                    if clr_words and piece2 != '':
+                        txt += "\x03{},{}{}\x03".format(fgw,bgw,piece2)
+                    elif not clr_words:
+                        txt += piece2
+
+                resp = "[%d] %s %s %s" % (idx, trans_name, verse_ref, txt)
+                print repr(resp)
+                self.say(chan, resp)
             except StopIteration:
                 self.say(chan, "*** No more search results")
                 break

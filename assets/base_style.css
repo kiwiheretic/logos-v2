@@ -161,9 +161,7 @@ input[type="submit"] {
 /* error message display */
 .messages {
     display: block;
-    margin-left: auto;
-    margin-right: auto;
-    margin-bottom: 30px;
+    margin: 10px auto 10px auto;
     width: 400px;
     border: 2px dashed red; 
     border-radius: 10px;

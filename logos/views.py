@@ -3,6 +3,11 @@ import pdb
 
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import render, redirect
+from django.http import HttpResponse, HttpResponseRedirect
+from django.contrib import messages
+from django.core.urlresolvers import reverse
+from django.core import serializers
+
 from forms import SettingsForm
 from models import BibleColours, Settings
 import copy
@@ -93,6 +98,7 @@ def profile(request):
     except socket.error:
         context = {'form':form, 'errors': 'Could not connect to Logos bot'}
         return render(request, 'logos/profile.html', context)
+
 @login_required()    
 def bot_approval(request, req_id):
     br = BotRequests.objects.get(pk=req_id)
@@ -103,12 +109,6 @@ def bot_deny(request, req_id):
     pass
 
 
-#class BibleColours(models.Model):
-#    network = models.TextField()
-#    room = models.TextField()
-#    element = models.TextField()
-#    mirc_colour = models.TextField()
-
 @login_required()
 def bot_colours(request):
     url = _get_rpc_url()
@@ -116,11 +116,46 @@ def bot_colours(request):
     network = srv.get_network_name()
     nicks_pickle = srv.get_nicks_db()
     nicks_db = pickle.loads(nicks_pickle)
-        
-    rooms = nicks_db.get_rooms() 
+    rooms = nicks_db.get_rooms()     
+
+    if request.method == "POST":
+        room = "#" + request.POST["room"]
+        network = request.POST["network"]
+        data = []
+        for k in request.POST.keys():
+            if k not in ("room", "network", "csrfmiddlewaretoken"):
+                v = request.POST[k]
+                try:
+                    obj = BibleColours.objects.get\
+                        (network=network, room=room,
+                         element=k)
+                except BibleColours.DoesNotExist:
+                    obj = BibleColours(network=network, room=room,
+                         element=k, mirc_colour=v)
+                else:
+                    obj.mirc_colour = v
+                obj.save()
+        messages.add_message(request, messages.INFO,
+                             'Colour settings for %s saved' % room)
+        return HttpResponseRedirect(reverse('logos.views.bot_colours'))
+
+    else:
        
-    context = {'network':network, 'rooms':rooms}
-    return render(request, 'logos/logos_colours.html', context)
+           
+        context = {'network':network, 'rooms':rooms}
+        return render(request, 'logos/logos_colours.html', context)
+
+@login_required()
+def ajax_get_room_colours(request, network, room):
+    try:
+        room_colours = BibleColours.objects.filter\
+            (network=network, room='#'+room)
+    except BibleColours.DoesNotExist:
+        return HttpResponse(None)
+
+    data = serializers.serialize("json", room_colours)
+
+    return HttpResponse(data)
 
 @login_required()
 def nicks_css(request):

@@ -17,7 +17,8 @@ urlpatterns = patterns('',
     url(r'^bots/deny/(\d+)', 'logos.views.bot_deny'),
     
     # parameter is room name
-    url(r'^bots/colours/', 'logos.views.bot_colours'),
+    url(r'^bots/colours/$', 'logos.views.bot_colours'),
+    url(r'^bots/colours/get-room-colours/([^/]+)/([^/]+)/', 'logos.views.ajax_get_room_colours'),
     
     url(r'^web-views/nicks-css/', 'logos.views.nicks_css'),
     # Uncomment the next line to enable the admin:
