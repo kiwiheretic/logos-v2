@@ -709,6 +709,7 @@ class BibleBot(Plugin):
                     fg,bg = clr.split(",")
                     clr_reply.append("\x03{},{} ".format(fg,bg)+elmt+" \x03")
             reply = ' '.join(clr_reply)
+            print repr(reply)
             self.say(chan, str(reply))
 
     def next(self, regex, chan, nick, **kwargs):
@@ -784,7 +785,9 @@ class BibleBot(Plugin):
                 if clr:
                     fg,bg = clr.split(",")
                     trans_name = "\x03{},{} ".format(fg,bg)+trans.name.upper()+" \x03"
-                
+                else:
+                    trans_name = trans.name.upper()
+                    
                 clr = self._get_colour(chan, "search-verse-ref")
                 if clr:
                     fg,bg = clr.split(",")
@@ -807,14 +810,19 @@ class BibleBot(Plugin):
                 # as an empty string if the word match occurs at the beginning
                 # of the string which seems to be the case
                 txt = ""
+
                 for piece1, piece2 in zip(pieces1, pieces2):
                     if clr and piece1 != '':
                         txt += "\x03{},{}{}\x03".format(fg,bg,piece1)
+                    elif not clr:
+                        txt += piece1
                     if clr_words and piece2 != '':
                         txt += "\x03{},{}{}\x03".format(fgw,bgw,piece2)
+                    elif not clr_words:
+                        txt += piece2
 
                 resp = "[%d] %s%s%s" % (idx, trans_name, verse_ref, txt)
-                
+                print repr(resp)
                 self.say(chan, resp)
             except StopIteration:
                 self.say(chan, "*** No more search results")
