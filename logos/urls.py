@@ -2,6 +2,11 @@ from django.conf.urls import patterns, include, url
 
 # Uncomment the next two lines to enable the admin:
 from django.contrib import admin
+
+# Remove RegistrationProfile widget from admin interface
+from registration.admin import RegistrationProfile
+admin.site.unregister(RegistrationProfile)
+
 admin.autodiscover()
 
 urlpatterns = patterns('',

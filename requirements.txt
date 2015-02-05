@@ -2,4 +2,5 @@ Django==1.7
 Twisted==14.0.0
 django-registration-redux==1.1
 django-guardian==1.2.5
+django-permissions-widget==1.4.0
 zope.interface==4.1.1

@@ -6,7 +6,7 @@ import email_settings
 import pdb
 logger = logging.getLogger(__name__)
 
-NETWORK='irc.cornerstonechristianchat.com'
+
 
 DEBUG = True
 TEMPLATE_DEBUG = DEBUG
@@ -211,7 +211,7 @@ INSTALLED_APPS = (
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
-    'django.contrib.sites',
+#    'django.contrib.sites',
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'django.contrib.humanize',
@@ -223,6 +223,10 @@ INSTALLED_APPS = (
      'django.contrib.admin',
     # Uncomment the next line to enable admin documentation:
     # 'django.contrib.admindocs',
+    
+    # Add admin interface permission widget
+    # http://permissions-widget.readthedocs.org/en/latest/
+    'permissions_widget',
 )
 
 # A sample logging configuration. The only tangible logging
