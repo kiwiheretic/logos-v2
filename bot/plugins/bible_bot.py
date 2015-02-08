@@ -642,13 +642,20 @@ class BibleBot(Plugin):
             self.pending_searches[chan.lower()][nick.lower()] = gen
                 
                 
-            self._format_search_results(chan, gen)
+            finished = self._format_search_results(chan, gen)
+            if finished:
+                del self.pending_searches[chan.lower()][nick.lower()]
     
     def next_search(self, regex, chan, nick, **kwargs):
 
-        gen = self.pending_searches[chan.lower()][nick.lower()]
-        self._format_search_results(chan, gen)
-    
+        if nick.lower() in self.pending_searches[chan.lower()]:
+            gen = self.pending_searches[chan.lower()][nick.lower()]
+            finished = self._format_search_results(chan, gen)
+            if finished:
+                del self.pending_searches[chan.lower()][nick.lower()]
+        else:
+            self.say(chan, "*** There is no currently active search***") 
+                       
     def phrase_search(self, regex, chan, nick, **kwargs):
         
         phrase = regex.group(2)
@@ -762,12 +769,12 @@ class BibleBot(Plugin):
                 results['book_start'] = 'genesis'
                 results['book_end'] = 'malachi'
                 words.pop(0)
-
                 
         return results
     def _format_search_results(self, chan, gen):
         start_time = time.clock()
         
+        finished = False
         srch_limit = self._get_searchlimit(chan)
         for ii in range(0,srch_limit):
             try:
@@ -826,9 +833,12 @@ class BibleBot(Plugin):
                 self.say(chan, resp)
             except StopIteration:
                 self.say(chan, "*** No more search results")
+                finished = True
                 break
         elapsed = time.clock() - start_time    
         self.say(chan, "Query took %6.3f seconds " % (elapsed,))
+        return finished
+    
         
     def _get_book(self, version, bookwork):
         
