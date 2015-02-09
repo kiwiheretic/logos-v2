@@ -722,8 +722,9 @@ class BibleBot(Plugin):
         normal_colours.append(self._get_colour(chan, "normal-verse-text"))
         
         result = self._get_verses(chan, nick, user, msg)
-        clr_reply = []
+
         for resp in result:
+            clr_reply = []
             normal_colours1 = copy.copy(normal_colours)
             for elmt in resp:
                 clr = normal_colours1.pop(0)
