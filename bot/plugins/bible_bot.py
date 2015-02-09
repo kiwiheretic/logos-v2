@@ -1,4 +1,10 @@
 #  BibleBot
+
+# Whether to use threads for concordance searches or not.
+# (This is an experimental feature.)
+THREADED_SEARCH = False
+
+
 import datetime
 import re
 import time
@@ -879,13 +885,22 @@ class BibleBot(Plugin):
             except StopIteration:
 #                self.say(chan, "*** No more search results")
                 finished = True
-        self.reactor.callFromThread(self._search_results, chan, nick, results, finished)
+                
+        if THREADED_SEARCH:
+            self.reactor.callFromThread(self._search_results, chan, nick, results, finished)
+        else:
+            self._search_results(chan, nick, results, finished)
+
                     
     def _format_search_results(self, chan, nick):
         start_time = time.clock()
         self.pending_searches[chan.lower()][nick.lower()]['timestamp'] = start_time
         gen = self.pending_searches[chan.lower()][nick.lower()]['gen']        
-        self.reactor.callInThread(self._threaded_search_results, chan, nick, gen)
+        if THREADED_SEARCH:
+            self.reactor.callInThread(self._threaded_search_results, chan, nick, gen)
+        else:
+            results = self._threaded_search_results(chan, nick, gen)
+            
 
         
     def _get_book(self, version, bookwork):
