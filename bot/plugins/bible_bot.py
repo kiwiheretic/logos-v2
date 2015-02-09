@@ -6,6 +6,7 @@ import copy
 
 import pdb
 from logos.constants import PUNCTUATION, STOP_WORDS
+from twisted.internet.error import AlreadyCalled, AlreadyCancelled
 
 from bot.pluginDespatch import Plugin, CommandException
 from logos.roomlib import get_room_option, set_room_option, set_global_option, \
@@ -49,7 +50,6 @@ class BibleBot(Plugin):
     def __init__(self, *args, **kwargs):
         super(BibleBot, self).__init__(*args, **kwargs)
         
-
         self.commands = (\
                          (r'help\s*$', self.help, "display bible bot help url"),
                          (r'(next|n)\s*$', self.next, "read next verse"),
@@ -321,6 +321,7 @@ class BibleBot(Plugin):
                 q_results = BibleConcordance.objects.filter(trans = trans)
             
             if len(normal_words) > 0:
+                #s = "word in (" + ", ".join('\'{0}\''.format(re.sub('\'','\'\'', w)) for w in normal_words) +")"
                 s = "word in (" + ", ".join('\'{0}\''.format(w) for w in normal_words) +")"
                 logger.info("where clause is \""+s +"\"")
                 q0_results = q_results.extra(where=[s])
@@ -438,9 +439,18 @@ class BibleBot(Plugin):
                     logger.debug("phrase srch: word_list = %s" % (str(word_list2),))
                     
                     if contains_sublist(verse_words, word_list2):
+
+                        bv = BibleVerses.objects.filter(trans = trans,
+                                                   book=wrd_rec.book,
+                                                   chapter=wrd_rec.chapter,
+                                                   verse=wrd_rec.verse)
+                        verse_text = bv.first().verse_text
+
+                       
                         logger.debug("In sublist")
                         yield {'index':sri, 'trans': trans.id, 'book': wrd_rec.book.id, 
-                            'chapter': wrd_rec.chapter, 'verse': wrd_rec.verse }
+                            'chapter': wrd_rec.chapter, 'verse': wrd_rec.verse,
+                            'verse_text':verse_text }
                         sri += 1
 
                 else: # mode == "simple"
@@ -637,20 +647,24 @@ class BibleBot(Plugin):
             gen = self._concordance_generator(chan, nick, trans, book_range, 
                                 words, mode="simple")
             if chan.lower() not in self.pending_searches:
-                self.pending_searches[chan.lower()] = {}
+                self.pending_searches[chan.lower()] = {nick.lower():{}}
             
-            self.pending_searches[chan.lower()][nick.lower()] = gen
+            self.pending_searches[chan.lower()][nick.lower()]['gen'] = gen
                 
-                
-            finished = self._format_search_results(chan, gen)
+            delayed = self.reactor.callLater(3.5, self._search_long_time, chan, nick)    
+            self.pending_searches[chan.lower()][nick.lower()]['delayed'] = delayed
+            
+            finished = self._format_search_results(chan, nick.lower())
             if finished:
                 del self.pending_searches[chan.lower()][nick.lower()]
     
     def next_search(self, regex, chan, nick, **kwargs):
 
         if nick.lower() in self.pending_searches[chan.lower()]:
-            gen = self.pending_searches[chan.lower()][nick.lower()]
-            finished = self._format_search_results(chan, gen)
+            gen = self.pending_searches[chan.lower()][nick.lower()]['gen']
+            delayed = self.reactor.callLater(3.5, self._search_long_time, chan, nick)
+            self.pending_searches[chan.lower()][nick.lower()]['delayed'] = delayed
+            finished = self._format_search_results(chan, nick.lower())
             if finished:
                 del self.pending_searches[chan.lower()][nick.lower()]
         else:
@@ -681,10 +695,12 @@ class BibleBot(Plugin):
             gen = self._concordance_generator(chan, nick, trans, 
                     book_range, words, mode="phrase")
             if chan.lower() not in self.pending_searches:
-                self.pending_searches[chan.lower()] = {}
+                self.pending_searches[chan.lower()] = {nick.lower():{}}
             
-            self.pending_searches[chan.lower()][nick.lower()] = gen
-            self._format_search_results(chan, gen)
+            self.pending_searches[chan.lower()][nick.lower()]['gen'] = gen
+            delayed = self.reactor.callLater(3.5, self._search_long_time, chan, nick)    
+            self.pending_searches[chan.lower()][nick.lower()]['delayed'] = delayed
+            self._format_search_results(chan, nick.lower())
     
     
     def _get_colour(self, chan, elmt):
@@ -708,8 +724,9 @@ class BibleBot(Plugin):
         result = self._get_verses(chan, nick, user, msg)
         clr_reply = []
         for resp in result:
+            normal_colours1 = copy.copy(normal_colours)
             for elmt in resp:
-                clr = normal_colours.pop(0)
+                clr = normal_colours1.pop(0)
                 if clr == None:
                     clr_reply.append(elmt)
                 else:
@@ -771,9 +788,30 @@ class BibleBot(Plugin):
                 words.pop(0)
                 
         return results
-    def _format_search_results(self, chan, gen):
-        start_time = time.clock()
+    
+    def _search_long_time(self, chan, nick):
+        logger.info("_search_long_time called with %s" % str((chan, nick)))
+    
+    def _search_results(self, chan, nick, results, finished):
+        delayed = self.pending_searches[chan.lower()][nick.lower()]['delayed'] 
+        try:
+            delayed.cancel()
+        except (AlreadyCalled, AlreadyCancelled) as e:
+            pass
         
+        start_time = self.pending_searches[chan.lower()][nick.lower()]['timestamp']
+        elapsed = time.clock() - start_time 
+
+        for result in results:
+            self.say(chan, result)
+            
+        if finished:
+            self.say(chan, "*** No more search results")
+   
+        self.say(chan, "Query took %6.3f seconds " % (elapsed,))
+                    
+    def _threaded_search_results(self, chan, nick, gen):
+        results = []
         finished = False
         srch_limit = self._get_searchlimit(chan)
         for ii in range(0,srch_limit):
@@ -812,33 +850,42 @@ class BibleBot(Plugin):
                 if len(pieces2) > 0:
                     pieces1 = re.split(r"<word-match>[^<]+?</word-match>",verse_txt)
                 pieces2.append("")
-                assert (len(pieces1) == len(pieces2))
-                # Here we rely on re.split returning the first list element
-                # as an empty string if the word match occurs at the beginning
-                # of the string which seems to be the case
-                txt = ""
 
-                for piece1, piece2 in zip(pieces1, pieces2):
-                    if clr and piece1 != '':
-                        txt += "\x03{},{}{}\x03".format(fg,bg,piece1)
-                    elif not clr:
-                        txt += piece1
-                    if clr_words and piece2 != '':
-                        txt += "\x03{},{}{}\x03".format(fgw,bgw,piece2)
-                    elif not clr_words:
-                        txt += piece2
+                # temporary hack until phrase search has markup
+                if 'pieces1' in locals():
+                    assert (len(pieces1) == len(pieces2))
+                    # Here we rely on re.split returning the first list element
+                    # as an empty string if the word match occurs at the beginning
+                    # of the string which seems to be the case
+                    txt = ""
 
+                    for piece1, piece2 in zip(pieces1, pieces2):
+                        if clr and piece1 != '':
+                            txt += "\x03{},{}{}\x03".format(fg,bg,piece1)
+                        elif not clr:
+                            txt += piece1
+                        if clr_words and piece2 != '':
+                            txt += "\x03{},{}{}\x03".format(fgw,bgw,piece2)
+                        elif not clr_words:
+                            txt += piece2
+                else:
+                    txt = verse_txt
+                    
                 resp = "[%d] %s %s %s" % (idx, trans_name, verse_ref, txt)
                 print repr(resp)
-                self.say(chan, resp)
+                results.append(resp)
+
             except StopIteration:
-                self.say(chan, "*** No more search results")
+#                self.say(chan, "*** No more search results")
                 finished = True
-                break
-        elapsed = time.clock() - start_time    
-        self.say(chan, "Query took %6.3f seconds " % (elapsed,))
-        return finished
-    
+        self.reactor.callFromThread(self._search_results, chan, nick, results, finished)
+                    
+    def _format_search_results(self, chan, nick):
+        start_time = time.clock()
+        self.pending_searches[chan.lower()][nick.lower()]['timestamp'] = start_time
+        gen = self.pending_searches[chan.lower()][nick.lower()]['gen']        
+        self.reactor.callInThread(self._threaded_search_results, chan, nick, gen)
+
         
     def _get_book(self, version, bookwork):
         
