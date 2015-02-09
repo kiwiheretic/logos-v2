@@ -42,6 +42,7 @@ class AuthenticatedUsers(object):
             return False
         
     def is_authenticated(self, nick):
+        """ Returns true if the user is logged in, false otherwise"""
         user = None
         for d in self.users:
             if nick.lower() == d['nick']:
@@ -59,7 +60,7 @@ class AuthenticatedUsers(object):
         return False
     
     def is_authorised(self, nick, chan, capability):
-
+        
         user = None
         for d in self.users:
             if nick.lower() == d['nick']:
