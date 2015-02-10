@@ -241,7 +241,7 @@ class BibleBot(Plugin):
         qual_verses_next_pk = None
         for q in qual_verses[0:verselimit]:
             resp.append((q.trans.name.upper(),
-                        q.book.long_book_name.capitalize() + " " + str(q.chapter) \
+                        q.book.long_book_name + " " + str(q.chapter) \
                             + ":" + str(q.verse),
                         q.verse_text))
             qual_verses_next_pk = q.pk + 1
