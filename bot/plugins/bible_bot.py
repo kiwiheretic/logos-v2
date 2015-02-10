@@ -12,6 +12,8 @@ import copy
 
 import pdb
 from logos.constants import PUNCTUATION, STOP_WORDS
+from logos.utils import *
+
 from twisted.internet.error import AlreadyCalled, AlreadyCancelled
 
 from bot.pluginDespatch import Plugin, CommandException
@@ -741,7 +743,7 @@ class BibleBot(Plugin):
                     clr_reply.append("\x03{},{} ".format(fg,bg)+elmt+" \x03")
             reply = ' '.join(clr_reply)
             print repr(reply)
-            self.say(chan, str(reply))
+            self.say(chan, reply.encode("utf-8", "replace_spc"))
 
     def next(self, regex, chan, nick, **kwargs):
         

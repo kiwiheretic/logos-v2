@@ -26,6 +26,7 @@ from logos.models import BibleTranslations, BibleBooks, BibleVerses, \
 
 from _booktbl import book_table
 from logos.constants import PUNCTUATION, STOP_WORDS
+from logos.utils import *
 
 logger = logging.getLogger(__name__)
 
@@ -238,11 +239,16 @@ def populate_concordance(options):
         iidx = 0
         for vs in bv:
 
-            text = vs.verse_text
-            words = re.split('\s+', text.lower())
+            text = re.sub(r"[^a-zA-Z0-9']", " ",  vs.verse_text)
+            text = re.sub(PUNCTUATION, "", text)
+            words = re.split('\s+', text.lower().strip())
             for word_id, wd in enumerate(words):
-                wd = re.sub(PUNCTUATION, "", wd)
-                if wd == '': continue
+#                wd = re.sub(PUNCTUATION, "", wd)
+#                try:
+                assert wd != ""
+#                except AssertionError:
+#                    pdb.set_trace()
+#                if wd == '': continue
 
 
                 wd_lower = wd.lower()
@@ -378,7 +384,9 @@ def populate_verses(trans, book_id, filename):
 
                 #txt = re.sub(r'\\', r'\\\\', txt)
                 
-                txt = re.sub('[^\x20-\x7F]', '', mch.group(4))
+                # The following is to avoid unicode errors
+                #                 #txt = re.sub('[^\x20-\x7F]', '', mch.group(4))
+                txt = mch.group(4).decode("ascii", "replace_spc")
                 bv = BibleVerses(id = next_id,
                                  trans = trans,
                                  book = book_id,
