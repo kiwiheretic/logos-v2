@@ -1,5 +1,7 @@
 # test plugin
 import re
+import os
+import json
 import pdb
 
 import django
@@ -430,7 +432,11 @@ class SystemCoreCommands(Plugin):
         self.msg(chan, "\x033Logos Super Bot -- Version %s \x03" % (VERSION,))
         self.msg(chan, "\x0310--- Courtesy of\x03\x0312 SplatsCreations\x03")        
         self.msg(chan, "\x0310--- Built with Django %s\\Python %s\\Twisted %s  \x03" % (dj_ver, py_ver, twst_ver))        
-
+        ver_path = os.path.dirname(os.path.realpath(os.path.join(__file__,"..","..")))
+        f = open(os.path.join(ver_path, "version.json"),"r")
+        ver_obj = json.load(f)
+        f.close()
+        self.msg(chan, "\x0310Parent SHA = {}\x03".format(ver_obj['sha'][:8]))
         self.msg(chan, "\x1f\x0312https://github.com/kiwiheretic/logos-v2/")        
         
     def set_password(self, regex, chan, nick, **kwargs):
