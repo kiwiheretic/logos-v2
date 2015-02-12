@@ -320,7 +320,7 @@ class PluginDespatcher(object):
                 room_plugin = RoomPlugins.objects.get(\
                     net__plugin__name=plugin_name,
                     net__network = self.irc_conn.factory.network,
-                    room=channel)
+                    room=channel.lower())
                 room_plugin.enabled = True
                 room_plugin.save()
                 
@@ -345,7 +345,7 @@ class PluginDespatcher(object):
                 room_plugin = RoomPlugins.objects.get(\
                     net__plugin__name=plugin_name,
                     net__network = self.irc_conn.factory.network,
-                    room=channel)
+                    room=channel.lower())
                 if room_plugin.net.plugin.system:
                     return False
                 room_plugin.enabled = False
