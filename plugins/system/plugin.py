@@ -85,7 +85,7 @@ class SystemCoreCommands(Plugin):
             pvt_trigger = get_global_option('pvt-trigger')
             if not pvt_trigger: pvt_trigger = "!"
             self.say(chan, 
-                     "Room trigger is {}, private windows trigger is {}".\
+                     "Room trigger is {} private windows trigger is {}".\
                          format(room_trigger,pvt_trigger))
 
     def actual_host(self, regex, chan, nick, **kwargs):
