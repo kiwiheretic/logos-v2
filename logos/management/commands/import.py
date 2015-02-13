@@ -14,7 +14,7 @@ from optparse import OptionParser, make_option
 
 from django.core.management.base import BaseCommand, CommandError
 from django.core.exceptions import ObjectDoesNotExist
-from django.db.transaction import commit_on_success
+from django.db import transaction
 from django.db import connection, reset_queries
 
 from django.db.models import Max
@@ -244,10 +244,10 @@ def populate_concordance(options):
             words = re.split('\s+', text.lower().strip())
             for word_id, wd in enumerate(words):
 #                wd = re.sub(PUNCTUATION, "", wd)
-#                try:
-                assert wd != ""
-#                except AssertionError:
-#                    pdb.set_trace()
+                try:
+                    assert wd != ""
+                except AssertionError:
+                    pdb.set_trace()
 #                if wd == '': continue
 
 
@@ -310,7 +310,7 @@ def populate_concordance(options):
 
 
 
-@commit_on_success
+@transaction.atomic
 def purge_translation(translation):
     """ Delete entire translation/version from database """
     try:
@@ -322,7 +322,7 @@ def purge_translation(translation):
     trans.delete()
 
 
-@commit_on_success
+@transaction.atomic
 def add_book_to_db(translation, book_path, long_name = None):
     book = os.path.splitext(book_path)[0]
     book = os.path.split(book)[1]
