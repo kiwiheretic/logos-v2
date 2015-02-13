@@ -1,14 +1,5 @@
 # tests
 
-# Helper modules to load in some fixture data which in this
-# case is a small amount of bible data KJV gospels only along 
-# with concordance data.
-from django.conf import settings
-from django.core import serializers
-import gzip
-import os
-import pdb
-
 # Import the plugin you wish to test
 from bot.plugins.bible_bot import BibleBot
 
