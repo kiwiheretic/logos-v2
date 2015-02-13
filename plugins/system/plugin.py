@@ -14,7 +14,7 @@ import twisted
 import sys
 import types
 from logos.constants import VERSION
-
+from logos.roomlib import get_room_option, get_global_option
 from bot.pluginDespatch import Plugin
 from logos.roomlib import get_room_option, set_room_option, set_room_defaults,\
     set_global_option
@@ -72,12 +72,25 @@ class SystemCoreCommands(Plugin):
                            "Set the autogreet message"),
                          (r'set\s+password\s+([^\s]+)', self.set_password, "Set your password"),
                          (r'nick\s+(?P<nick>[a-zA-z0-9-_]+)', self.set_nick, "Set the bot nick"),
+                         (r'actual\s+server\s*$', self.actual_host, "Set the bot nick"),
         )
         
     
     def privmsg(self, user, channel, message):
-        pass
+        what_triggers_rgx = re.search("what are (?:the|your) triggers", message, re.I)
+        if what_triggers_rgx:
+            chan = channel.lower()
+            # determine the trigger for this room
+            room_trigger = get_room_option(self.factory.network, channel, 'activation')
+            pvt_trigger = get_global_option('pvt-trigger')
+            if not pvt_trigger: pvt_trigger = "!"
+            self.say(chan, 
+                     "Room trigger is {}, private windows trigger is {}".\
+                         format(room_trigger,pvt_trigger))
 
+    def actual_host(self, regex, chan, nick, **kwargs):
+        self.say(chan, "Actual IRC server is {}".format(self.irc_conn.actual_host))
+        
     def list_plugins(self, regex, chan, nick, **kwargs):
         self.say(chan, "=== Plugins ===")
         self.say(chan, "  === Network Level ===")

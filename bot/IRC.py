@@ -177,6 +177,7 @@ class IRCBot(irc.IRCClient):
         self.plugins = None 
         self.nicks_db = NicksDB()
         self.expecting_nickserv = None
+        self.actual_host = None
 
         self.timer = task.LoopingCall(self.onTimer)
         self.channel_queues = {}
@@ -256,6 +257,10 @@ class IRCBot(irc.IRCClient):
                     logger.debug('action not found ' + str(action) )
 
 
+    def irc_RPL_YOURHOST(self, prefix, params):
+        self.actual_host = prefix
+        irc.IRCClient.irc_RPL_YOURHOST(self, prefix, params)
+        
     def signedOn(self):
         """ After we sign on to the server we need to mark this irc
             client as a bot """
@@ -506,6 +511,7 @@ class IRCBot(irc.IRCClient):
             enters a channel with people already on it."""
         irc.IRCClient.irc_unknown(self, prefix, command, params)
 
+        
         line =  '[server]: ' + prefix + ',' + command + ',' + ','.join(params)
         if command not in ['PONG']: # we don't care about these
             logger.info(line)
