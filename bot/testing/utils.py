@@ -7,7 +7,7 @@ class FakePlugin(object):
     def __init__(self, *args, **kwargs):
         self.irc_conn = self
         self._obj_list = [self]
-        self.output = []
+        self.plugin_output = []
         if 'network_settings' in kwargs:
             settings = kwargs['network_settings']
             self.nickname = settings.get('nick')
@@ -17,22 +17,22 @@ class FakePlugin(object):
             self.act = settings.get('act', '!')
 
         
-    # This will suffice as long as we're note testing enabling of plugins
+    # This will suffice as long as we're not testing enabling of plugins
     # Fix this later
     def is_plugin_enabled(self, channel, plugin_module):
         return True
     
     def say(self, channel, message):
-        self.output.append(('say', channel, message))
+        self.plugin_output.append("{} {}: {}".format('say', channel, message))
 
     def msg(self, channel, message):
-        self.output.append(('msg', channel, message))
+        self.plugin_output.append("{} {}: {}".format('msg', channel, message))
 
     def describe(self, channel, action):
         pass
 
     def notice(self, user, message):
-        self.output.append(('notice', channel, message))
+        self.plugin_output.append("{} {}: {}".format('notice', channel, message))
 
     def kick(self, channel, user, reason=None):    
         pass
@@ -44,12 +44,14 @@ class FakePlugin(object):
         pass
 
     def send_command(self, msg):
-        self.output=[]
+        self.plugin_output=[]
         print "testing: "+msg
         orig_msg = self.act + msg
         self.command(self.nickname, self.user, self.chan, orig_msg, msg, self.act)
-        print self.output
+        output = "\n".join(self.plugin_output)
+        print output
         print "--------------------------------------------"
+        return output
 
 # Monkey patch for testing only
 # based on http://stackoverflow.com/questions/9646187/how-to-copy-a-member-function-of-another-class-into-myclass-in-python
