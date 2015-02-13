@@ -181,8 +181,13 @@ class SystemCoreCommands(Plugin):
             self.msg(chan, "You are not authorised or not logged in")
                     
     def listusers(self, regex, chan, nick, **kwargs):
-        for user in User.objects.all():
-            self.msg(chan, "{} {}".format(user.username, user.email))
+        if self.get_auth().is_authorised(nick,  '#', 'net_admin'):
+            self.notice(nick, "List of users....")
+            for user in User.objects.all():
+                self.notice(nick, "{} {}".format(user.username, user.email))
+        else:
+            self.msg(chan, "You are not authorised or not logged in")        
+
     
     def login(self, regex, chan, nick, **kwargs):
         password = regex.group('password')
@@ -205,39 +210,45 @@ class SystemCoreCommands(Plugin):
         self.say(chan, "Logged out")
 
     def list_perms(self, regex, chan, nick, **kwargs):
-        self.say(chan, "=== Network Permissions ===")
+        self.notice(nick, "=== Network Permissions ===")
         perm_str = ", ".join([p for p,_ in NetworkPermissions._meta.permissions])
-        self.say(chan, perm_str)
+        self.notice(nick, perm_str)
 
-        self.say(chan, "=== Room Permissions ===")
+        self.notice(nick, "=== Room Permissions ===")
         perm_str = ", ".join([p for p,_ in RoomPermissions._meta.permissions])
-        self.say(chan, perm_str)
+        self.notice(nick, perm_str)
 
     def perms(self, regex, chan, nick, **kwargs):
         username = regex.group('username').lower()
-        try:
-            user = User.objects.get(username__iexact = username)
-        except User.DoesNotExist:
-            self.say(chan, "Unknown user")
-            return
-        
-        self.say(chan, "=== Network Permissions ===")
-        for net_obj in NetworkPermissions.objects.all():
+        # if user is net_admin or if user is inquiring about themself...
+        if self.get_auth().is_authorised(nick,  '#', 'net_admin') or \
+        (username == nick.lower() and self.get_auth().is_authenticated(nick)):
+            try:
+                user = User.objects.get(username__iexact = username)
+            except User.DoesNotExist:
+                self.notice(nick, "Unknown user")
+                return
             
-            perms = get_perms(user, net_obj)
-            self.say(chan, "{} {}".format(net_obj.network,
-                                                ", ".join(perms)))
-        last_perms = None
-        for room_obj in RoomPermissions.objects.all():
-            
-            perms = get_perms(user, room_obj)
-            if perms:
-                if last_perms == None:
-                    self.say(chan, "\n=== Room Permissions ===")
-                self.say(chan, "{} {} {}".format(room_obj.network,
-                                            room_obj.room,
-                                            ", ".join(perms))) 
-                last_perms = perms
+            self.notice(nick, "=== Network Permissions ===")
+            for net_obj in NetworkPermissions.objects.all():
+                
+                perms = get_perms(user, net_obj)
+                self.notice(nick, "{} {}".format(net_obj.network,
+                                                    ", ".join(perms)))
+            last_perms = None
+            for room_obj in RoomPermissions.objects.all():
+                
+                perms = get_perms(user, room_obj)
+                if perms:
+                    if last_perms == None:
+                        self.notice(nick, "\n=== Room Permissions ===")
+                    self.notice(nick, "{} {} {}".format(room_obj.network,
+                                                room_obj.room,
+                                                ", ".join(perms))) 
+        else:
+            self.msg(chan, "You are not authorised or not logged in") 
+
+
 
     def assign_net_perms(self, regex, chan, nick, **kwargs):
         if self.get_auth().is_authorised(nick,  '#', 'net_admin'):
