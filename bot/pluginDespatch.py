@@ -257,58 +257,59 @@ class PluginDespatcher(object):
         self.irc_conn = irc_conn
         self.authenticated_users = AuthenticatedUsers(self.irc_conn.factory.network)
         NetworkPlugins.objects.filter(network=self.irc_conn.factory.network).update(loaded=False)
-        dirs = os.listdir(settings.BASE_DIR + os.sep + os.path.join('bot', 'plugins'))
+        plugin_path = os.path.join(settings.BASE_DIR, 'plugins')
+        dirs = os.listdir(plugin_path)
         for m in dirs:
-            if m == '__init__.py' : continue
-            if m[0] == '_': continue  #ignore private files
-            if m[-3:] != '.py': continue  # exclude .pyc and other files
             try:
-                m = re.sub(r'\.py', '', m)
-                logger.info('importing module '+'bot.plugins.'+m)
-                m1 = getattr(__import__('bot.plugins.'+m), 'plugins')
-                mod = getattr(m1, m)
+                pth = os.path.join(plugin_path, m)
+                if os.path.isdir(pth):
+                    
+                    logger.info('importing module '+'plugins.'+m)
+                    m1 = getattr(__import__('plugins.'+m+".plugin"), m)
+                    mod = getattr(m1, 'plugin')
+                    #mod = getattr(m1, m)
 
-                for attr in dir(mod):
-                    a1 = getattr(mod, attr)
-                    # Check if the class is a class derived from 
-                    # bot.PluginDespatch.Plugin
-                    # but is not the base class only
+                    for attr in dir(mod):
+                        a1 = getattr(mod, attr)
+                        # Check if the class is a class derived from 
+                        # bot.PluginDespatch.Plugin
+                        # but is not the base class only
 
-                    if inspect.isclass(a1) and \
-                    a1 != bot.pluginDespatch.Plugin and \
-                    issubclass(a1, Plugin) and \
-                    hasattr(a1, 'plugin'):  
-                        logger.info('loading module '+'bot.plugins.'+m)
-                        plugin_object = a1(self, irc_conn)
-                        if hasattr(plugin_object, 'system') and plugin_object.system:
-                            system = True
-                        else:
-                            system = False
-                        self._obj_list.append(plugin_object)
-                        
-                        with transaction.atomic():
-                            plugin_name, descr = plugin_object.plugin
-                            plugin, created = Plugins.objects.\
-                                get_or_create(name=plugin_name,
-                                              description=descr)
-                            plugin.system = system
-                            plugin.save()
-                            net_plugin, created = NetworkPlugins.objects.\
-                                get_or_create(plugin=plugin,
-                                    network=self.irc_conn.factory.network,
-                                    defaults={'loaded': True})
-                            
-                            if hasattr(plugin_object,'system') and \
-                                plugin_object.system:
-                                net_plugin.enabled = True
+                        if inspect.isclass(a1) and \
+                        a1 != bot.pluginDespatch.Plugin and \
+                        issubclass(a1, Plugin) and \
+                        hasattr(a1, 'plugin'):  
+                            logger.info('loading module '+'plugins.'+m)
+                            plugin_object = a1(self, irc_conn)
+                            if hasattr(plugin_object, 'system') and plugin_object.system:
+                                system = True
                             else:
-                                if created:
-                                    net_plugin.enabled = False
+                                system = False
+                            self._obj_list.append(plugin_object)
+                            
+                            with transaction.atomic():
+                                plugin_name, descr = plugin_object.plugin
+                                plugin, created = Plugins.objects.\
+                                    get_or_create(name=plugin_name,
+                                                  description=descr)
+                                plugin.system = system
+                                plugin.save()
+                                net_plugin, created = NetworkPlugins.objects.\
+                                    get_or_create(plugin=plugin,
+                                        network=self.irc_conn.factory.network,
+                                        defaults={'loaded': True})
+                                
+                                if hasattr(plugin_object,'system') and \
+                                    plugin_object.system:
+                                    net_plugin.enabled = True
+                                else:
+                                    if created:
+                                        net_plugin.enabled = False
 
-                            net_plugin.loaded = True
-                            net_plugin.save()    
-                        
-                        break
+                                net_plugin.loaded = True
+                                net_plugin.save()    
+                            
+                            break
             except ImportError, e:
                 logger.error("ImportError: "+str(e))
 

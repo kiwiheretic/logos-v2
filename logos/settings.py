@@ -34,7 +34,7 @@ DATABASES = {
         'ENGINE': 'django.db.backends.sqlite3', # Add 'postgresql_psycopg2', 'mysql', 'sqlite3' or 'oracle'.
         'NAME': os.path.join(DB_ROOT, 'bibles.sqlite3.db'),  # Or path to database file if using sqlite3.
         'TEST_NAME': os.path.join(DB_ROOT, 'test-bibles.sqlite3.db'),
-        # The following settings are not used with sqlite3:
+        # Don't overwrite the test database
         'CLOBBER_TEST_DB':False,
         'USER': '',
         'PASSWORD': '',

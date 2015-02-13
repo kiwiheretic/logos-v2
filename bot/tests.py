@@ -1,7 +1,7 @@
 # tests
 
 # Import the plugin you wish to test
-from bot.plugins.bible_bot import BibleBot
+from plugins.bible.plugin import BibleBot
 
 # Subclass your test class from LogosTestCase
 from bot.testing.utils import LogosTestCase
