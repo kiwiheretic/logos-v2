@@ -7,6 +7,7 @@ from django.conf import settings
 from django.core import serializers
 import gzip
 import os
+import pdb
 
 # Import the plugin you wish to test
 from bot.plugins.bible_bot import BibleBot
@@ -20,18 +21,19 @@ class TestBibleBot(LogosTestCase):
     plugin_class = BibleBot
     
     def setUp(self):
+        pass
         
         # Load initial test data into test database
 
         #https://docs.djangoproject.com/en/1.7/topics/testing/tools/#topics-testing-fixtures
         #https://docs.djangoproject.com/en/dev/ref/django-admin/#database-specific-fixtures        
-        fixtures_path = os.path.join(settings.BASE_DIR, 'logos', 'fixtures')
-        fixture_file = os.path.join(fixtures_path, 'testdata.bibles.json.gz')
-        fp = gzip.open(fixture_file)
-        for ii, obj in enumerate(serializers.deserialize("json", fp)):
-            if ii % 500 == 0: print ".",
-            obj.save()
-        print
+#        fixtures_path = os.path.join(settings.BASE_DIR, 'logos', 'fixtures')
+#        fixture_file = os.path.join(fixtures_path, 'testdata.bibles.json.gz')
+#        fp = gzip.open(fixture_file)
+#        for ii, obj in enumerate(serializers.deserialize("json", fp)):
+#            if ii % 500 == 0: print ".",
+#            obj.save()
+#        print
         ### === Finished loading test data ===
         
     def testVerseLookup(self):

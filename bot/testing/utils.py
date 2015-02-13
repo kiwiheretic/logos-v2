@@ -6,7 +6,7 @@ from django.utils import unittest
 class FakePlugin(object):
     def __init__(self, *args, **kwargs):
         self.irc_conn = self
-        self._cls_list = [self]
+        self._obj_list = [self]
         self.output = []
         if 'network_settings' in kwargs:
             settings = kwargs['network_settings']
@@ -17,7 +17,11 @@ class FakePlugin(object):
             self.act = settings.get('act', '!')
 
         
-
+    # This will suffice as long as we're note testing enabling of plugins
+    # Fix this later
+    def is_plugin_enabled(self, channel, plugin_module):
+        return True
+    
     def say(self, channel, message):
         self.output.append(('say', channel, message))
 

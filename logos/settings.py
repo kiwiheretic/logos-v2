@@ -32,8 +32,10 @@ DATABASES = {
 
     'bibles': {
         'ENGINE': 'django.db.backends.sqlite3', # Add 'postgresql_psycopg2', 'mysql', 'sqlite3' or 'oracle'.
-        'NAME': os.path.join(DB_ROOT, 'bibles.sqlite3.db'),                       # Or path to database file if using sqlite3.
+        'NAME': os.path.join(DB_ROOT, 'bibles.sqlite3.db'),  # Or path to database file if using sqlite3.
+        'TEST_NAME': os.path.join(DB_ROOT, 'test-bibles.sqlite3.db'),
         # The following settings are not used with sqlite3:
+        'CLOBBER_TEST_DB':False,
         'USER': '',
         'PASSWORD': '',
         'HOST': '',                      # Empty for localhost through domain sockets or '127.0.0.1' for localhost through TCP.
@@ -63,7 +65,8 @@ DATABASE_ROUTERS = ['logos.logos_router.LogosRouter',]
 # Declare TEST_RUNNER to silence capricious warning message
 # http://daniel.hepper.net/blog/2014/04/fixing-1_6-w001-when-upgrading-from-django-1-5-to-1-7/
 
-TEST_RUNNER = 'django.test.runner.DiscoverRunner'
+#TEST_RUNNER = 'django.test.runner.DiscoverRunner'
+TEST_RUNNER = 'bot.testing.logos_test_runner.LogosDiscoverRunner'
 
 #### Email Settings
 
