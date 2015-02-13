@@ -63,6 +63,7 @@ class SystemCoreCommands(Plugin):
                           "Request bot to part a room"), 
                          (r'cmd\s+(.*)', self.cmd, "Have bot perform an IRC command"),
                          (r'say\s+(?P<room>#[a-zA-z0-9-]+)\s+(.*)', self.speak, "Say something into a room"),
+                         (r'act\s+(?P<room>#[a-zA-z0-9-]+)\s+(.*)', self.action, "perform a /me action in room"),
                          (r'set\s+(?P<room>#[a-zA-z0-9-]+)\s+(?:activation|trigger)\s+\"(.)\"', self.set_trigger,
                            "Set the trigger used by the bot"),
                          (r'set\s+(?:pvt|private)\s+(?:activation|trigger)\s+\"(.)\"', self.set_pvt_trigger,
@@ -353,6 +354,15 @@ class SystemCoreCommands(Plugin):
             self.msg(chan, "You are not authorised or not logged in")
     
            
+    def action(self, regex, chan, nick, **kwargs):
+        ch = regex.group('room')
+        if self.get_auth().is_authorised(nick,  ch, 'can_speak'):
+
+            text = regex.group(2)
+            self.describe(chan, text)
+        else:
+            self.msg(chan, "You are not authorised or not logged in")
+        
     def speak(self, regex, chan, nick, **kwargs):
 
         ch = regex.group('room')
