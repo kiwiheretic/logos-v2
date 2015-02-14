@@ -171,7 +171,8 @@ class BibleBot(Plugin):
         if not book:
             raise CommandException(user, chan, "Could not find book %s" % (bookwork,))
 
-        passage = re.sub("\s+","",versework)
+
+        passage = re.sub(r"(\d+)\s*:\s*(\d+)",r"\1:\2",versework)
 
 
         splitwork = re.split('(?::|-|\s+)',passage)
