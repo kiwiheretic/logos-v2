@@ -171,10 +171,11 @@ class BibleBot(Plugin):
         if not book:
             raise CommandException(user, chan, "Could not find book %s" % (bookwork,))
 
-        passage = versework
+        passage = re.sub("\s+","",versework)
 
 
         splitwork = re.split('(?::|-|\s+)',passage)
+
         chapter = int(splitwork.pop(0))
         if splitwork:
             firstverse = int(splitwork.pop(0))
@@ -636,8 +637,8 @@ class BibleBot(Plugin):
         parse_res = self._parse_trans_book_range(def_trans, words)            
 
         if len(words) == 0:
-            self.msg(chan, "Must have at least one word for "+act+"search")
-            self.usage(chan, 'search')
+            self.msg(chan, "Must have at least one word for search")
+#            self.usage(chan, 'search')
             
         else:
             trans = parse_res['translation']
@@ -657,6 +658,9 @@ class BibleBot(Plugin):
             if chan.lower() not in self.pending_searches:
                 self.pending_searches[chan.lower()] = {nick.lower():{}}
             
+            if nick.lower() not in self.pending_searches[chan.lower()]:
+                self.pending_searches[chan.lower()][nick.lower()] = {}
+                
             self.pending_searches[chan.lower()][nick.lower()]['gen'] = gen
                 
             delayed = self.reactor.callLater(3.5, self._search_long_time, chan, nick)    
