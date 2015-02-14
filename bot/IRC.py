@@ -140,7 +140,7 @@ class NicksDB:
             return None
 
     def set_ident(self, user, ident):
-        logger.info("Setting Ident for %s = %s" % (user, ident))
+        logger.debug("Setting Ident for %s = %s" % (user, ident))
         self.nicks_info[user.lower()]['ident'] = ident
     
     def get_op_status(self, user, room):
@@ -180,6 +180,8 @@ class IRCBot(irc.IRCClient):
         self.actual_host = None
 
         self.timer = task.LoopingCall(self.onTimer)
+        self.log_flush_timer = task.LoopingCall(self.onLogFlushTimer)
+        self.log_flush_timer.start(30)
         self.channel_queues = {}
         self.whois_in_progress = []
         
@@ -224,6 +226,20 @@ class IRCBot(irc.IRCClient):
     def get_room_nicks(self, room):
         return self.nicks_db.get_room_nicks(room)
 
+    def onLogFlushTimer(self):
+        # Getting flushed file output to actually appear inside the text file
+        # is hard because windows still caches the output in OS buffers even after
+        # a flush().  See url below.
+        # http://stackoverflow.com/questions/7127075/what-exactly-the-pythons-file-flush-is-doing
+        this_logger = logging.getLogger()
+        handlers = this_logger.handlers
+        for handler in handlers:
+            handler.flush()
+            try:
+                os.fsync(handler.stream.fileno())
+            except OSError:
+                pass
+        
     def onTimer(self):
         for chan in self.channel_queues:
             # If the bot is in the channel or if the message
@@ -241,7 +257,7 @@ class IRCBot(irc.IRCClient):
                     else:
                         msg_list.append(elmt)
 
-                logger.debug("timer: "+str((chan, msg_list)))
+#                logger.debug("timer: "+str((chan, msg_list)))
                 action = msg_list.pop(0)
                 if hasattr(self, action):
                     # sendLine used for startup script primarily
@@ -259,6 +275,7 @@ class IRCBot(irc.IRCClient):
 
     def irc_RPL_YOURHOST(self, prefix, params):
         self.actual_host = prefix
+        logger.info("Connected to IRC Server: {}".format(prefix))
         irc.IRCClient.irc_RPL_YOURHOST(self, prefix, params)
         
     def signedOn(self):
@@ -268,8 +285,7 @@ class IRCBot(irc.IRCClient):
         irc.IRCClient.signedOn(self)
         self.plugins = Plugins(self)
         self.channel = self.factory.channel.lower()
-        logger.info("server name = "+self.factory.network)
-        logger.info( "Signed on as %s." % (self.nickname,))
+        logger.info("Target IRC server:  "+self.factory.network)
 
         self.lineRate = LINE_RATE
 
@@ -395,7 +411,7 @@ class IRCBot(irc.IRCClient):
 
         line = "NAMES " + channel
         self.sendLine(line)
-        logger.info(line)
+        logger.debug(line)
 
         act = get_room_option(self.factory.network, channel, 'activation')
         if not act: act = '!'
@@ -419,7 +435,7 @@ class IRCBot(irc.IRCClient):
     def noticed(self, user, channel, message):
         """ Called when receiving a NOTICE """
         irc.IRCClient.noticed(self, user, channel, message)
-        logger.info('Notice Received : ' + user + ' ' + channel + ' ' + message)
+        logger.debug('Notice Received : ' + user + ' ' + channel + ' ' + message)
         nick = user.split('!')[0].lower()
         if nick == "nickserv":
 
@@ -499,7 +515,7 @@ class IRCBot(irc.IRCClient):
         mch = re.match(re.escape(act)+ "(.*)", msg)
         if mch:
             msg = mch.group(1).strip()
-            logger.info("Received Command " + str((nick, user, chan, orig_msg, msg, act)))
+            logger.debug("Received Command " + str((nick, user, chan, orig_msg, msg, act)))
             self.plugins.command(nick, user, chan, orig_msg, msg, act)
 
         self.plugins.privmsg(user, channel, orig_msg)
@@ -514,7 +530,7 @@ class IRCBot(irc.IRCClient):
         
         line =  '[server]: ' + prefix + ',' + command + ',' + ','.join(params)
         if command not in ['PONG']: # we don't care about these
-            logger.info(line)
+            logger.debug(line)
 #            self.queue_message(self.factory.channel, 'say', line)
 
         # We use the RPL_NAMREPLY to get a list of all people currently

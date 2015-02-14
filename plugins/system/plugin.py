@@ -451,7 +451,7 @@ class SystemCoreCommands(Plugin):
             # Have the bot issue any IRC command
             
             line = regex.group(1)
-            logger.info("%s issued command '%s' to bot" % (nick, line))
+            logger.debug("%s issued command '%s' to bot" % (nick, line))
             self.sendLine(line)
         else:
             self.msg(chan, "You are not authorised or not logged in")

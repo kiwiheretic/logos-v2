@@ -331,7 +331,7 @@ class BibleBot(Plugin):
             if len(normal_words) > 0:
                 #s = "word in (" + ", ".join('\'{0}\''.format(re.sub('\'','\'\'', w)) for w in normal_words) +")"
                 s = "word in (" + ", ".join('\'{0}\''.format(w) for w in normal_words) +")"
-                logger.info("where clause is \""+s +"\"")
+                logger.debug("where clause is \""+s +"\"")
                 q0_results = q_results.extra(where=[s])
                 q0_results = q0_results.values('word').annotate(Count('word'))
             # Example format of q_results
@@ -506,9 +506,9 @@ class BibleBot(Plugin):
 
 
 
-    def noticed(self, user, channel, message):
-        """ Biblebot receives notice """
-        logger.info('NOTICE: '+ message)
+#    def noticed(self, user, channel, message):
+#        """ Biblebot receives notice """
+#        logger.debug('NOTICE: '+ message)
         
     def joined(self, channel):
         """ BibleBot joins room """
@@ -742,7 +742,7 @@ class BibleBot(Plugin):
                     fg,bg = clr.split(",")
                     clr_reply.append("\x03{},{} ".format(fg,bg)+elmt+" \x03")
             reply = ' '.join(clr_reply)
-            print repr(reply)
+            logger.debug(repr(reply))
             self.say(chan, reply.encode("utf-8", "replace_spc"))
 
     def next(self, regex, chan, nick, **kwargs):
@@ -881,7 +881,7 @@ class BibleBot(Plugin):
                     txt = verse_txt
                     
                 resp = "[%d] %s %s %s" % (idx, trans_name, verse_ref, txt)
-                print repr(resp)
+                logger.debug( repr(resp))
                 results.append(resp)
 
             except StopIteration:

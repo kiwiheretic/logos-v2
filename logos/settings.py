@@ -289,8 +289,18 @@ LOGGING = {
         'logos': {
             'handlers': ['console', 'file'],
             'level': 'DEBUG',
-            'propagate': True,
+            'propagate': False,
         },
+        'bot': {
+            'handlers': ['console', 'file'],
+            'level': 'DEBUG',
+            'propagate': False,
+        },        
+        'plugins': {
+            'handlers': ['console', 'file'],
+            'level': 'DEBUG',
+            'propagate': False,
+        },        
     },
     # the 'root' logger seems to cause things to
     # be logged twice.  Especially "manage.py import"
