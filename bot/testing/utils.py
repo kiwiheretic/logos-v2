@@ -2,6 +2,7 @@
 
 from bot import pluginDespatch
 from django.utils import unittest
+from twisted.internet import reactor
 
 class FakePlugin(object):
     def __init__(self, *args, **kwargs):
@@ -15,6 +16,9 @@ class FakePlugin(object):
             self.chan = settings.get('chan')
             self.network = settings.get('network')
             self.act = settings.get('act', '!')
+            self.reactor = reactor
+
+        
 
         
     # This will suffice as long as we're not testing enabling of plugins
@@ -81,3 +85,5 @@ class LogosTestCase(unittest.TestCase):
 
         
 
+    def set_nick(self, new_nick):
+        self.plugin.nickname = new_nick 
