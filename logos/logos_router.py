@@ -1,5 +1,6 @@
 # LogosRouter.py
 
+from logos.itermodels import plugin_models_finder
 # Follows is a list of DB identifier and associated model names
 routing_data = (('bibles', 
                  ('BibleTranslations', 'BibleBooks', 
@@ -53,6 +54,22 @@ class LogosRouter(object):
                     return True
                 else:
                     return False
+        
+        for model_module, model_class in plugin_models_finder():
+            if hasattr(model_module, 'DB_ROUTER'):
+                router = model_module.DB_ROUTER
+                iter_klass_name = model_class.__name__
+                klass_name = model.__name__
+                if klass_name == iter_klass_name:
+                    # If we have found the model class in the
+                    # plugins folder then we don't want to 
+                    # allow it to be sync'd to the 'default' database
+                    # so return False here if there is no match
+                    if db == router:
+                        return True
+                    else:
+                        return False
+
         if db == 'default':
             return True
         else:
