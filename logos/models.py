@@ -14,52 +14,8 @@ from django.conf import settings
 
 import datetime
 
-class BibleTranslations(models.Model):
-    name = models.CharField(unique=True, max_length=10)
-    class Meta:
-        db_table = 'bible_translations'
-
-class BibleBooks(models.Model):
-    trans = models.ForeignKey('BibleTranslations')
-    book_idx = models.IntegerField()
-    long_book_name = models.TextField()
-    canonical = models.TextField(blank=True)
-    class Meta:
-        db_table = 'bible_books'
-
-class BibleVerses(models.Model):
-    trans = models.ForeignKey('BibleTranslations')
-    book = models.ForeignKey('BibleBooks')
-    chapter = models.IntegerField()
-    verse = models.IntegerField()
-    verse_text = models.TextField()
-    class Meta:
-        db_table = 'bible_verses'
-        index_together = [
-            ["trans", "book", "chapter", "verse"],
-        ]
-
-class BibleConcordance(models.Model):
-    trans = models.ForeignKey('BibleTranslations')
-    book = models.ForeignKey('BibleBooks')
-    chapter = models.IntegerField()
-    verse = models.IntegerField()
-    word_id = models.IntegerField()
-    word = models.CharField(max_length=60)
-    class Meta:
-        db_table = 'bible_concordance'
-        index_together = [
-            ["trans", "book", "chapter", "verse", "word_id"],
-            ["trans", "word"],
-            ["trans", "word", "chapter"],
-            ["trans", "word", "chapter", "verse"],
-        ]
-
-class BibleDict(models.Model):
-    strongs = models.CharField(db_index=True, max_length=10)
-    description = models.TextField(blank=True)
-    class Meta:
-        db_table = 'bible_dict'
+# import all the bot's plugins models
+from plugins.models import *
 
 
 class BibleColours(models.Model):
@@ -94,6 +50,7 @@ class NetworkPermissions(models.Model):
             ('set_pvt_version', 'Set bible version default in private chat window'),
             ('change_pvt_trigger', 'Set trigger used in private chat window'),
             ('change_nick', 'Can issue a bot nick change command'),
+            ('warn_user', 'Warn a user of their behaviour'),
             
         )
                 
@@ -109,10 +66,13 @@ class RoomPermissions(models.Model):
             ('set_greeting', 'Set room greeting message'),
             ('can_speak', 'Speak through bot'),
             ('enable_plugins', 'Can enable or disable room plugins'),
+            ('kick_user', 'Can kick user'),
+            ('ban_user', 'Can ban user'),
+            ('room_op', 'Bot can op'),
         )
 
 class Plugins(models.Model):
-    name = models.TextField()
+    name = models.TextField(unique=True)
     description = models.TextField()
     system = models.BooleanField(default=False)
         
@@ -154,5 +114,3 @@ class GameUsers(models.Model):
     nick = models.TextField(blank=True)
     host = models.TextField(blank=True)
 
-
-    

@@ -1,5 +1,12 @@
 # LogosRouter.py
 
+import logging
+from logos.settings import LOGGING
+from django.db.models import Count
+
+logger = logging.getLogger(__name__)
+logging.config.dictConfig(LOGGING)
+
 from logos.itermodels import plugin_models_finder
 # Follows is a list of DB identifier and associated model names
 routing_data = (('bibles', 
@@ -21,6 +28,18 @@ class LogosRouter(object):
         """
         Select DB to read from
         """
+
+        for model_module, model_class in plugin_models_finder():
+            if hasattr(model_module, 'DB_ROUTER'):
+                router = model_module.DB_ROUTER
+                iter_klass_name = model_class.__name__
+                klass_name = model.__name__
+                if klass_name == iter_klass_name:
+                    logger.debug( "DB READ: selecting {} for model {}".format(router,klass_name))
+                    return router
+
+
+        
         for db_id, models in routing_data:
             if model._meta.object_name in models:
                 return db_id
@@ -31,6 +50,16 @@ class LogosRouter(object):
         """
         Select DB to write to
         """
+        
+        for model_module, model_class in plugin_models_finder():
+            if hasattr(model_module, 'DB_ROUTER'):
+                router = model_module.DB_ROUTER
+                iter_klass_name = model_class.__name__
+                klass_name = model.__name__
+                if klass_name == iter_klass_name:
+                    logger.debug( "DB WRITE: selecting {} for model {}".format(router,klass_name))
+                    return router
+        
         for db_id, models in routing_data:
             if model._meta.object_name in models:
                 return db_id

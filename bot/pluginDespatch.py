@@ -265,6 +265,8 @@ class PluginDespatcher(object):
                 if os.path.isdir(pth):
                     
                     logger.info('importing module '+'plugins.'+m)
+                    plugin_file_path = os.path.join(pth, "plugin.py")
+                    if not os.path.exists(plugin_file_path): continue
                     m1 = getattr(__import__('plugins.'+m+".plugin"), m)
                     mod = getattr(m1, 'plugin')
                     #mod = getattr(m1, m)
@@ -503,6 +505,7 @@ class PluginDespatcher(object):
             
             matched_fn = []
             for m in self._obj_list:
+                logger.debug("Examining {} plugin".format(m.plugin[1]))
                 if self.is_plugin_enabled(chan, m): 
                     if hasattr(m, 'commands'):
                         for rgx_s, f, _ in m.commands:
@@ -519,7 +522,8 @@ class PluginDespatcher(object):
                                 kwargs['clean_line'] = msg
                                 logger.debug('matching %s regex = %s' % (str(m.plugin), s))
                                 matched_fn.append((f, regex, m.plugin))
-                                
+                else:
+                    logger.debug("Plugin {} is not enabled".format(m.plugin[1]))                
             # === Undernet Hack? ====
             # IRC servers seems to pass chan as nickname of bot's name
             # so we try to reverse this here.
@@ -533,6 +537,7 @@ class PluginDespatcher(object):
             
             # If we found the one and only regex
             if len(matched_fn) == 1:
+                logger.debug("Invoking command of {} plugin".format(matched_fn[0][2]))
                 fn, regex, _ = matched_fn[0]
                 fn(regex, adj_chan, nick, **kwargs)
             # regex not found 

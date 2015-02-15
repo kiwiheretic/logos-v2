@@ -20,8 +20,10 @@ from bot.pluginDespatch import Plugin, CommandException
 from logos.roomlib import get_room_option, set_room_option, set_global_option, \
     get_global_option
 from logos.pluginlib import CommandDecodeException
-from logos.models import BibleTranslations, BibleBooks, BibleVerses, \
-    BibleConcordance, BibleDict, BibleColours
+from models import BibleTranslations, BibleBooks, BibleVerses, \
+    BibleConcordance, BibleDict
+from logos.models import BibleColours
+
 from logos.management.commands._booktbl import book_table
 
 import logging
