@@ -174,7 +174,6 @@ class BibleBot(Plugin):
 
         passage = re.sub(r"(\d+)\s*:\s*(\d+)",r"\1:\2",versework)
 
-
         splitwork = re.split('(?::|-|\s+)',passage)
 
         chapter = int(splitwork.pop(0))
@@ -211,23 +210,26 @@ class BibleBot(Plugin):
                                    verse__gte = firstverse,
                                    verse__lt = firstverse+versecount)
 
-        for v in qual_verses:
-            pk = v.pk
-        qual_verses_next_pk = pk + 1
+        if qual_verses:
+            for v in qual_verses:
+                pk = v.pk
+            qual_verses_next_pk = pk + 1
 
-        resp = []
-        for q in qual_verses:
-            resp.append((version.upper(),
-                        long_book_name + " " + str(q.chapter) \
-                            + ":" + str(q.verse),
-                        q.verse_text))
-        timestamp = datetime.datetime.now()
+            resp = []
+            for q in qual_verses:
+                resp.append((version.upper(),
+                            long_book_name + " " + str(q.chapter) \
+                                + ":" + str(q.verse),
+                            q.verse_text))
+            timestamp = datetime.datetime.now()
 
-        self.reading_progress[nick.lower()] = \
-            {'verses_pk':qual_verses_next_pk,
-             'timestamp': timestamp}
+            self.reading_progress[nick.lower()] = \
+                {'verses_pk':qual_verses_next_pk,
+                 'timestamp': timestamp}
 
-
+        else:
+            raise CommandException(nick, user, \
+                "Verse {} {}:{} not found".format(long_book_name, chapter, firstverse))
         return resp
     
     def _next_reading(self, chan, user):
