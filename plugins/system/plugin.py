@@ -383,7 +383,7 @@ class SystemCoreCommands(Plugin):
         if self.get_auth().is_authorised(nick,  ch, 'can_speak'):
 
             text = regex.group(2)
-            self.describe(chan, text)
+            self.describe(ch, text)
         else:
             self.msg(chan, "You are not authorised or not logged in")
         
