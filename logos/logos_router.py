@@ -28,14 +28,22 @@ class LogosRouter(object):
         """
         Select DB to read from
         """
-
+        
         for model_module, model_class in plugin_models_finder():
             if hasattr(model_module, 'DB_ROUTER'):
                 router = model_module.DB_ROUTER
+                if hasattr(model_module, 'DB_ROUTE_EXCEPTIONS'):
+                    route_exceptions = model_module.DB_ROUTE_EXCEPTIONS
+                else:
+                    route_exceptions = None
                 iter_klass_name = model_class.__name__
                 klass_name = model.__name__
                 if klass_name == iter_klass_name:
-                    logger.debug( "DB READ: selecting {} for model {}".format(router,klass_name))
+                    if route_exceptions and klass_name in route_exceptions:
+                        router = route_exceptions[klass_name]
+                        logger.debug( "Exception DB READ: selecting {} for model {}".format(router,klass_name))
+                    else:
+                        logger.debug( "DB READ: selecting {} for model {}".format(router,klass_name))
                     return router
 
 
@@ -54,10 +62,18 @@ class LogosRouter(object):
         for model_module, model_class in plugin_models_finder():
             if hasattr(model_module, 'DB_ROUTER'):
                 router = model_module.DB_ROUTER
+                if hasattr(model_module, 'DB_ROUTE_EXCEPTIONS'):
+                    route_exceptions = model_module.DB_ROUTE_EXCEPTIONS
+                else:
+                    route_exceptions = None
                 iter_klass_name = model_class.__name__
                 klass_name = model.__name__
                 if klass_name == iter_klass_name:
-                    logger.debug( "DB WRITE: selecting {} for model {}".format(router,klass_name))
+                    if route_exceptions and klass_name in route_exceptions:
+                        router = route_exceptions[klass_name]
+                        logger.debug( "Exception DB WRITE: selecting {} for model {}".format(router,klass_name))
+                    else:
+                        logger.debug( "DB WRITE: selecting {} for model {}".format(router,klass_name))
                     return router
         
         for db_id, models in routing_data:

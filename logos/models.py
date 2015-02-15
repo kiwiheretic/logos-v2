@@ -18,13 +18,7 @@ import datetime
 from plugins.models import *
 
 
-class BibleColours(models.Model):
-    network = models.TextField()
-    room = models.TextField()
-    element = models.TextField()
-    mirc_colour = models.TextField()
-    class Meta:
-        db_table = 'bible_colours'
+
 
 class RoomOptions(models.Model):
     network = models.TextField()
