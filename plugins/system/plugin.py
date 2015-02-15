@@ -14,6 +14,9 @@ import twisted
 import sys
 import types
 from logos.constants import VERSION
+from bot.logos_decorators import irc_room_permission_required, \
+    irc_network_permission_required
+
 from logos.roomlib import get_room_option, get_global_option
 from bot.pluginDespatch import Plugin
 from logos.roomlib import get_room_option, set_room_option, set_room_defaults,\
@@ -121,72 +124,60 @@ class SystemCoreCommands(Plugin):
         self.say(chan, "*** End of List ***")  
         
         
+    @irc_room_permission_required('enable_plugins')
     def enable_plugin(self, regex, chan, nick, **kwargs):
         room = regex.group('room')
-        if self.get_auth().is_authorised(nick,  room, 'enable_plugins'):
-            plugin_name = re.sub('-','_',regex.group('plugin'))
-            if super(SystemCoreCommands, self).enable_plugin(room, plugin_name):
-                self.say(chan, "plugin enabled successfully")
-            else:
-                self.say(chan, "plugin could not be enabled")
+        plugin_name = re.sub('-','_',regex.group('plugin'))
+        if super(SystemCoreCommands, self).enable_plugin(room, plugin_name):
+            self.say(chan, "plugin enabled successfully")
         else:
-            self.msg(chan, "You are not authorised or not logged in")
+            self.say(chan, "plugin could not be enabled")
                 
+    @irc_room_permission_required('enable_plugins')
     def disable_plugin(self, regex, chan, nick, **kwargs):
         room = regex.group('room')
-        if self.get_auth().is_authorised(nick,  room, 'enable_plugins'):
-            plugin_name = re.sub('-','_',regex.group('plugin'))
-            if super(SystemCoreCommands, self).disable_plugin(room, plugin_name):
-                self.say(chan, "plugin disabled successfully")
-            else:
-                self.say(chan, "plugin could not be disabled")
+        plugin_name = re.sub('-','_',regex.group('plugin'))
+        if super(SystemCoreCommands, self).disable_plugin(room, plugin_name):
+            self.say(chan, "plugin disabled successfully")
         else:
-            self.msg(chan, "You are not authorised or not logged in")
+            self.say(chan, "plugin could not be disabled")
 
+    @irc_network_permission_required('net_disable_plugins')
     def net_enable_plugin(self, regex, chan, nick, **kwargs):
-        if self.get_auth().is_authorised(nick,  '#', 'net_disable_plugins'):
-            plugin_name = re.sub('-','_',regex.group('plugin'))
-            if super(SystemCoreCommands, self).net_enable_plugin(plugin_name):
-                self.say(chan, "plugin enabled at network level successfully")
-            else:
-                self.say(chan, "plugin could not be enabled")
+        plugin_name = re.sub('-','_',regex.group('plugin'))
+        if super(SystemCoreCommands, self).net_enable_plugin(plugin_name):
+            self.say(chan, "plugin enabled at network level successfully")
         else:
-            self.msg(chan, "You are not authorised or not logged in")
-                
+            self.say(chan, "plugin could not be enabled")
+
+    @irc_network_permission_required('net_disable_plugins')                
     def net_disable_plugin(self, regex, chan, nick, **kwargs):
-        if self.get_auth().is_authorised(nick,  '#', 'net_disable_plugins'):
-            plugin_name = re.sub('-','_',regex.group('plugin'))
-            if super(SystemCoreCommands, self).net_disable_plugin(plugin_name):
-                self.say(chan, "plugin disabled at network level successfully")
-            else:
-                self.say(chan, "plugin could not be disabled")
+        plugin_name = re.sub('-','_',regex.group('plugin'))
+        if super(SystemCoreCommands, self).net_disable_plugin(plugin_name):
+            self.say(chan, "plugin disabled at network level successfully")
         else:
-            self.msg(chan, "You are not authorised or not logged in")
-            
+            self.say(chan, "plugin could not be disabled")
+
+    @irc_network_permission_required('net_admin')            
     def adduser(self, regex, chan, nick, **kwargs):
         username = regex.group('username')
         password = regex.group('password')
         email = regex.group('email')        
-        if self.get_auth().is_authorised(nick,  '#', 'net_admin'):
-            try:
-                user = User.objects.get(username__iexact = username.lower())
-            except User.DoesNotExist:
-                user = User(username = username.lower(), email = email)
-                user.set_password(password)
-                user.save()
-                self.msg(chan, "User successfully created")
-            else:
-                self.msg(chan, "User already exists in database")
+        try:
+            user = User.objects.get(username__iexact = username.lower())
+        except User.DoesNotExist:
+            user = User(username = username.lower(), email = email)
+            user.set_password(password)
+            user.save()
+            self.msg(chan, "User successfully created")
         else:
-            self.msg(chan, "You are not authorised or not logged in")
-                    
+            self.msg(chan, "User already exists in database")
+
+    @irc_network_permission_required('net_admin')                     
     def listusers(self, regex, chan, nick, **kwargs):
-        if self.get_auth().is_authorised(nick,  '#', 'net_admin'):
-            self.notice(nick, "List of users....")
-            for user in User.objects.all():
-                self.notice(nick, "{} {}".format(user.username, user.email))
-        else:
-            self.msg(chan, "You are not authorised or not logged in")        
+        self.notice(nick, "List of users....")
+        for user in User.objects.all():
+            self.notice(nick, "{} {}".format(user.username, user.email))
 
     
     def login(self, regex, chan, nick, **kwargs):
@@ -249,181 +240,151 @@ class SystemCoreCommands(Plugin):
             self.msg(chan, "You are not authorised or not logged in") 
 
 
-
+    @irc_network_permission_required('net_admin')  
     def assign_net_perms(self, regex, chan, nick, **kwargs):
-        if self.get_auth().is_authorised(nick,  '#', 'net_admin'):
-            username = regex.group('username').lower()
-            try:
-                user = User.objects.get(username__iexact = username)
-            except User.DoesNotExist:
-                self.say(chan, "Unknown user")
-                return
+        username = regex.group('username').lower()
+        try:
+            user = User.objects.get(username__iexact = username)
+        except User.DoesNotExist:
+            self.say(chan, "Unknown user")
+            return
 
-            permission = regex.group('perm')
-            perm_obj = None
-            for perm, desc in NetworkPermissions._meta.permissions:
-                if perm == permission:
-                    try:
-                        perm_obj = NetworkPermissions.objects.get(network=self.network)
-                    except NetworkPermissions.DoesNotExist:
-                        perm_obj = NetworkPermissions(network=self.network)
-                        perm_obj.save()
-                    break
-            if perm_obj:
-                assign_perm(permission, user, perm_obj)
-                self.say(chan, "Permission assigned successfully")
-            else:
-                self.say(chan, "Permission not found")
+        permission = regex.group('perm')
+        perm_obj = None
+        for perm, desc in NetworkPermissions._meta.permissions:
+            if perm == permission:
+                try:
+                    perm_obj = NetworkPermissions.objects.get(network=self.network)
+                except NetworkPermissions.DoesNotExist:
+                    perm_obj = NetworkPermissions(network=self.network)
+                    perm_obj.save()
+                break
+        if perm_obj:
+            assign_perm(permission, user, perm_obj)
+            self.say(chan, "Permission assigned successfully")
         else:
-            self.msg(chan, "You are not authorised or not logged in")
+            self.say(chan, "Permission not found")
             
+    @irc_network_permission_required('net_admin')  
     def unassign_net_perms(self, regex, chan, nick, **kwargs):
-        if self.get_auth().is_authorised(nick,  '#', 'net_admin'):
-            username = regex.group('username').lower()
-            try:
-                user = User.objects.get(username__iexact = username)
-            except User.DoesNotExist:
-                self.say(chan, "Unknown user")
-                return
+        username = regex.group('username').lower()
+        try:
+            user = User.objects.get(username__iexact = username)
+        except User.DoesNotExist:
+            self.say(chan, "Unknown user")
+            return
 
-            permission = regex.group('perm')
-            perm_obj = None
-            for perm, desc in NetworkPermissions._meta.permissions:
-                if perm == permission:
-                    try:
-                        perm_obj = NetworkPermissions.objects.get(network=self.network)
-                    except NetworkPermissions.DoesNotExist:
-                        perm_obj = NetworkPermissions(network=self.network)
-                        perm_obj.save()
-                    break
-            if perm_obj:
-                remove_perm(permission, user, perm_obj)
-                self.say(chan, "Permission removed successfully")
-            else:
-                self.say(chan, "Permission not found")
+        permission = regex.group('perm')
+        perm_obj = None
+        for perm, desc in NetworkPermissions._meta.permissions:
+            if perm == permission:
+                try:
+                    perm_obj = NetworkPermissions.objects.get(network=self.network)
+                except NetworkPermissions.DoesNotExist:
+                    perm_obj = NetworkPermissions(network=self.network)
+                    perm_obj.save()
+                break
+        if perm_obj:
+            remove_perm(permission, user, perm_obj)
+            self.say(chan, "Permission removed successfully")
         else:
-            self.msg(chan, "You are not authorised or not logged in")
+            self.say(chan, "Permission not found")
 
+    @irc_network_permission_required('net_admin')  
     def assign_room_perms(self, regex, chan, nick, **kwargs):
         room = regex.group('room')
-        if self.get_auth().is_authorised(nick,  '#', 'net_admin'):
-            username = regex.group('username').lower()
-            try:
-                user = User.objects.get(username__iexact = username)
-            except User.DoesNotExist:
-                self.say(chan, "Unknown user")
-                return
+        username = regex.group('username').lower()
+        try:
+            user = User.objects.get(username__iexact = username)
+        except User.DoesNotExist:
+            self.say(chan, "Unknown user")
+            return
 
-            permission = regex.group('perm')
+        permission = regex.group('perm')
 
-            perm_obj = None
-            for perm, desc in RoomPermissions._meta.permissions:
-                if perm == permission:
-                    try:
-                        perm_obj = RoomPermissions.objects.get(network=self.network, room=room.lower())
-                    except RoomPermissions.DoesNotExist:
-                        perm_obj = RoomPermissions(network=self.network, room=room.lower())
-                        perm_obj.save()                    
-                    break        
-            if perm_obj:
-                assign_perm(permission, user, perm_obj)
-                self.say(chan, "Permission assigned successfully")
-            else:
-                self.say(chan, "Permission not found")
+        perm_obj = None
+        for perm, desc in RoomPermissions._meta.permissions:
+            if perm == permission:
+                try:
+                    perm_obj = RoomPermissions.objects.get(network=self.network, room=room.lower())
+                except RoomPermissions.DoesNotExist:
+                    perm_obj = RoomPermissions(network=self.network, room=room.lower())
+                    perm_obj.save()                    
+                break        
+        if perm_obj:
+            assign_perm(permission, user, perm_obj)
+            self.say(chan, "Permission assigned successfully")
         else:
-            self.msg(chan, "You are not authorised or not logged in")
+            self.say(chan, "Permission not found")
             
+    @irc_network_permission_required('net_admin')  
     def unassign_room_perms(self, regex, chan, nick, **kwargs):
         room = regex.group('room')
-        if self.get_auth().is_authorised(nick,  '#', 'net_admin'):
-            username = regex.group('username').lower()
-            try:
-                user = User.objects.get(username__iexact = username)
-            except User.DoesNotExist:
-                self.say(chan, "Unknown user")
-                return
+        username = regex.group('username').lower()
+        try:
+            user = User.objects.get(username__iexact = username)
+        except User.DoesNotExist:
+            self.say(chan, "Unknown user")
+            return
 
-            permission = regex.group('perm')
+        permission = regex.group('perm')
 
-            perm_obj = None
-            for perm, desc in RoomPermissions._meta.permissions:
-                if perm == permission:
-                    try:
-                        perm_obj = RoomPermissions.objects.get(network=self.network, room=room.lower())
-                    except RoomPermissions.DoesNotExist:
-                        perm_obj = RoomPermissions(network=self.network, room=room.lower())
-                        perm_obj.save()                    
-                    break        
-            if perm_obj:
-                remove_perm(permission, user, perm_obj)
-                self.say(chan, "Permission removed successfully")
-            else:
-                self.say(chan, "Permission not found")
+        perm_obj = None
+        for perm, desc in RoomPermissions._meta.permissions:
+            if perm == permission:
+                try:
+                    perm_obj = RoomPermissions.objects.get(network=self.network, room=room.lower())
+                except RoomPermissions.DoesNotExist:
+                    perm_obj = RoomPermissions(network=self.network, room=room.lower())
+                    perm_obj.save()                    
+                break        
+        if perm_obj:
+            remove_perm(permission, user, perm_obj)
+            self.say(chan, "Permission removed successfully")
         else:
-            self.msg(chan, "You are not authorised or not logged in")
+            self.say(chan, "Permission not found")
 
+    @irc_network_permission_required('join_or_part_room')  
     def join_room(self, regex, chan, nick, **kwargs):
-        if self.get_auth().is_authorised(nick,  '#', 'join_or_part_room'):
-            room = regex.group('room')
-            self.join(room)
-        else:
-            self.msg(chan, "You are not authorised or not logged in")
-        
+        room = regex.group('room')
+        self.join(room)
     
+    @irc_network_permission_required('join_or_part_room')  
     def part_room(self, regex, chan, nick, **kwargs):
-        if self.get_auth().is_authorised(nick,  '#', 'join_or_part_room'):
-            room = regex.group('room')
-            self.part(room)
-        else:
-            self.msg(chan, "You are not authorised or not logged in")
-    
+        room = regex.group('room')
+        self.part(room)
            
+    @irc_room_permission_required('can_speak')  
     def action(self, regex, chan, nick, **kwargs):
-        ch = regex.group('room')
-        if self.get_auth().is_authorised(nick,  ch, 'can_speak'):
-
-            text = regex.group(2)
-            self.describe(ch, text)
-        else:
-            self.msg(chan, "You are not authorised or not logged in")
+        text = regex.group(2)
+        self.describe(ch, text)
         
+    @irc_room_permission_required('can_speak')  
     def speak(self, regex, chan, nick, **kwargs):
+        room = regex.group('room')
+        text = regex.group(2)
+        self.msg(room, text)
 
-        ch = regex.group('room')
-        if self.get_auth().is_authorised(nick,  ch, 'can_speak'):
-
-            text = regex.group(2)
-            self.msg(ch, text)
-        else:
-            self.msg(chan, "You are not authorised or not logged in")
-
+    @irc_room_permission_required('set_greeting')  
     def set_greet(self, regex, chan, nick, **kwargs):
-        ch = regex.group('room')
-        if self.get_auth().is_authorised(nick,  ch, 'set_greeting'):
-            greet_msg = regex.group(2)
-            set_room_option(self.factory.network, ch, \
-                    'greet_message', greet_msg)
-            self.msg(chan, "Greet message for %s set to \"%s\" " % (ch,greet_msg))  
-        else:
-            self.msg(chan, "You are not authorised or not logged in")
+        greet_msg = regex.group(2)
+        set_room_option(self.factory.network, ch, \
+                'greet_message', greet_msg)
+        self.msg(chan, "Greet message for %s set to \"%s\" " % (ch,greet_msg))  
                               
+    @irc_room_permission_required('change_trigger')  
     def set_trigger(self, regex, chan, nick, **kwargs):
+        # Command issued to bot to change the default activation
+        # character.
+        arg = regex.group(2)
         ch = regex.group('room')
-        if self.get_auth().is_authorised(nick,  ch, 
-                                                  'change_trigger'):
-            # Command issued to bot to change the default activation
-            # character.
-            arg = regex.group(2)
-            ch = regex.group('room')
-            set_room_option(self.factory.network, ch, \
-                'activation', arg)  
+        set_room_option(self.factory.network, ch, \
+            'activation', arg)  
 
-            self.msg(chan, "Trigger for room %s set to \"%s\"" % (ch,  arg))
-            # Don't send this message twice if chan,ch are same room
-            if chan != ch:
-                self.msg(ch, "Trigger has been changed to \"%s\"" % (arg,)) 
-        else:
-            self.msg(chan, "You are not authorised to change trigger for this room")
+        self.msg(chan, "Trigger for room %s set to \"%s\"" % (ch,  arg))
+        # Don't send this message twice if chan,ch are same room
+        if chan != ch:
+            self.msg(ch, "Trigger has been changed to \"%s\"" % (arg,)) 
                                       
     def set_pvt_trigger(self, regex, chan, nick, **kwargs):
         if self.get_auth().is_authorised(nick,  '#', 

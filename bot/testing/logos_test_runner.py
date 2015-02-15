@@ -20,7 +20,8 @@ class LogosDiscoverRunner(DiscoverRunner):
         self.test_db_path = os.path.realpath(os.path.join(script_path,"..","..",
                                "sqlite-databases", "test-bibles.sqlite3.db" ))
 
-        shutil.copyfile(db_path, self.test_db_path)
+        if not os.path.exists(self.test_db_path):
+            shutil.copyfile(db_path, self.test_db_path)
         
 
         # First pass -- work out which databases actually need to be created,

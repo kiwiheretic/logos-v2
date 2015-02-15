@@ -4,23 +4,37 @@ from bot import pluginDespatch
 from django.utils import unittest
 from twisted.internet import reactor
 
+from django.contrib.auth.models import User
+from logos.management.commands.admin import assignperm
+
 class FakePlugin(object):
     def __init__(self, *args, **kwargs):
         self.irc_conn = self
         self._obj_list = [self]
         self.plugin_output = []
-        if 'network_settings' in kwargs:
-            settings = kwargs['network_settings']
-            self.nickname = settings.get('nick')
-            self.user = settings.get('user')
-            self.chan = settings.get('chan')
-            self.network = settings.get('network')
-            self.act = settings.get('act', '!')
-            self.reactor = reactor
-
         
-
         
+        initial_settings = {'nickname':'testBot',
+                            'user':"testBot!logos@Chatopia-530r0e.xtra.co.nz",
+                            'chan':'#test',
+                            'act':'!',
+                            'network':'irc.server.net',
+                            }
+        self.reactor = reactor 
+        for k in initial_settings:
+            setattr(self, k, initial_settings[k])
+        self.auth_users = pluginDespatch.AuthenticatedUsers(self.network)
+        
+        class FakeFactory:
+            pass
+        self.factory = FakeFactory()
+        self.factory.network = self.network
+                   
+    def get_auth(self):
+        return self.auth_users       
+    
+    def get_host(self, nick):
+        return self.user 
     # This will suffice as long as we're not testing enabling of plugins
     # Fix this later
     def is_plugin_enabled(self, channel, plugin_module):
@@ -51,7 +65,8 @@ class FakePlugin(object):
         self.plugin_output=[]
         print "testing: "+msg
         orig_msg = self.act + msg
-        self.command(self.nickname, self.user, self.chan, orig_msg, msg, self.act)
+        self.command(self.nickname, self.user, self.chan, 
+                     orig_msg, msg, self.act)
         output = "\n".join(self.plugin_output)
         print output
         print "--------------------------------------------"
@@ -74,16 +89,23 @@ class LogosTestCase(unittest.TestCase):
         
         # default values for most settings
         
-        initial_settings = {'nick':'testBot',
-                            'user':"testBot!logos@Chatopia-530r0e.xtra.co.nz",
-                            'chan':'#test',
-                            'act':'!',
-                            'network':'irc.server.net',
-                            }
-        self.plugin = self.plugin_class(network_settings = initial_settings)
-        
 
         
+        self.plugin = self.plugin_class()
+
+    @property
+    def room(self):
+        return self.plugin.chan    
 
     def set_nick(self, new_nick):
         self.plugin.nickname = new_nick 
+
+    def create_user(self, username, email, password):
+        user = User.objects.create_user(username, email, password)
+        user.save()
+    
+    def assign_room_permission(self, username, room, permission):
+        assignperm(self.plugin.network, \
+                   room, username, permission)
+    
+    

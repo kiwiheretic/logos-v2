@@ -97,43 +97,7 @@ class Command(BaseCommand):
         
     @transaction.atomic                                     
     def cmd_assignperm(self, network, room, username, permission):
-        if not re.match(r"#[a-zA-Z0-9-]*", room):
-            self.stdout.write("Invalid room name {} -- cannot assign".format(room))
-            return
-        
-        perm_obj = None
-        
-        if room == "#":  # if network permission
-            for perm, desc in NetworkPermissions._meta.permissions:
-                if perm == permission:
-
-                    try:
-                        perm_obj = NetworkPermissions.objects.get(network=network)
-                    except NetworkPermissions.DoesNotExist:
-                        perm_obj = NetworkPermissions(network=network)
-                        perm_obj.save()
-                    break
-
-        else:  # else room permission
-            for perm, desc in RoomPermissions._meta.permissions:
-                if perm == permission:
-                    try:
-                        perm_obj = RoomPermissions.objects.get(network=network, room=room.lower())
-                    except RoomPermissions.DoesNotExist:
-                        perm_obj = RoomPermissions(network=network, room=room.lower())
-                        perm_obj.save()                    
-                    break
-        if perm_obj == None:
-            self.stdout.write("Unknown permission type")
-            return
-        try:
-            user = User.objects.get(username__iexact = username)
-        except User.DoesNotExist:
-            self.stdout.write("Unknown user")
-            return
-
-        assign_perm(permission, user, perm_obj)
-        self.stdout.write("Assigned {} permission to {} successfully".format(permission, username))
+        assignperm(network, room, username, permission)
         
     def cmd_getperms(self, username):
         try:
@@ -151,8 +115,47 @@ class Command(BaseCommand):
         
         self.stdout.write("\n=== Room Permissions ===")
         for room_obj in RoomPermissions.objects.all():
-            
             perms = get_perms(user, room_obj)
             self.stdout.write("{} {} {}".format(room_obj.network,
                                                 room_obj.room,
                                                 ", ".join(perms)))
+            
+def assignperm(network, room, username, permission):
+
+    if not re.match(r"#[a-zA-Z0-9-]*", room):
+        self.stdout.write("Invalid room name {} -- cannot assign".format(room))
+        return
+    
+    perm_obj = None
+    
+    if room == "#":  # if network permission
+        for perm, desc in NetworkPermissions._meta.permissions:
+            if perm == permission:
+
+                try:
+                    perm_obj = NetworkPermissions.objects.get(network=network)
+                except NetworkPermissions.DoesNotExist:
+                    perm_obj = NetworkPermissions(network=network)
+                    perm_obj.save()
+                break
+
+    else:  # else room permission
+        for perm, desc in RoomPermissions._meta.permissions:
+            if perm == permission:
+                try:
+                    perm_obj = RoomPermissions.objects.get(network=network, room=room.lower())
+                except RoomPermissions.DoesNotExist:
+                    perm_obj = RoomPermissions(network=network, room=room.lower())
+                    perm_obj.save()                    
+                break
+    if perm_obj == None:
+        self.stdout.write("Unknown permission type")
+        return
+    try:
+        user = User.objects.get(username__iexact = username)
+    except User.DoesNotExist:
+        self.stdout.write("Unknown user")
+        return
+
+    assign_perm(permission, user, perm_obj)
+    print("Assigned {} permission to {} successfully".format(permission, username))
