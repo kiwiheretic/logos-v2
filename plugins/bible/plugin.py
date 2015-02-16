@@ -12,8 +12,11 @@ import copy
 
 import pdb
 from logos.constants import PUNCTUATION, STOP_WORDS
-from logos.utils import *
+from logos.utils import replace_spc_error_handler
 
+from bot.logos_decorators import irc_room_permission_required, \
+    irc_network_permission_required
+    
 from twisted.internet.error import AlreadyCalled, AlreadyCancelled
 
 from bot.pluginDespatch import Plugin, CommandException
@@ -556,69 +559,56 @@ class BibleBot(Plugin):
         tr_str = ",".join(translations)
         self.msg(chan, "Supported translations are %s " % (tr_str,))     
                    
+    @irc_network_permission_required('set_pvt_version')
     def set_pvt_translation(self, regex, chan, nick, **kwargs):
-       
-        if self.get_auth().is_authorised(nick,  '#', 'set_pvt_version'):
-            trans = regex.group(1)
-            translations = self._get_translations()                        
-            if trans not in translations:
-                self.msg(chan, "Could not locate translation %s " % (def_trans,))
-                return True
-            else:
-                set_global_option('pvt-translation', trans)
-                self.msg(chan, "Private translation set to %s " % (trans,))   
+        trans = regex.group(1)
+        translations = self._get_translations()                        
+        if trans not in translations:
+            self.msg(chan, "Could not locate translation %s " % (def_trans,))
+            return True
         else:
-            self.msg(chan, "You are not authorised or not logged in")
+            set_global_option('pvt-translation', trans)
+            self.msg(chan, "Private translation set to %s " % (trans,))   
                              
+    @irc_room_permission_required('set_default_translation')
     def set_default_trans(self, regex, chan, nick, **kwargs):
         room = regex.group('room')
-        if self.get_auth().is_authorised(nick,  room, 'set_default_translation'):
-            def_trans = regex.group(2)
-            translations = self._get_translations()                        
-            if def_trans not in translations:
-                self.msg(chan, "Could not locate translation %s " % (def_trans,))
-                return
-            else:
-                set_room_option(self.factory.network, room, \
-                    'default_translation', def_trans)
-
-                self.msg(chan, "Default translation for %s set to %s " % (room,def_trans)) 
+        def_trans = regex.group(2)
+        translations = self._get_translations()                        
+        if def_trans not in translations:
+            self.msg(chan, "Could not locate translation %s " % (def_trans,))
+            return
         else:
-            self.msg(chan, "You are not authorised or not logged in")
+            set_room_option(self.factory.network, room, \
+                'default_translation', def_trans)
+
+            self.msg(chan, "Default translation for %s set to %s " % (room,def_trans)) 
                            
+    @irc_room_permission_required('set_verse_limits')
     def set_search_limit(self, regex, chan, nick, **kwargs):
         room = regex.group('room')
-        if self.get_auth().is_authorised(nick,  room, 'set_verse_limits'):
-      
-            searchlmt = int(regex.group(2))
-            # Get the channel the user is authorised to access
-            
-            if searchlmt > 20:
-                self.msg(chan, "Search limit cannot be set higher than 20")
-            else:
-                set_room_option(self.factory.network, room, \
-                    'searchlimit', searchlmt)                        
-
-                self.msg(chan, "Search limit for %s set to %s " % (room, searchlmt)) 
+        searchlmt = int(regex.group(2))
+        # Get the channel the user is authorised to access
+        
+        if searchlmt > 20:
+            self.msg(chan, "Search limit cannot be set higher than 20")
         else:
-            self.msg(chan, "You are not authorised or not logged in")
+            set_room_option(self.factory.network, room, \
+                'searchlimit', searchlmt)                        
+
+            self.msg(chan, "Search limit for %s set to %s " % (room, searchlmt)) 
                    
+    @irc_room_permission_required('set_verse_limits')
     def set_verse_limit(self, regex, chan, nick, **kwargs):
         room = regex.group('room')
-        if self.get_auth().is_authorised(nick,  room, 'set_verse_limits'):
-    
-            verselmt = int(regex.group(2))
-            
-            
-            if verselmt > 20:
-                self.msg(chan, "Verse limit cannot be set higher than 20")
-            else:
-                set_room_option(self.factory.network, room, \
-                    'verselimit', verselmt)
-
-                self.msg(chan, "Verse limit for %s set to %s " % (room,verselmt)) 
+        verselmt = int(regex.group(2))
+        if verselmt > 20:
+            self.msg(chan, "Verse limit cannot be set higher than 20")
         else:
-            self.msg(chan, "You are not authorised or not logged in")
+            set_room_option(self.factory.network, room, \
+                'verselimit', verselmt)
+
+            self.msg(chan, "Verse limit for %s set to %s " % (room,verselmt)) 
                            
     def dict(self, regex, chan, nick, **kwargs):
 

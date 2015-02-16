@@ -386,36 +386,27 @@ class SystemCoreCommands(Plugin):
         if chan != ch:
             self.msg(ch, "Trigger has been changed to \"%s\"" % (arg,)) 
                                       
+    @irc_network_permission_required('change_pvt_trigger') 
     def set_pvt_trigger(self, regex, chan, nick, **kwargs):
-        if self.get_auth().is_authorised(nick,  '#', 
-                                                  'change_pvt_trigger'):
             # Command issued to bot to change the default activation
             # character.
             arg = regex.group(1)
             set_global_option('pvt-trigger', arg)
-
             self.msg(chan, "Private window trigger set to \"%s\"" % (arg,))
-        else:
-            self.msg(chan, "You are not authorised to change trigger for private window")
 
+    @irc_network_permission_required('change_nick') 
     def set_nick(self, regex, chan, nick, **kwargs):
         nick_to_set = regex.group('nick')
-        if self.get_auth().is_authorised(nick,  '#', 'change_nick'):
-            self.msg(chan, "Attempting to set nick to %s" % nick_to_set)
-            self.irc_conn.setNick(nick_to_set)
-        else:
-            self.msg(chan, "You are not authorised to change bot nick")
+        self.msg(chan, "Attempting to set nick to %s" % nick_to_set)
+        self.irc_conn.setNick(nick_to_set)
             
+    @irc_network_permission_required('irc_cmd')
     def cmd(self, regex, chan, nick, **kwargs):
-
-        if self.get_auth().is_authorised(nick,  '#', 'irc_cmd'):
-            # Have the bot issue any IRC command
-            
-            line = regex.group(1)
-            logger.debug("%s issued command '%s' to bot" % (nick, line))
-            self.sendLine(line)
-        else:
-            self.msg(chan, "You are not authorised or not logged in")
+        # Have the bot issue any IRC command
+        
+        line = regex.group(1)
+        logger.debug("%s issued command '%s' to bot" % (nick, line))
+        self.sendLine(line)
             
     def version(self, regex, chan, nick, **kwargs):
 

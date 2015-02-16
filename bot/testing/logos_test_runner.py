@@ -20,6 +20,10 @@ class LogosDiscoverRunner(DiscoverRunner):
         self.test_db_path = os.path.realpath(os.path.join(script_path,"..","..",
                                "sqlite-databases", "test-bibles.sqlite3.db" ))
 
+        # copying the file over can take quite a while so
+        # don't copy it over if this already exists.
+        # Not the most wonderful way of testing but a reasonable
+        # compromoise I think.
         if not os.path.exists(self.test_db_path):
             shutil.copyfile(db_path, self.test_db_path)
         
