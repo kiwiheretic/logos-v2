@@ -3,6 +3,9 @@ __pycache__/
 *.py[cod~]
 *.*~
 bibles/
+logs/
+sqlite-databases/
+
 # C extensions
 *.so
 
