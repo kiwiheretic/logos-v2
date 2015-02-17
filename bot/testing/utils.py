@@ -47,7 +47,7 @@ class FakePlugin(object):
         self.plugin_output.append("{} {}: {}".format('msg', channel, message))
 
     def describe(self, channel, action):
-        pass
+        self.plugin_output.append("{} {}: {}".format('action', channel, action))
 
     def notice(self, user, message):
         self.plugin_output.append("{} {}: {}".format('notice', channel, message))

@@ -10,6 +10,14 @@ logger = logging.getLogger(__name__)
 
 DEBUG = True
 TEMPLATE_DEBUG = DEBUG
+#
+# REGENERATE_TEST_DATABASE: Whether to recreate the test database 
+# (if it doesn't already exist).  Sometimes I leave this as False because 
+# it takes awhile to create the test database if it already exists, why bother?  
+# On the off chance it becomes corrupted you might waant to change this to 
+# True or maybe just delete 
+# sqlite-databases\test-bibles.sqlite3.db is a better option.
+REGENERATE_TEST_DATABASE = False
 
 ACCOUNT_ACTIVATION_DAYS = 3
 

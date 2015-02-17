@@ -1,7 +1,7 @@
 # logos_test_runner.py
 import shutil
 import os
-from logos import settings
+from django.conf import settings
 
 # Because our bible database is huge, and takes a long time to generate
 # we don't want to regenerate it for every test case.
@@ -23,8 +23,8 @@ class LogosDiscoverRunner(DiscoverRunner):
         # copying the file over can take quite a while so
         # don't copy it over if this already exists.
         # Not the most wonderful way of testing but a reasonable
-        # compromoise I think.
-        if not os.path.exists(self.test_db_path):
+        # compromise I think.
+        if settings.REGENERATE_TEST_DATABASE or not os.path.exists(self.test_db_path):
             shutil.copyfile(db_path, self.test_db_path)
         
 
@@ -104,5 +104,6 @@ class LogosDiscoverRunner(DiscoverRunner):
                 conn.close()
             
  
-        os.remove(self.test_db_path)
+        if settings.REGENERATE_TEST_DATABASE:
+            os.remove(self.test_db_path)
     

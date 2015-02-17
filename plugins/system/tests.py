@@ -19,13 +19,19 @@ class TestSystemPlugin(LogosTestCase):
 
         output = self.plugin.send_command("say {} Hello".format(self.room))
         self.assertNotIn('Hello', output)
+        
+        output = self.plugin.send_command("act {} dances".format(self.room))
+        self.assertNotIn('dances', output)
 
         output = self.plugin.send_command("login password1")
         self.assertIn('Login successful', output)
 
         output = self.plugin.send_command("say {} Hello".format(self.room))
         self.assertIn('Hello', output)
-        
+
+        output = self.plugin.send_command("act {} dances".format(self.room))
+        self.assertIn('dances', output)
+                
         output = self.plugin.send_command("set {} trigger \"?\"".format(self.room))
         self.assertIn('not authorised', output)
         
