@@ -27,7 +27,8 @@ class UrlCatcherPlugin(Plugin):
             num_to_print = 5
         # send the urls in order of reverse chronological
         # order
-        cap_urls = CapturedUrls.objects.filter(room=chan.lower()).\
+        room = regex.group('room')
+        cap_urls = CapturedUrls.objects.filter(room=room.lower()).\
             order_by('-timestamp')[:num_to_print]
         for url in cap_urls:
             timestamp = str(url.timestamp)

@@ -3,7 +3,6 @@ import os
 import sys
 import logging
 import email_settings
-import pdb
 logger = logging.getLogger(__name__)
 
 
@@ -13,10 +12,10 @@ TEMPLATE_DEBUG = DEBUG
 #
 # REGENERATE_TEST_DATABASE: Whether to recreate the test database 
 # (if it doesn't already exist).  Sometimes I leave this as False because 
-# it takes awhile to create the test database if it already exists, why bother?  
-# On the off chance it becomes corrupted you might waant to change this to 
-# True or maybe just delete 
-# sqlite-databases\test-bibles.sqlite3.db is a better option.
+# it takes awhile to create the test database. After all, if it already exists, 
+# why bother?  On the off chance it becomes corrupted you might want to 
+# change this to True or maybe just delete 
+# sqlite-databases\test-bibles.sqlite3.db might be the better option.
 REGENERATE_TEST_DATABASE = False
 
 ACCOUNT_ACTIVATION_DAYS = 3
