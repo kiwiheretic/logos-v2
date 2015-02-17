@@ -13,7 +13,6 @@ class UrlCatcherPlugin(Plugin):
     plugin = ("url_catcher", "Url Catcher Module")
     def __init__(self, *args, **kwargs):
         Plugin.__init__(self, *args, **kwargs)
-        self.urls = []
         
         self.commands = (\
          (r'urls\s+(?P<room>#[a-zA-z0-9-]+)\s+(?P<count>\d+)', self.urls_display, "display a list of captured urls"),
