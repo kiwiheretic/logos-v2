@@ -356,8 +356,9 @@ class SystemCoreCommands(Plugin):
            
     @irc_room_permission_required('can_speak')  
     def action(self, regex, chan, nick, **kwargs):
+        room = regex.group('room')
         text = regex.group(2)
-        self.describe(ch, text)
+        self.describe(room, text)
         
     @irc_room_permission_required('can_speak')  
     def speak(self, regex, chan, nick, **kwargs):
