@@ -35,7 +35,9 @@ class TestBibleBot(LogosTestCase):
         output = self.plugin.send_command("search kjv Jesus wept")
         self.assertIn('John 11:35', output)
 
-        
-
-        
+        output = self.plugin.send_command("search kjv judg* speed* ")
+        self.assertIn('Ezra 7:26', output)
+        self.assertIn('judgment', output)
+        self.assertIn('speedily', output)
+       
         
