@@ -4,6 +4,8 @@ __pycache__/
 *.*~
 bibles/
 logs/
+logos/email_settings.py
+
 sqlite-databases/
 
 # C extensions
