@@ -152,6 +152,9 @@ class Plugin(object):
     def get_host(self, nick):
         return self.irc_conn.nicks_db.get_host(nick)
     
+    def get_rooms(self):
+        return self.irc_conn.nicks_db.get_rooms()
+        
     def get_room_nicks(self, room):
         return self.irc_conn.get_room_nicks(room)
 

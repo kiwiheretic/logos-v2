@@ -5,3 +5,6 @@ django-guardian==1.2.5
 django-permissions-widget==1.4.0
 zope.interface==4.1.1
 GitPython==0.3.6
+python-dateutil==2.4.0
+python-twitter==2.2
+pytz==2014.10
