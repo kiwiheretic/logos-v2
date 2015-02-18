@@ -179,7 +179,10 @@ class Plugin(object):
 
     def net_disable_plugin(self, plugin_name):
         return self.despatcher.net_disable_plugin(plugin_name)                
-        
+    
+    def is_plugin_enabled(self, channel):
+        return self.despatcher.is_plugin_enabled(channel, self)
+
 #       Enabling this method causes epic fail
 #
 #    def __getattr__(self, name):

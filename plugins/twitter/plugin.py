@@ -11,7 +11,7 @@ from models import TwitterStatuses, ReportedTweets
 import logging
 from logos.settings import LOGGING
 from logos import utils 
-
+from logos.roomlib import get_global_option, set_global_option
 logger = logging.getLogger(__name__)
 logging.config.dictConfig(LOGGING)
 
@@ -28,7 +28,9 @@ class TwitterPlugin(Plugin):
     def __init__(self, *args, **kwargs):
         Plugin.__init__(self, *args, **kwargs)
         self.commands = (\
-                         (r'tweets', self.new_tweets, 'Get new tweets'),
+                         (r'reset\s+(?P<room>#[a-zA-z0-9-]+)', self.reset, 'Reset reported tweets'),
+                         (r'set check time (\d+)', self.set_check_time, 
+                          'set the twitter check time'),
                          
                          )
         self.consumer_key = 'JHzzZAYjH1zgyU8OoG212WpVV'
@@ -45,18 +47,31 @@ class TwitterPlugin(Plugin):
         
 
     def signedOn(self):
-        self.timer.start(30, now=False)
+        check_time = get_global_option("twitter-check-time")
+        if check_time:
+            check_time = int(check_time)
+        else:
+            check_time = 30
+        logger.info("Twitter check timer is every {} seconds".format(check_time))
+        self.timer.start(check_time, now=False)
 
+       
     def privmsg(self, user, channel, message):
         pass
     
-    def new_tweets(self, regex, chan, nick, **kwargs):
-     
-        self.say(chan, "Elementary my dear Watson")
-        self.describe(chan, "shakes its chains")
-        self.notice(nick, "Now is the time for all good men...")
+    def set_check_time(self, regex, chan, nick, **kwargs):
+        check_time = regex.group(1)
+        set_global_option("twitter-check-time", check_time)
+        self.timer.stop()
+        self.timer.start(int(check_time), now=False)
+        self.say(chan,"Twitter check time successfully set")
+        
+    def reset(self, regex, chan, nick, **kwargs):
+        room = regex.group('room')
+        ReportedTweets.objects.filter(network=self.network,
+                                      room=room).delete()
+        self.say(chan,"Tweets for room {} now reset".format(room))
 
-    
     
     def on_timer(self):
         logger.info("on_timer")
@@ -88,9 +103,10 @@ class TwitterPlugin(Plugin):
             filter(created_at__gt = n_days_ago).\
                 order_by('created_at')
         
-        limit = 3
+        limit = 2
         rooms = self.get_rooms()
         for room in rooms:
+            if not self.is_plugin_enabled(room): continue
             count = 0
             for status in statuses:
                 if status.reportedtweets_set.\
@@ -98,7 +114,7 @@ class TwitterPlugin(Plugin):
                            room=room.lower()).exists():
                     continue
                 if count==0:
-                    self.say(room, "Your Christian Twitter Feed:")
+                    self.say(room, "Your Christian Twitter Feed :)")
                     
                 chan_text = "@{} -- {}".format(status.screen_name,
                                            status.text.encode("ascii", "replace_spc"))
@@ -111,7 +127,7 @@ class TwitterPlugin(Plugin):
                 
                 count += 1
                 
-                if count > limit: break
+                if count >= limit: break
         
         
 
