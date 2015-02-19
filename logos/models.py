@@ -63,6 +63,7 @@ class RoomPermissions(models.Model):
             ('kick_user', 'Can kick user'),
             ('ban_user', 'Can ban user'),
             ('room_op', 'Bot can op'),
+            ('twitter_op', 'Can add or remove twitter follows')
         )
 
 class Plugins(models.Model):
