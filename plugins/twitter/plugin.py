@@ -196,6 +196,11 @@ class TwitterPlugin(Plugin):
                     filter(network=self.network.lower(),
                            room=room.lower()).exists():
                     continue
+                if not TwitterFollows.objects.filter(network=self.network.lower(),\
+                room=room.lower(),\
+                screen_name__iexact = "@"+status.screen_name).exists():
+                    continue
+                        
                 if count==0:
                     self.say(room, "Your Christian Twitter Feed :)")
                     
