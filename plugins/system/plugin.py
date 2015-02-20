@@ -52,7 +52,7 @@ class SystemCoreCommands(Plugin):
                          (r'net\s+disable\s+plugin\s+(?P<plugin>[a-z_-]+)',
                           self.net_disable_plugin, "Disable specified plugin for room"),
                          (r'list\s+(?:perms|permissions)', self.list_perms, "list all permissions available"),
-                         (r'add\s+user\s+(?P<username>[a-zA-z0-9-]+)\s+(?P<email>[a-zA-z0-9-]+@[a-zA-z0-9\.-]+)\s+(?P<password>[a-zA-z0-9-]+)',
+                         (r'add\s+user\s+(?P<username>\S+)\s+(?P<email>[a-zA-z0-9-]+@[a-zA-z0-9\.-]+)\s+(?P<password>[a-zA-z0-9-]+)',
                           self.adduser, 'Add user to system'),
                          (r'list\s+users', self.listusers, 'List users in system'),
                          (r'assign\s+(?:perm|permission)\s+(?P<perm>[a-z_]+)\s+to\s+(?P<username>[^\s]+)', self.assign_net_perms, "assign permission to username"),

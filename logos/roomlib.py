@@ -4,6 +4,7 @@ from django.core.exceptions import ObjectDoesNotExist
 import pdb
 
 def set_global_option(option, value):
+    """ Set a global option for a given plugin"""
     try:
         obj = Settings.objects.get(option = option)
         obj.value = value
@@ -13,6 +14,7 @@ def set_global_option(option, value):
         obj.save()   
 
 def get_global_option(option):
+    """ Get a global option for a given plugin"""
     try:
         obj = Settings.objects.get(option = option)
         return obj.value
@@ -34,6 +36,7 @@ def set_room_defaults(network, room, defaults):
             set_room_option(network, room, option, value)
 
 def get_room_option(network, room, opt):
+    """ Get a room specific option for a given plugin"""
     try:
         value_of_opt = RoomOptions.objects.get(network=network.lower(),
                                            room = room.lower(),
@@ -43,6 +46,7 @@ def get_room_option(network, room, opt):
         return None
 
 def set_room_option(network, room, opt, value):
+    """ Set a room specific option for a given plugin"""
     room_opt, created = RoomOptions.objects.get_or_create(network = network.lower(),
                            room = room.lower(),
                            option = opt)
