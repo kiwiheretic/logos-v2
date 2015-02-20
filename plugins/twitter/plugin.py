@@ -5,6 +5,7 @@ import re
 import os
 import twitter
 import json
+import HTMLParser
 
 from datetime import timedelta, datetime
 from dateutil import parser
@@ -20,6 +21,8 @@ from bot.logos_decorators import irc_network_permission_required, \
     irc_room_permission_required
 logger = logging.getLogger(__name__)
 logging.config.dictConfig(LOGGING)
+
+USE_THREADS = True
 
 # If using this file as a starting point for your plugin
 # then remember to change the class name 'MyBotPlugin' to
@@ -46,6 +49,7 @@ class TwitterPlugin(Plugin):
                           'Reset reported tweets'),
                          (r'set check time (\d+)', self.set_check_time, 
                           'set the twitter check time'),
+                         (r'pull',self.pull_tweet, "Pull some tweets without waiting for timer"),
                          
                          )
         pth = os.path.dirname(__file__)
@@ -63,7 +67,7 @@ class TwitterPlugin(Plugin):
                       access_token_secret=self.token_secret)
 
         self.timer = task.LoopingCall(self.on_timer)
-        
+        self.h = HTMLParser.HTMLParser()
 
     def signedOn(self):
         check_time = get_global_option("twitter-check-time")
@@ -139,40 +143,68 @@ class TwitterPlugin(Plugin):
                                       room=room).delete()
         self.say(chan,"Tweets for room {} now reset".format(room))
     
+    def pull_tweet(self, regex, chan, nick, **kwargs):
+        self.say(chan, "Manually requesting tweet")
+        self._process_tweets(manual_request=True, chan=chan)
+        
+        
     def on_timer(self):
         dt = datetime.now(pytz.utc)
         logger.info("on_timer {}".format(str(dt)))
+        if USE_THREADS:
+            self.reactor.callInThread(self._process_tweets)
+        else:
+            self._process_tweets()
+            
+    def _process_results(self, responses, manual_request=False, chan=None):
+        for room, msg in responses:
+            msg = re.sub(r"\n|\r", "", msg)
+            msg = self.h.unescape(msg)
+
+            self.say(room, msg)
+        if not responses and manual_request:
+            self.say(chan, "=== No Tweets Found ===")
+            
+    def _process_tweets(self, **kwargs):
+        
+        responses = []
+
+        
         follows = TwitterFollows.objects.filter(network=self.network).\
             values('screen_name').distinct()
                                       
         get_tweets_from = [x['screen_name'] for x in follows]
         for tweeter in get_tweets_from:
-            last_tweet = TwitterStatuses.objects.\
-                filter(screen_name__iexact=tweeter[1:]).order_by('twitter_id').last()
-            if last_tweet:
-                since_id = long(last_tweet.twitter_id)
-#                logger.info("Since ID = " + str(since_id))
-                statuses = self.api.GetUserTimeline(screen_name=tweeter,
-                                                    since_id = since_id)
-            else:
-                statuses = self.api.GetUserTimeline(screen_name=tweeter)
-            
-            for status in statuses:
-                if TwitterStatuses.objects.filter(twitter_id=status.id).exists():
-                    logger.info("Twitter status {} already exists".format(status.id))
+            try:
+                last_tweet = TwitterStatuses.objects.\
+                    filter(screen_name__iexact=tweeter[1:]).order_by('twitter_id').last()
+                if last_tweet:
+                    since_id = long(last_tweet.twitter_id)
+    #                logger.info("Since ID = " + str(since_id))
+                    statuses = self.api.GetUserTimeline(screen_name=tweeter,
+                                                        since_id = since_id)
                 else:
-                    ts = TwitterStatuses()
-                    ts.twitter_id = status.id
-                    ts.screen_name = status.user.screen_name
-                    try:
-                        ts.url = status.urls[0].url
-                    except IndexError:
-                        ts.url = None
-                    ts.text = status.text
-                    ts.created_at = parser.parse(status.created_at)
-                    ts.save()        
-        
-
+                    statuses = self.api.GetUserTimeline(screen_name=tweeter)
+                
+                for status in statuses:
+                    if TwitterStatuses.objects.filter(twitter_id=status.id).exists():
+                        logger.info("Twitter status {} already exists".format(status.id))
+                    else:
+                        ts = TwitterStatuses()
+                        ts.twitter_id = status.id
+                        ts.screen_name = status.user.screen_name
+                        try:
+                            ts.url = status.urls[0].url
+                        except IndexError:
+                            ts.url = None
+                        ts.text = status.text
+                        ts.created_at = parser.parse(status.created_at)
+                        ts.save()        
+            
+            except twitter.error.TwitterError:
+                print "A twitter error occurred"
+                pass
+            
         now = datetime.now(pytz.utc)
         n_days_ago = now - timedelta(days=14)
 
@@ -201,12 +233,14 @@ class TwitterPlugin(Plugin):
                 screen_name__iexact = "@"+status.screen_name).exists():
                     continue
                         
-                if count==0:
-                    self.say(room, "Your Christian Twitter Feed :)")
+#                if count==0:
+#                    self.say(room, "Your Christian Twitter Feed :)")
                     
                 chan_text = "@{} -- {}".format(status.screen_name,
                                            status.text.encode("ascii", "replace_spc"))
-                self.say(room, chan_text)
+
+                responses.append((room, chan_text))
+#                self.say(room, chan_text)
                 reported_twt = ReportedTweets()
                 reported_twt.tweet = status
                 reported_twt.network = self.network.lower()
@@ -216,8 +250,8 @@ class TwitterPlugin(Plugin):
                 count += 1
                 
                 if count >= limit: break
-        
-        
-
-
-
+        if USE_THREADS:
+            self.reactor.callFromThread(self._process_results, responses, **kwargs)
+        else:
+            self._process_results(responses, **kwargs)
+            
