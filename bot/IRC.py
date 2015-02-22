@@ -8,9 +8,11 @@ import os
 import types
 import time
 import signal
+import codecs
 
 from simple_webserver import SimpleWeb
 from simple_rpcserver import SimpleRPC
+import logos.utils
 
 from copy import copy
 from logos.roomlib import get_room_option, set_room_option, get_startup_rooms, \
@@ -191,7 +193,7 @@ class IRCBot(irc.IRCClient):
         self.realname = "logos"
         
         if settings.DEBUG:
-            self.irc_line_log = open(os.path.join(settings.LOG_DIR, "IRClinesReceived.txt"), "a")
+            self.irc_line_log = codecs.open(os.path.join(settings.LOG_DIR, "IRClinesReceived.txt"), "ab", "cp1252")
         else:
             self.irc_line_log = None
         
@@ -253,7 +255,7 @@ class IRCBot(irc.IRCClient):
                 chan_q = self.channel_queues[chan].pop(0)
                 for elmt in chan_q:
                     if type(elmt) == types.UnicodeType:
-                        msg_list.append(str(elmt))
+                        msg_list.append(elmt.encode("utf-8","replace_spc"))
                     else:
                         msg_list.append(elmt)
 
@@ -330,7 +332,7 @@ class IRCBot(irc.IRCClient):
 
     def sendLine(self, line):
         if self.irc_line_log:
-           self.irc_line_log.write(">> " + line+"\n") 
+            self.irc_line_log.write((">> " + line+"\n").decode("utf-8","replace_spc"))
         irc.IRCClient.sendLine(self, line)
 
     def lineReceived(self, line):
