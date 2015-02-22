@@ -6,6 +6,7 @@ import gc
 import os
 import re
 import csv
+import codecs
 import pdb
 import logging
 from datetime import datetime, timedelta
@@ -239,7 +240,7 @@ def populate_concordance(options):
         iidx = 0
         for vs in bv:
 
-            text = re.sub(r"[^a-zA-Z0-9']", " ",  vs.verse_text)
+            text = re.sub(r"[^a-zA-Z0-9\s]", "",  vs.verse_text)
             text = re.sub(PUNCTUATION, "", text)
             words = re.split('\s+', text.lower().strip())
             for word_id, wd in enumerate(words):
@@ -372,7 +373,8 @@ def populate_verses(trans, book_id, filename):
     else:
         next_id = 1
 
-    f = open(filename, "r")
+    f = codecs.open(filename, 'rb', 'cp1252')
+#    f = open(filename, "r")
     for lineno, ln in enumerate(f.readlines()):
         if ln.strip() != '':
             mch = re.match('[^\d]*(\d+):(\d+)(\s+|:)(.*)', ln)
@@ -384,9 +386,9 @@ def populate_verses(trans, book_id, filename):
 
                 #txt = re.sub(r'\\', r'\\\\', txt)
                 
-                # The following is to avoid unicode errors
-                #                 #txt = re.sub('[^\x20-\x7F]', '', mch.group(4))
-                txt = mch.group(4).decode("ascii", "replace_spc")
+#                if re.search(r"rev\.txt", filename) and ch==2 and vs ==3:
+#                    pdb.set_trace()
+                txt = mch.group(4).encode("utf-8", "replace_spc")
                 bv = BibleVerses(id = next_id,
                                  trans = trans,
                                  book = book_id,
