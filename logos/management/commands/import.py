@@ -406,7 +406,8 @@ def populate_verses(trans, book_id, filename):
 
 
             else:
-                print "weird -> ", filename, lineno, ln
+                weird_line =  "weird -> {} {} {}".format(filename, lineno, ln)
+                print weird_line.encode("ascii", "replace_spc")
 
 
     BibleVerses.objects.bulk_create(book_cache)
