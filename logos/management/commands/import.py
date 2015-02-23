@@ -373,9 +373,15 @@ def populate_verses(trans, book_id, filename):
     else:
         next_id = 1
 
-    f = codecs.open(filename, 'rb', 'cp1252')
-#    f = open(filename, "r")
-    for lineno, ln in enumerate(f.readlines()):
+    for cdc in ('cp1253', 'utf-8'):
+        try:
+            f = codecs.open(filename, 'rb', cdc)
+            lines = list(f.readlines())
+        except UnicodeDecodeError:
+            pass
+        else:
+            break
+    for lineno, ln in enumerate(lines):
         if ln.strip() != '':
             mch = re.match('[^\d]*(\d+):(\d+)(\s+|:)(.*)', ln)
             if mch:
