@@ -1,6 +1,6 @@
 #! /usr/bin/env python
 
-#import psutil # Used to determine available RAM
+import psutil # Used to determine available RAM
 import sys
 import gc
 import os
@@ -39,6 +39,9 @@ class Command(BaseCommand):
         make_option('--replace-version',action='store',
                     help="Only replace the specified translation in the" + \
                     "database.  Should be a folder name in bibles/"),
+        make_option('--use-more-ram',action='store_true',
+                    help="Try to speed up a sqlite3 database import by " + \
+                        "storing the journal in ram"),
 
     )
     option_list = BaseCommand.option_list + extra_options
@@ -48,18 +51,19 @@ class Command(BaseCommand):
         logger.debug ("args = "+str(args))
         logger.debug ("options = "+ str(options))
 
-#        if DATABASES['bibles']['ENGINE'].endswith('sqlite3'):
-#            vm = psutil.virtual_memory()
-#            cursor = connection.cursor()
-#            cursor.execute("PRAGMA Journal_mode = MEMORY")
-#            cursor.execute("PRAGMA Page_size")
-#            row = cursor.fetchone()
-#            page_size = row[0]
-#            # use 75% of available VM for cache
-#            cache_size = int(.75 * vm.available / page_size)
-#            cursor.execute("PRAGMA Cache_Size = "+str(cache_size))
-#            print "page_size = " + str(page_size) + " bytes"
-#            print "cache_size = " + str(cache_size) + " pages"
+        if options['use_more_ram'] and DATABASES['bibles']['ENGINE'].endswith('sqlite3'):
+            logger.info("Allocating the SQLITE3 journal in RAM")
+            vm = psutil.virtual_memory()
+            cursor = connection.cursor()
+            cursor.execute("PRAGMA Journal_mode = MEMORY")
+            cursor.execute("PRAGMA Page_size")
+            row = cursor.fetchone()
+            page_size = row[0]
+            # use 75% of available memory for cache
+            cache_size = int(.75 * vm.available / page_size)
+            cursor.execute("PRAGMA Cache_Size = "+str(cache_size))
+            print "page_size = " + str(page_size) + " bytes"
+            print "cache_size = " + str(cache_size) + " pages"
 
         
         if options['replace_version']:
@@ -144,7 +148,7 @@ def import_trans(options):
     def process_books(version):
         biblepath = BIBLES_DIR + os.sep + version
         trans_file = biblepath + os.sep + "trans_file.csv"
-        print biblepath
+#        print biblepath
         for bk in valid_books:
             book_path = biblepath + os.sep + bk
             if os.path.exists(book_path):
@@ -171,7 +175,7 @@ def import_trans(options):
                     if os.path.exists(book_path):
                         add_book_to_db(translation, book_path, long_name=long_name)
                     else:
-                        print "Error in adding apocraphyl book %s %s" %(version, short_name)
+                        logger.error( "Error in adding apocraphyl book %s %s" %(version, short_name))
           
     if options['replace_version']:
         version = options['replace_version']
@@ -221,7 +225,8 @@ def populate_concordance(options):
                 lbook = last_rec.book
                 lchapter = last_rec.chapter
                 lverse = last_rec.verse
-                print "continuing from %s %d:%d" % (lbook.long_book_name, lchapter, lverse)
+                logger.info( "continuing from %s %d:%d" % \
+                            (lbook.long_book_name, lchapter, lverse))
                 bv_id = BibleVerses.objects.filter(trans=trans, \
                                 book = lbook, chapter = lchapter, \
                                 verse=lverse).first().id
@@ -242,13 +247,17 @@ def populate_concordance(options):
 
             text = re.sub(r"[^a-zA-Z0-9\s]", "",  vs.verse_text)
             text = re.sub(PUNCTUATION, "", text)
+            if not text:
+                continue
             words = re.split('\s+', text.lower().strip())
             for word_id, wd in enumerate(words):
 #                wd = re.sub(PUNCTUATION, "", wd)
                 try:
                     assert wd != ""
                 except AssertionError:
-                    pdb.set_trace()
+                    logger.error("line was {}".format(vs.verse_text))
+                    logger.error("words is " + str(words))
+                    continue
 #                if wd == '': continue
 
 
@@ -334,7 +343,7 @@ def add_book_to_db(translation, book_path, long_name = None):
 
         new_trans = BibleTranslations(name = translation)
         new_trans.save()
-        print "saved new trans " + translation
+        logger.info( "Generating new translation: " + translation)
         trans = new_trans.pk
 
     if long_name:
@@ -406,9 +415,11 @@ def populate_verses(trans, book_id, filename):
 
 
             else:
-                weird_line =  "weird -> {} {} {}".format(filename, lineno, ln)
-                print weird_line.encode("ascii", "replace_spc")
-
+                try:
+                    weird_line =  u"weird -> {} {} {}".format(filename, lineno, ln)
+                    print weird_line.encode("ascii", "replace_spc")
+                except UnicodeDecodeError:
+                    pdb.set_trace()
 
     BibleVerses.objects.bulk_create(book_cache)
 

@@ -45,9 +45,10 @@ class LogosRouter(object):
                 if klass_name == iter_klass_name:
                     if route_exceptions and klass_name in route_exceptions:
                         router = route_exceptions[klass_name]
-                        logger.debug( "Exception DB READ: selecting {} for model {}".format(router,klass_name))
+#                        logger.debug( "Exception DB READ: selecting {} for model {}".format(router,klass_name))
                     else:
-                        logger.debug( "DB READ: selecting {} for model {}".format(router,klass_name))
+#                        logger.debug( "DB READ: selecting {} for model {}".format(router,klass_name))
+                        pass
                     return router
 
 
@@ -75,9 +76,10 @@ class LogosRouter(object):
                 if klass_name == iter_klass_name:
                     if route_exceptions and klass_name in route_exceptions:
                         router = route_exceptions[klass_name]
-                        logger.debug( "Exception DB WRITE: selecting {} for model {}".format(router,klass_name))
+#                        logger.debug( "Exception DB WRITE: selecting {} for model {}".format(router,klass_name))
                     else:
-                        logger.debug( "DB WRITE: selecting {} for model {}".format(router,klass_name))
+#                        logger.debug( "DB WRITE: selecting {} for model {}".format(router,klass_name))
+                        pass
                     return router
         
         for db_id, models in routing_data:
