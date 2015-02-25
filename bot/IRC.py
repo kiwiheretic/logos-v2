@@ -193,7 +193,7 @@ class IRCBot(irc.IRCClient):
         self.realname = "logos"
         
         if settings.DEBUG:
-            self.irc_line_log = codecs.open(os.path.join(settings.LOG_DIR, "IRClinesReceived.txt"), "ab", "cp1252")
+            self.irc_line_log = open(os.path.join(settings.LOG_DIR, "IRClinesReceived.txt"), "ab")
         else:
             self.irc_line_log = None
         
@@ -332,7 +332,7 @@ class IRCBot(irc.IRCClient):
 
     def sendLine(self, line):
         if self.irc_line_log:
-            self.irc_line_log.write((">> " + line+"\n").decode("utf-8","replace_spc"))
+            self.irc_line_log.write(">> " + line+"\n")
         irc.IRCClient.sendLine(self, line)
 
     def lineReceived(self, line):
