@@ -83,7 +83,7 @@ class BibleBot(Plugin):
                          (r'dict\s+(\S+)', self.dict, "lookup strongs numbers"),
                          (r'(\w+\+?\s+)?\d?\s*[a-zA-Z]+\s+\d+\s*(:?\s*\d+\s*(-?\s*\d+)?)?$',
                           self.verse_lookup, "lookup bible verse"), \
-                         (r'book names (?:for\s+(?:translation|version)\s+)?(.*)',
+                         (r'books\s+(.*)',
                           self.book_names, "show book names for translation"),
                          
                          )
