@@ -8,7 +8,7 @@ import os
 import types
 import time
 import signal
-import codecs
+import socket
 
 from simple_webserver import SimpleWeb
 from simple_rpcserver import SimpleRPC
@@ -647,6 +647,8 @@ def instantiateIRCBot(network, port, room, botName, sys_password,
                       nickserv, web_port = None, rpc_port=None, 
                       extra_options=None):
 
+    
+    socket.setdefaulttimeout(10)
     # Start the IRC Bot
     reactor.connectTCP(network, port,
                        IRCBotFactory(reactor, network, room, botName,\

@@ -5,6 +5,7 @@ import re
 import os
 import twitter
 import json
+import threading
 import HTMLParser
 
 from datetime import timedelta, datetime
@@ -42,7 +43,7 @@ class TwitterPlugin(Plugin):
                          (r'remove\s+follow\s+(?P<room>#[a-zA-z0-9-]+)\s+(?P<follow>@[a-zA-Z_]+)', 
                           self.remove_follow, 
                           'Add screen name to follow'),                          
-                         (r'set\s+(?P<room>#[a-zA-z0-9-]+)\s+twitter\s+display\s+limit\s+(?P<count>)',
+                         (r'set\s+(?P<room>#[a-zA-z0-9-]+)\s+twitter\s+display\s+limit\s+(?P<count>\d+)',
                            self.set_room_limit, 
                           'Set number of tweets to display each time in room'), 
                          (r'reset\s+(?P<room>#[a-zA-z0-9-]+)', self.reset, 
@@ -68,6 +69,7 @@ class TwitterPlugin(Plugin):
 
         self.timer = task.LoopingCall(self.on_timer)
         self.h = HTMLParser.HTMLParser()
+
 
     def signedOn(self):
         check_time = get_global_option("twitter-check-time")
@@ -149,8 +151,9 @@ class TwitterPlugin(Plugin):
         
         
     def on_timer(self):
+        logger.debug("Num Threads = "+str(threading.active_count()))
         dt = datetime.now(pytz.utc)
-        logger.info("on_timer {}".format(str(dt)))
+        logger.debug("on_timer {}".format(str(dt)))
         if USE_THREADS:
             self.reactor.callInThread(self._process_tweets)
         else:
@@ -180,7 +183,6 @@ class TwitterPlugin(Plugin):
                     filter(screen_name__iexact=tweeter[1:]).order_by('twitter_id').last()
                 if last_tweet:
                     since_id = long(last_tweet.twitter_id)
-    #                logger.info("Since ID = " + str(since_id))
                     statuses = self.api.GetUserTimeline(screen_name=tweeter,
                                                         since_id = since_id)
                 else:
@@ -188,7 +190,7 @@ class TwitterPlugin(Plugin):
                 
                 for status in statuses:
                     if TwitterStatuses.objects.filter(twitter_id=status.id).exists():
-                        logger.info("Twitter status {} already exists".format(status.id))
+                        logger.error("Twitter status {} already exists".format(status.id))
                     else:
                         ts = TwitterStatuses()
                         ts.twitter_id = status.id
@@ -202,8 +204,7 @@ class TwitterPlugin(Plugin):
                         ts.save()        
             
             except twitter.error.TwitterError:
-                print "A twitter error occurred"
-                pass
+                logger.error("An error occurred fetching tweets")
             
         now = datetime.now(pytz.utc)
         n_days_ago = now - timedelta(days=14)
