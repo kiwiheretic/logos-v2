@@ -6,6 +6,7 @@ import gc
 import os
 import re
 import csv
+import json
 import codecs
 import pdb
 import logging
@@ -148,6 +149,7 @@ def import_trans(options):
     def process_books(version):
         biblepath = BIBLES_DIR + os.sep + version
         trans_file = biblepath + os.sep + "trans_file.csv"
+        map_file = biblepath + os.sep + "mappings.json"
 #        print biblepath
         for bk in valid_books:
             book_path = biblepath + os.sep + bk
@@ -165,7 +167,23 @@ def import_trans(options):
         # process apocraphyl books in folder (if any).
         # Uses the csv file in the same folder to determine what are
         # the apocraphyl files.
-        if os.path.exists(trans_file):
+        
+        if os.path.exists(map_file):
+            with open(map_file, 'rb') as mapfile:
+                map_data = json.load(mapfile)
+                for filename in map_data['files'].keys():
+                    book_path = biblepath + os.sep + filename + ".txt"
+                    long_name = map_data['files'][filename]['humanised']
+                    shortcut = map_data['files'][filename]['shortcut']
+                    if os.path.exists(book_path):
+                        logger.info("Adding apocraphyl book " + long_name)
+                        add_book_to_db(translation, book_path, 
+                                       long_name=long_name,
+                                       cononical=shortcut)
+                    else:
+                        logger.error( "Error in adding apocraphyl book %s %s" %(version, long_name))
+
+        elif os.path.exists(trans_file):
             with open(trans_file, 'rb') as csvfile:
                 csvreader = csv.reader(csvfile)
                 for row in csvreader:
@@ -333,7 +351,7 @@ def purge_translation(translation):
 
 
 @transaction.atomic
-def add_book_to_db(translation, book_path, long_name = None):
+def add_book_to_db(translation, book_path, long_name = None, cononical=None):
     book = os.path.splitext(book_path)[0]
     book = os.path.split(book)[1]
 
@@ -352,18 +370,19 @@ def add_book_to_db(translation, book_path, long_name = None):
         long_book = long_name
     else:
         long_book, idx = get_long_book_name(book)
-    mch = re.match("^([^\.]+)", book)
-    if mch:
-        base_book = mch.group(1)
-    assert base_book
+    if not cononical:
+        mch = re.match("^([^\.]+)", book)
+        if mch:
+            cononical = mch.group(1)
+    assert cononical
 
     if not BibleBooks.objects.\
-        filter(trans = new_trans, canonical = base_book).exists():
+        filter(trans = new_trans, canonical = cononical).exists():
         print "adding book ", long_book
         bib_book = BibleBooks(trans = new_trans,
                               long_book_name= long_book,
                               book_idx = int(idx),
-                              canonical = base_book)
+                              canonical = cononical)
         bib_book.save()
 
         populate_verses(new_trans, bib_book, book_path)
