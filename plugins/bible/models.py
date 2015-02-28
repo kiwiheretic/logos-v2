@@ -1,7 +1,7 @@
 from django.db import models
 
 DB_ROUTER="bibles"
-DB_ROUTE_EXCEPTIONS = {'BibleColours':'settings'}
+DB_ROUTE_EXCEPTIONS = {'BibleColours':'settings', 'BibleStats':'statistics'}
 
 class BibleColours(models.Model):
     network = models.TextField()
@@ -40,6 +40,16 @@ class BibleVerses(models.Model):
             ["trans", "book", "chapter", "verse"],
         ]
 
+class BibleStats(models.Model):
+    trans_idx = models.IntegerField()
+    word = models.CharField(max_length=60)
+    count = models.IntegerField()
+    class Meta:
+        app_label = 'logos'    
+        index_together = [
+            ["trans_idx", "count"],
+        ]  
+      
 class BibleConcordance(models.Model):
     trans = models.ForeignKey('BibleTranslations')
     book = models.ForeignKey('BibleBooks')

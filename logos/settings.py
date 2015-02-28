@@ -48,6 +48,14 @@ DATABASES = {
         'HOST': '',                      # Empty for localhost through domain sockets or '127.0.0.1' for localhost through TCP.
         'PORT': '',                      # Set to empty string for default.
     },
+    'statistics': {
+        'NAME': os.path.join(DB_ROOT, 'statistics.sqlite3.db'), 
+        'ENGINE': 'django.db.backends.sqlite3',
+        'USER': '',
+        'PASSWORD': '',
+        'HOST': '',                      # Empty for localhost through domain sockets or '127.0.0.1' for localhost through TCP.
+        'PORT': '',          
+    },
      'settings': {
         'NAME': os.path.join(DB_ROOT, 'settings.sqlite3.db'), 
         'ENGINE': 'django.db.backends.sqlite3',
@@ -275,6 +283,11 @@ LOGGING = {
             'class': 'logging.StreamHandler',
             'formatter': 'simple'
         },
+        'console_debug':{
+            'level': 'DEBUG',
+            'class': 'logging.StreamHandler',
+            'formatter': 'simple'
+        },        
         'file': {
             'level': 'DEBUG',
             'class': 'logging.FileHandler',
@@ -308,6 +321,11 @@ LOGGING = {
             'level': 'DEBUG',
             'propagate': False,
         },        
+        'plugins.twitter.plugin': {
+            'handlers': ['console_debug', 'file'],
+            'level': 'DEBUG',
+            'propagate': False,
+        }, 
     },
     # the 'root' logger seems to cause things to
     # be logged twice.  Especially "manage.py import"

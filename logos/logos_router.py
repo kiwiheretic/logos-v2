@@ -17,6 +17,8 @@ routing_data = (('bibles',
                  ('BibleTranslations', 'BibleBooks', 
                   'BibleVerses', 'BibleConcordance', 
                   'BibleDict')),
+                ('statistics',
+                 ('BibleStats',)),
                 ('settings',
                  ('Settings',
                   'BibleColours', 'RoomOptions', 
@@ -63,7 +65,6 @@ class LogosRouter(object):
         """
         Select DB to write to
         """
-        
         for model_module, model_class in plugin_models_finder():
             if hasattr(model_module, 'DB_ROUTER'):
                 router = model_module.DB_ROUTER
