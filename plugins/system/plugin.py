@@ -199,9 +199,10 @@ class SystemCoreCommands(Plugin):
             self.say(chan, "Login failed")
 
     def logout(self, regex, chan, nick, **kwargs):
+        username = self.get_auth().get_username(nick)
         self.get_auth().remove(nick)
         self.say(chan, "Logged out")
-        self.signal("logout", {"nick":nick })
+        self.signal("logout", {"nick":nick, "username":username })
 
     def list_perms(self, regex, chan, nick, **kwargs):
         self.notice(nick, "=== Network Permissions ===")

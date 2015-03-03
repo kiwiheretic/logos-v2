@@ -9,6 +9,7 @@ from models import WPCredentials
 from bot.pluginDespatch import Plugin
 from datetime import datetime
 import socket
+import copy
 
 # Time to try the WP connection again, needs to be greater than the socket timeout
 # specified in IRC.py
@@ -24,9 +25,10 @@ class WordpressPlugin(Plugin):
                          (r'set\s+wordpress\s+account\s+(?P<url>\S+)\s+(?P<username>[a-zA-z0-9-]+)\s+(?P<password>\S+)', 
                           self.set_wordpress_account, 
                           'Set the wordpress account to use'),
-                         (r'purge$', self.purge, 'purge all posts'),
                          (r'start\s+logging$', self.start_logging,
                           'Log all text to wordpress post'),
+                         (r'stop\s+logging$', self.stop_logging,
+                          'Stop logging text to wordpress post'),                          
                          )
         self.wp_users = {}
         self.problem_usernames = []
@@ -47,7 +49,8 @@ class WordpressPlugin(Plugin):
         
         username = self.get_auth().get_username(nick)
 
-        self.wp_users[username] = {'nick':nick, 'user':data['user']}
+        self.wp_users[username] = {'nick':nick, 'user':data['user'], 
+                                   'logging':False}
         # get WP login if there is one
         try:
             wp = WPCredentials.objects.get(user=data['user'])
@@ -62,7 +65,7 @@ class WordpressPlugin(Plugin):
     def _wp_init(self, username):
         
         wpdb = self.wp_users[username]['wpdb']
-        wp_title = "Notes " + datetime.now().strftime('%d-%b-%Y')
+        wp_title = "Logos Notes " + datetime.now().strftime('%d-%b-%Y')
         try:
             wp = Client(wpdb.url + "/xmlrpc.php", 'splat', 'qw3rty123')
             
@@ -73,6 +76,8 @@ class WordpressPlugin(Plugin):
             while posts:
                 offset += post_chunks
                 for post in posts:
+#                    print post.title
+#                    print post.post_status
                     if post.title == wp_title:
                         the_post = post
                         break
@@ -83,13 +88,14 @@ class WordpressPlugin(Plugin):
                 the_post = WordPressPost()
                 the_post.title = wp_title
                 the_post.content = \
-    """ This is an automatically generated post courtesy of the Wordpress plugin
-    for Logos-v2 IRC bot courtesy of SplatsCreations.
-    Please see the website: http://github.com/kiwiheretic/logos-v2 for more 
-    information.
-    
-    """
+        "This is an automatically generated post courtesy of the Wordpress " + \
+        "plugin for Logos-v2 IRC by SplatsCreations.  " + \
+        "Please see the website: http://github.com/kiwiheretic/logos-v2 for more " + \
+        "information.<br/>\n"
                 the_post.id = wp.call(NewPost(the_post))
+            else:
+                print "Existing Post found"
+                
             self.wp_users[username]['wp'] = wp
             self.wp_users[username]['post'] = the_post
             print self.wp_users
@@ -105,7 +111,8 @@ class WordpressPlugin(Plugin):
         self.reactor.callLater(TRY_AGAIN_TIME, self._try_again)
 
     def _try_again(self):
-        for username in self.problem_usernames:
+        for username in copy.copy(self.problem_usernames):
+            self.problem_usernames.remove(username)
             nick = self.wp_users[username]['nick']
             self.notice(nick, "Trying your WP account again")
             if USE_THREADS:
@@ -115,14 +122,16 @@ class WordpressPlugin(Plugin):
         
     def onSignal_logout(self, source, data):
         print "logout ", data
-        username = self.get_auth().get_username(nick)
+        username = data['username']
         if username in self.wp_users:
             del self.wp_users[username]
         
     def onSignal_verse_lookup(self, source, data):
         nick = data['nick']
         username = self.get_auth().get_username(nick)
-        if username and 'wp' in self.wp_users[username]:
+        if username and 'wp' in self.wp_users[username] and \
+            self.wp_users[username]['logging']:
+
             wp = self.wp_users[username]['wp']
             if 'post' in self.wp_users[username]:
                 the_post = self.wp_users[username]['post']
@@ -134,10 +143,13 @@ class WordpressPlugin(Plugin):
     def onSignal_verse_search(self, source, data):
         nick = data['nick']
         username = self.get_auth().get_username(nick)
-        if username and 'wp' in self.wp_users[username]:
+        if username and 'wp' in self.wp_users[username] and \
+            self.wp_users[username]['logging']:
+                        
             wp = self.wp_users[username]['wp']
             if 'post' in self.wp_users[username]:
                 the_post = self.wp_users[username]['post']
+                the_post.content += "<br/>\n"
                 for verse_txt in data['verses']:
                     the_post.content += verse_txt + "\n"
                 wp.call(EditPost(the_post.id, the_post))
@@ -156,39 +168,17 @@ class WordpressPlugin(Plugin):
         self.say(chan, "WP Credentials saved")
             
     
-    def purge(self, regex, chan, nick, **kwargs):
-        for username in self.wp_users.keys():
-            print username
-    
     @login_required()
     def start_logging(self, regex, chan, nick, **kwargs):
-        wp_title = "Notes " + datetime.now().strftime('%d-%b-%Y')
-        if nick.lower() in self.wp_users:
-            username = self.get_auth().get_username(nick)
-            wpdb = self.wp_users[username]['wpdb']
-            wp = Client(wpdb.url + "/xmlrpc.php", 'splat', 'qw3rty123')
-            
-            offset = 0
-            the_post = None
-            posts = wp.call(GetPosts({'number':20}))
-            while posts:
-                offset += 20
-                for post in posts:
-                    print post.title
-                    if post.title == wp_title:
-                        the_post = post
-                        break
-
-    #                print type(post.content)
-    #                print post.content.encode("cp1252")            
-                if the_post: break
-                posts = wp.call(GetPosts({'number':20, 'offset':offset}))
-            if not the_post:
-                post = WordPressPost()
-                post.title = wp_title
-                post.content = 'This is an automatically generated header.'
-                post.id = wp.call(NewPost(post))
-        else:
-            self.say(chan, "You haven't registered your wordpress url yet")
+        username = self.get_auth().get_username(nick)
+        if username and username in self.wp_users:
+            self.wp_users[username]['logging'] = True
+            self.notice(nick, "WP Logging turned on")
+                
         
-        
+    @login_required()
+    def stop_logging(self, regex, chan, nick, **kwargs):
+        username = self.get_auth().get_username(nick)
+        if username and username in self.wp_users:
+            self.wp_users[username]['logging'] = False
+            self.notice(nick, "WP Logging turned off")

@@ -45,7 +45,7 @@ class Command(BaseCommand):
             bs, created = BibleStats.objects.get_or_create(defaults = {'count':1},
                                                   trans_idx = trans_idx,
                                                   word = rec.word)
-            if created:
+            if not created:
                 bs.count += 1
                 bs.save() 
             if idx % 200 ==0: 

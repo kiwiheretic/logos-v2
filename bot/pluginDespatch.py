@@ -124,7 +124,10 @@ class AuthenticatedUsers(object):
             if nick.lower() == d['nick']:
                 user = d['object']
                 break
-        return user.username
+        if user:
+            return user.username
+        else:
+            return None
             
     def get_user_obj(self, nick):
         user = None
