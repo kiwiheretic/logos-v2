@@ -193,12 +193,15 @@ class SystemCoreCommands(Plugin):
         if user.check_password(password):
             self.get_auth().add(nick, host, user)
             self.say(chan, "Login successful")
+            self.signal("login", {"nick":nick, "user":user })
+
         else:
             self.say(chan, "Login failed")
 
     def logout(self, regex, chan, nick, **kwargs):
         self.get_auth().remove(nick)
         self.say(chan, "Logged out")
+        self.signal("logout", {"nick":nick })
 
     def list_perms(self, regex, chan, nick, **kwargs):
         self.notice(nick, "=== Network Permissions ===")
@@ -453,9 +456,11 @@ class SystemCoreCommands(Plugin):
     def userLeft(self, user, channel):
         if not self.is_nick_in_rooms(user):
             self.get_auth().remove(user)
+            self.signal("logout", {"nick":user })
         
     def userQuit(self, user, quitMessage):
         self.get_auth().remove(user)
+        self.signal("logout", {"nick":user })
         
     def userRenamed(self, oldname, newname):
         self.get_auth().rename(oldname, newname)

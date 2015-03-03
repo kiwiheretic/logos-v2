@@ -1,5 +1,15 @@
 # logos-decorators.py
 
+def login_required():
+    def permission_decorator(func):
+        def func_wrapper(self, regex, chan, nick, **kwargs):
+            if self.get_auth().is_authenticated(nick):
+                f_res = func(self, regex, chan, nick, **kwargs)
+                return f_res
+            else:
+                self.msg(chan, "You are not logged in")
+        return func_wrapper
+    return permission_decorator
 
 def irc_room_permission_required(permission):
     def permission_decorator(func):

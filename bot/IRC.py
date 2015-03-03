@@ -332,12 +332,12 @@ class IRCBot(irc.IRCClient):
 
     def sendLine(self, line):
         if self.irc_line_log:
-            self.irc_line_log.write(">> " + line+"\n")
+            self.irc_line_log.write(">> " + repr(line)+"\n")
         irc.IRCClient.sendLine(self, line)
 
     def lineReceived(self, line):
         if self.irc_line_log:
-           self.irc_line_log.write("<< " + line+"\n") 
+           self.irc_line_log.write("<< " + repr(line) +"\n") 
         irc.IRCClient.lineReceived(self, line)
         
     def userJoined(self, user, channel):
@@ -648,7 +648,7 @@ def instantiateIRCBot(network, port, room, botName, sys_password,
                       extra_options=None):
 
     
-    socket.setdefaulttimeout(10)
+    socket.setdefaulttimeout(30)
     # Start the IRC Bot
     reactor.connectTCP(network, port,
                        IRCBotFactory(reactor, network, room, botName,\

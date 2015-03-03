@@ -2,7 +2,7 @@
 
 # Whether to use threads for concordance searches or not.
 # (This is an experimental feature.)
-THREADED_SEARCH = False
+THREADED_SEARCH = True
 
 
 import datetime
@@ -727,9 +727,9 @@ class BibleBot(Plugin):
         normal_colours.append(self._get_colour(chan, "normal-translation"))
         normal_colours.append(self._get_colour(chan, "normal-verse-ref"))
         normal_colours.append(self._get_colour(chan, "normal-verse-text"))
-        
         result = self._get_verses(chan, nick, user, msg)
-
+        signal_data = {'nick':nick, 'chan':chan, 'verses':result}
+        self.signal("verse_lookup", signal_data)
         for resp in result:
             clr_reply = []
             normal_colours1 = copy.copy(normal_colours)
@@ -747,6 +747,8 @@ class BibleBot(Plugin):
     def next(self, regex, chan, nick, **kwargs):
         
         result = self._next_reading(chan, nick)
+        signal_data = {'nick':nick, 'chan':chan, 'result':result}
+        self.signal("verse_lookup", signal_data)
         if result:
             for resp in result:
                 reply = ' '.join(resp)
@@ -809,7 +811,8 @@ class BibleBot(Plugin):
         
         start_time = self.pending_searches[chan.lower()][nick.lower()]['timestamp']
         elapsed = time.clock() - start_time 
-
+        signal_data = {'chan': chan, 'nick': nick, 'verses':results }
+        self.signal("verse_search", signal_data)
         for result in results:
             self.say(chan, result)
             

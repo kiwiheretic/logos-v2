@@ -30,6 +30,10 @@ class FakePlugin(object):
         self.factory = FakeFactory()
         self.factory.network = self.network
                    
+    def signal(self, signal_id, data):
+        """ Send a signal to other plugins"""
+        pass
+#        self.despatcher.signal(self, signal_id, data)    
     def get_auth(self):
         return self.auth_users       
     

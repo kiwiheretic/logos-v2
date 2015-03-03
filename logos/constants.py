@@ -1,4 +1,4 @@
-VERSION = "0.98.53"
+VERSION = "0.98.60"
 
 PUNCTUATION = r"[\?`)(';:\*\[\],.\-\"|!\x7f]"
 
@@ -6,5 +6,6 @@ PUNCTUATION = r"[\?`)(';:\*\[\],.\-\"|!\x7f]"
 # are not indexed (in the concordance).  It makes for a lot
 # smaller concordance database.
 STOP_WORDS = ['a', 'i', 'in', 'of', 'the', 'he', 'she',
-    'and', 'said', 'be', 'it', 'was', 'is', 'on', 'to',
+    'and', 'said', 'be', 'it', 'was', 'is', 'on', 'to', 'you',
+    'we', 'them', 'that', 'they', 'are', 'so', 'or',
     'thy', 'thou', 'her', 'his', 'him', 'there', 'their']

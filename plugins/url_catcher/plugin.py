@@ -32,7 +32,7 @@ class UrlCatcherPlugin(Plugin):
             order_by('-timestamp')[:num_to_print]
         for url in cap_urls:
             timestamp = str(url.timestamp)
-            self.notice(nick, "{} {} -- {}".format(timestamp, url.nick, url.url))
+            self.say(nick, "{} {} -- {}".format(timestamp, url.nick, url.url))
 
     def privmsg(self, user, channel, message):
         # Capture any matching urls and keep it in buffer

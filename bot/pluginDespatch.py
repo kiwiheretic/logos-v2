@@ -115,6 +115,25 @@ class AuthenticatedUsers(object):
             permission = qs.filter(network=self.network, room=chan.lower()).exists()
             return permission
           
+    def get_username(self, nick):
+        """ Get the database username which can be different
+        to the nick (and more reliable) because people can change their nick 
+        with /nick """
+        user = None
+        for d in self.users:
+            if nick.lower() == d['nick']:
+                user = d['object']
+                break
+        return user.username
+            
+    def get_user_obj(self, nick):
+        user = None
+        for d in self.users:
+            if nick.lower() == d['nick']:
+                user = d['object']
+                break
+        return user
+     
     def add(self, nick, host, user):
         self.remove(nick)
         self.users.append({'nick':nick.lower(), 'host':host, 'object':user})
@@ -150,12 +169,18 @@ class Plugin(object):
         return self.irc_conn.nickname
     
     def get_host(self, nick):
+        """Get the hostname for the specified nick.  Returns
+        a string specifying the hostname"""
         return self.irc_conn.nicks_db.get_host(nick)
     
     def get_rooms(self):
+        """Get a list of all rooms the bot is in.  
+        Returns a python list of strings of room names.
+        eg. ['#thebot','#Testing','#TheClub']"""
         return self.irc_conn.nicks_db.get_rooms()
         
     def get_room_nicks(self, room):
+        """Get all nicks in a particular room"""
         return self.irc_conn.get_room_nicks(room)
 
     def is_nick_in_rooms(self, nick):
@@ -183,6 +208,10 @@ class Plugin(object):
     def is_plugin_enabled(self, channel):
         return self.despatcher.is_plugin_enabled(channel, self)
 
+    def signal(self, signal_id, data):
+        """ Send a signal to other plugins"""
+        self.despatcher.signal(self, signal_id, data)
+    
 #       Enabling this method causes epic fail
 #
 #    def __getattr__(self, name):
@@ -317,6 +346,10 @@ class PluginDespatcher(object):
                                 net_plugin.loaded = True
                                 net_plugin.save()    
                             
+                            if net_plugin.enabled:
+                                if hasattr(plugin_object, "on_activate"):
+                                    plugin_object.on_activate()
+                                
                             break
             except ImportError, e:
                 logger.error("ImportError: "+str(e))
@@ -381,29 +414,40 @@ class PluginDespatcher(object):
                 plugin__name=plugin_name,
                 network = self.irc_conn.factory.network,
                 )
-            net_plugin.enabled = True
-            net_plugin.save()
-            
-            return True
+            # Don't bother enabling plugin if its already enabled, nothing to 
+            # gain and it would only lead to potential confusion!!
+            if not net_plugin.enabled:
+                net_plugin.enabled = True
+                net_plugin.save()
+                for m in self._obj_list:
+                    if m.plugin[0] == plugin_name:
+                        if hasattr(m, 'on_activate'):
+                            m.on_activate()
+                return True
+
         except NetworkPlugins.DoesNotExist:
             return False
 
         
     def net_disable_plugin(self, plugin_name):
         try:
-                net_plugin = NetworkPlugins.objects.get(\
-                    plugin__name=plugin_name,
-                    network = self.irc_conn.factory.network,
-                    )
-                net_plugin.enabled = False
-                net_plugin.save()
-                
-                return True
+            net_plugin = NetworkPlugins.objects.get(\
+                plugin__name=plugin_name,
+                network = self.irc_conn.factory.network,
+                )
+            net_plugin.enabled = False
+            net_plugin.save()
+            for m in self._obj_list:
+                if m.plugin[0] == plugin_name:
+                    if hasattr(m, 'on_deactivate'):
+                        m.on_deactivate()                    
+            return True
 
         except NetworkPlugins.DoesNotExist:
             return False   
             
                                        
+        
     def install_plugin(self, channel, plugin_name, enabled=False):
         if channel[0] =='#':
             net_plugin = NetworkPlugins.objects.get(\
@@ -453,12 +497,19 @@ class PluginDespatcher(object):
             # currently all loaded modules are enabled in pm
             return True
 
+
+    def signal(self, source, signal_id, data):
+        for m in self._obj_list:
+            if source != m:
+                if hasattr(m, 'onSignal_'+signal_id):
+                    fn = getattr(m, 'onSignal_'+signal_id)
+                    fn(source, data)
+
     # ---- delegate methods below --------
 
     # Possible TODO
     # Look at using __getattr__ for these following methods and dynamically
-    # creating the methods.  What are the advantages?  More DRY.
-
+    # creating the methods.  What are the advantages?  More DRY.    
     def signedOn(self):
         for m in self._obj_list:
             #m.init(self)

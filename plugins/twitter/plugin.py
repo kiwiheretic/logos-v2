@@ -71,7 +71,9 @@ class TwitterPlugin(Plugin):
         self.h = HTMLParser.HTMLParser()
 
 
-    def signedOn(self):
+       
+    def on_activate(self):
+        """ When this plugin is activated for the network """
         check_time = get_global_option("twitter-check-time")
         if check_time:
             check_time = int(check_time)
@@ -80,7 +82,11 @@ class TwitterPlugin(Plugin):
         logger.info("Twitter check timer is every {} seconds".format(check_time))
         self.timer.start(check_time, now=False)
 
-       
+    def on_deactivate(self):
+        """ When this plugin is deactivated for the network """
+        self.timer.stop()
+        logger.info("Twitter check timer stopped")
+        
     def privmsg(self, user, channel, message):
         pass
         
