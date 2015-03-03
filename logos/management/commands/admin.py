@@ -4,7 +4,8 @@ from django.db import transaction
 
 from logos.models import NetworkPermissions, RoomPermissions
 from django.contrib.auth.models import User
-from guardian.shortcuts import assign_perm, get_perms, remove_perm
+from guardian.shortcuts import assign_perm, get_perms, remove_perm, \
+    get_perms
 
 import re
 import pdb
@@ -49,7 +50,11 @@ class Command(BaseCommand):
     def cmd_listusers(self):
         for user in User.objects.all():
             self.stdout.write("%s %s" % (user.username, user.email))
-        
+
+    def cmd_listnetworks(self):
+        for net in NetworkPermissions.objects.all():
+            self.stdout.write("%s " % (net.network, ))
+                
 
     def cmd_listperms(self):
         self.stdout.write("Network Permissions")
@@ -120,6 +125,40 @@ class Command(BaseCommand):
                                                 room_obj.room,
                                                 ", ".join(perms)))
             
+
+    def cmd_copyperms(self, network_old, network_new):
+        perm_obj = NetworkPermissions.objects.get(network=network_old)
+        if not NetworkPermissions.objects.filter(network = network_new).exists():
+            obj.network = network_new
+            obj.pk = None
+            obj.save()
+        else:
+            obj = NetworkPermissions.objects.get(network = network_new)
+
+        net_obj = NetworkPermissions.objects.get(network = network_old)
+        for user in User.objects.all():
+            perms = get_perms(user, net_obj)
+            for perm in perms:
+                assign_perm(perm, user, obj)
+                
+
+        perm_objs = RoomPermissions.objects.filter(network=network_old)
+        for obj in perm_objs:
+            room = obj.room
+            if not RoomPermissions.objects.filter(network = network_new, room=room).exists():
+                obj.network = network_new
+                obj.pk = None
+                obj.save()
+            else:
+                obj = RoomPermissions.objects.get(network = network_new, room=room)                
+
+            net_obj = RoomPermissions.objects.get(network = network_old, room=room)
+            for user in User.objects.all():
+                perms = get_perms(user, net_obj)
+                for perm in perms:
+                    assign_perm(perm, user, obj)
+        self.stdout.write("Successfully copied permissions to new network")
+
 def assignperm(network, room, username, permission):
 
     if not re.match(r"#[a-zA-Z0-9-]*", room):
@@ -159,3 +198,8 @@ def assignperm(network, room, username, permission):
 
     assign_perm(permission, user, perm_obj)
     print("Assigned {} permission to {} successfully".format(permission, username))
+
+
+        
+    
+    
