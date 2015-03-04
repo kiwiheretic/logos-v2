@@ -10,6 +10,8 @@ from bot.pluginDespatch import Plugin
 from datetime import datetime
 import socket
 import copy
+import re
+from django.contrib.auth.models import User
 
 # Time to try the WP connection again, needs to be greater than the socket timeout
 # specified in IRC.py
@@ -25,6 +27,8 @@ class WordpressPlugin(Plugin):
                          (r'set\s+wordpress\s+account\s+(?P<url>\S+)\s+(?P<username>[a-zA-z0-9-]+)\s+(?P<password>\S+)', 
                           self.set_wordpress_account, 
                           'Set the wordpress account to use'),
+                         (r'get\s+wordpress\s+account$', 
+                          self.get_wordpress_account, "Retrieve wordpress account details"),
                          (r'start\s+logging$', self.start_logging,
                           'Log all text to wordpress post'),
                          (r'stop\s+logging$', self.stop_logging,
@@ -34,8 +38,18 @@ class WordpressPlugin(Plugin):
         self.problem_usernames = []
     
     def privmsg(self, user, channel, message):
-        for user in self.wp_users.keys():
-            pass
+        nick,_ = user.split('!')
+        username = self.get_auth().get_username(nick)
+        if username and username in self.wp_users:
+            if self.wp_users[username]['logging']:
+                regex = re.match("#(.*)",message)
+                if regex :
+                    text = regex.group(1)
+                    wp = self.wp_users[username]['wp']
+                    the_post = self.wp_users[username]['post']
+                    the_post.content += "\n" + text + "\n"
+                    wp.call(EditPost(the_post.id, the_post))
+
     
     def on_activate(self):
         """ When this plugin is activated for the network or startup
@@ -55,47 +69,51 @@ class WordpressPlugin(Plugin):
         try:
             wp = WPCredentials.objects.get(user=data['user'])
             self.wp_users[username]['wpdb'] = wp
-            if USE_THREADS:
-                self.reactor.callInThread(self._wp_init, username)
-            else:
-                self._wp_init(username)                
+#            if USE_THREADS:
+#                self.reactor.callInThread(self._wp_init, username)
+#            else:
+#                self._wp_init(username)                
         except WPCredentials.DoesNotExist:
-            pass
+            self.notice(nick, "Your wordpress credentials were not found")
         
+    def _get_post(self, wp):
+        wp_title = "Logos Notes " + datetime.now().strftime('%d-%b-%Y')
+        post_chunks = 20
+        offset = 0
+        the_post = None
+        posts = wp.call(GetPosts({'number':post_chunks}))
+        while posts:
+            offset += post_chunks
+            for post in posts:
+#                    print post.title
+#                    print post.post_status
+                if post.title == wp_title:
+                    the_post = post
+                    break
+            if the_post: break
+            if len(posts) < post_chunks: break
+            posts = wp.call(GetPosts({'number':post_chunks, 'offset':offset}))
+        if not the_post:
+            the_post = WordPressPost()
+            the_post.title = wp_title
+            the_post.content = \
+    "This is an automatically generated post courtesy of the Wordpress " + \
+    "plugin for Logos-v2 IRC by SplatsCreations.  " + \
+    "Please see the website: http://github.com/kiwiheretic/logos-v2 for more " + \
+    "information.<br/>\n"
+            the_post.id = wp.call(NewPost(the_post))
+        else:
+            print "Existing Post found"
+        return the_post
+    
+                
     def _wp_init(self, username):
         
         wpdb = self.wp_users[username]['wpdb']
-        wp_title = "Logos Notes " + datetime.now().strftime('%d-%b-%Y')
+        
         try:
             wp = Client(wpdb.url + "/xmlrpc.php", 'splat', 'qw3rty123')
-            
-            post_chunks = 20
-            offset = 0
-            the_post = None
-            posts = wp.call(GetPosts({'number':post_chunks}))
-            while posts:
-                offset += post_chunks
-                for post in posts:
-#                    print post.title
-#                    print post.post_status
-                    if post.title == wp_title:
-                        the_post = post
-                        break
-                if the_post: break
-                if len(posts) < post_chunks: break
-                posts = wp.call(GetPosts({'number':post_chunks, 'offset':offset}))
-            if not the_post:
-                the_post = WordPressPost()
-                the_post.title = wp_title
-                the_post.content = \
-        "This is an automatically generated post courtesy of the Wordpress " + \
-        "plugin for Logos-v2 IRC by SplatsCreations.  " + \
-        "Please see the website: http://github.com/kiwiheretic/logos-v2 for more " + \
-        "information.<br/>\n"
-                the_post.id = wp.call(NewPost(the_post))
-            else:
-                print "Existing Post found"
-                
+            the_post = self._get_post(wp)
             self.wp_users[username]['wp'] = wp
             self.wp_users[username]['post'] = the_post
             print self.wp_users
@@ -166,12 +184,25 @@ class WordpressPlugin(Plugin):
         if created:
             self.wp_users[nick.lower()] = {"user":user, "wpdb":obj}
         self.say(chan, "WP Credentials saved")
-            
+  
+    @login_required()
+    def get_wordpress_account(self, regex, chan, nick, **kwargs):
+        username = self.get_auth().get_username(nick)
+        user = User.objects.get(username=username)
+        wpcred = user.wpcredentials_set.first()
+        self.notice(nick, "WP Credentials")
+        self.notice(nick, "Url = {}, username = {}, password = {}".\
+                    format(wpcred.url,wpcred.username,wpcred.password))
     
     @login_required()
     def start_logging(self, regex, chan, nick, **kwargs):
         username = self.get_auth().get_username(nick)
         if username and username in self.wp_users:
+            if not self.wp_users[username]['logging']:
+                if USE_THREADS:
+                    self.reactor.callInThread(self._wp_init, username)
+                else:
+                    self._wp_init(username)                
             self.wp_users[username]['logging'] = True
             self.notice(nick, "WP Logging turned on")
                 
