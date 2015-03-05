@@ -1,5 +1,4 @@
 # tests
-
 # Import the plugin you wish to test
 from plugins.bible.plugin import BibleBot
 
@@ -29,10 +28,12 @@ class TestBibleBot(LogosTestCase):
         # Test the search works with different Nicks
         self.set_nick("Fred")
         output = self.plugin.send_command("search kjv Jesus wept")
+
         self.assertIn('John 11:35', output)
         
         self.set_nick("Jake")
         output = self.plugin.send_command("search kjv Jesus wept")
+
         self.assertIn('John 11:35', output)
 
         output = self.plugin.send_command("search kjv judg* speed* ")

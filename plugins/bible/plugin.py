@@ -2,7 +2,7 @@
 
 # Whether to use threads for concordance searches or not.
 # (This is an experimental feature.)
-THREADED_SEARCH = True
+THREADED_SEARCH = False
 
 
 import datetime
