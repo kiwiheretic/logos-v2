@@ -57,6 +57,7 @@ class NicksDB:
             # This can occur if the irc network has some policy
             # where unregistered bots cannot join new rooms
             return None
+
     def add_room(self,channel):
         # Keep a list of who is in room.  We will find out later
         # when we get a RPL_NAMREPLY response as to who is actually in room.
@@ -185,7 +186,9 @@ class IRCBot(irc.IRCClient):
         self.log_flush_timer = task.LoopingCall(self.onLogFlushTimer)
         self.log_flush_timer.start(30)
         self.channel_queues = {}
-        self.whois_in_progress = []
+#        self.whois_in_progress = []
+        self.userhost_in_progress = []
+
         
         # Some IRC servers seem to require username and realname
         # (notably some Undernet servers)
@@ -522,6 +525,61 @@ class IRCBot(irc.IRCClient):
 
         self.plugins.privmsg(user, channel, orig_msg)
     
+    def irc_RPL_NAMREPLY(self, prefix, params):
+        # We use the RPL_NAMREPLY to get a list of all people currently
+        # in a room when the bot first joins that room and uses that information
+        # to populate the NicksDB.
+        logger.info("irc_RPL_NAMREPLY "+str(params))
+        room = params[2].lower()
+
+        nicks_to_fill_in = []
+        names = params[3].strip().split(' ')
+#        print names
+        for name in names:
+
+            if name == '': continue
+            this_name = name
+
+
+            # strip off nickname prefixes for ops and voice
+            opstatus = None
+            if this_name[0] in "~%&@+":
+                opstatus = this_name[0]
+                this_name = this_name[1:]
+
+
+
+            if not self.nicks_db.nick_in_room(this_name, room):
+                self.nicks_db.add_nick_to_room(this_name, room, opstatus=opstatus)
+                ident = self.nicks_db.get_host(this_name)
+                if ident == None:
+                    # need to strip opstatus off first
+                    nicks_to_fill_in.append(this_name)
+                           
+        for ii in range(0, len(nicks_to_fill_in)/5+1):
+            nicks_to_get_hosts = " ".join(nicks_to_fill_in[ii*5:5*(ii+1)])
+            line = "userhost " + nicks_to_get_hosts
+#            print line
+            self.sendLine(line)        
+    
+    def irc_RPL_USERHOST(self, prefix, params):
+        logger.info("irc_RPL_USERHOST")
+        response = params[1]
+        nick_strings = response.strip().split(" ")
+        for nick_str in nick_strings:
+            nick, host = nick_str.split("=")
+            nick = re.sub("\*","", nick)
+            host = re.sub("^[~%&@\-\+]+","", host)
+            logger.info("{} = {}".format(nick, host))
+            self.nicks_db.set_ident(nick, host)
+            if self.factory.extra_options['no_services']:
+                pass
+            else:
+                line = 'privmsg nickserv info ' + nick
+                self.sendLine(line)            
+#        print self.nicks_db.nicks_in_room
+#        print self.nicks_db.nicks_info
+        
     def irc_unknown(self, prefix, command, params):
         """ Used to handle RPL_NAMREPLY and REL_WHOISUSER events
             so that we can keep a track of who is and who isn't
@@ -535,9 +593,7 @@ class IRCBot(irc.IRCClient):
             logger.debug(line)
 #            self.queue_message(self.factory.channel, 'say', line)
 
-        # We use the RPL_NAMREPLY to get a list of all people currently
-        # in a room when the bot first joins that room and uses that information
-        # to populate the self._nicks_in_room dictionary.
+
 
         if command == "335":
             logger.debug("335 " +  str(params))
@@ -550,49 +606,7 @@ class IRCBot(irc.IRCClient):
             logger.debug("307 " +  str(params))
             user = params[1]
             self.nicks_db.set_nickserv_response(user, approved = True)
-        elif command == "RPL_NAMREPLY":
-            room = params[2].lower()
-            if room not in self.whois_in_progress:
-                names = params[3].strip().split(' ')
-                for name in names:
 
-                    if name == '': continue
-                    this_name = name
-
-
-                    # strip off nickname prefixes for ops and voice
-                    opstatus = None
-                    if this_name[0] in "~%&@+":
-                        opstatus = this_name[0]
-                        this_name = this_name[1:]
-
-
-
-                    if not self.nicks_db.nick_in_room(this_name, room):
-                        self.nicks_db.add_nick_to_room(this_name, room, opstatus=opstatus)
-                        ident = self.nicks_db.get_host(this_name)
-                        if ident == None:
-                            # need to strip opstatus off first
-                            if this_name not in self.whois_in_progress:
-                                self.whois_in_progress.append(this_name)
-                            else:
-                                continue # don't do whois twice on same nick                            
-                            line = "whois " + this_name
-                            self.sendLine(line)
-                
-        elif command == "RPL_WHOISUSER":
-            user = params[1]
-            ident = params[3]
-            if user in self.whois_in_progress:
-                self.whois_in_progress.remove(user)
-                self.nicks_db.set_ident(user, ident)
-                if self.factory.extra_options['no_services']:
-                    pass
-                else:
-                    line = 'privmsg nickserv info ' + user
-                    self.sendLine(line)
-                if len(self.whois_in_progress) == 0:
-                    self.say(self.factory.channel, "Whois completed")
 
 
 class IRCBotFactory(protocol.ClientFactory):
