@@ -557,7 +557,9 @@ class IRCBot(irc.IRCClient):
                     nicks_to_fill_in.append(this_name)
                            
         for ii in range(0, len(nicks_to_fill_in)/5+1):
-            nicks_to_get_hosts = " ".join(nicks_to_fill_in[ii*5:5*(ii+1)])
+            nicks_batch = nicks_to_fill_in[ii*5:5*(ii+1)]
+            nicks_to_get_hosts = " ".join(nicks_batch)
+            self.userhost_in_progress.extend(nicks_batch)
             line = "userhost " + nicks_to_get_hosts
 #            print line
             self.sendLine(line)        
@@ -571,12 +573,20 @@ class IRCBot(irc.IRCClient):
             nick = re.sub("\*","", nick)
             host = re.sub("^[~%&@\-\+]+","", host)
             logger.info("{} = {}".format(nick, host))
+            # If the nick is in multiple rooms but it may appear in this list
+            # only once so we should be careful
+            if nick in self.userhost_in_progress:
+                self.userhost_in_progress.remove(nick)
+            print self.userhost_in_progress
             self.nicks_db.set_ident(nick, host)
             if self.factory.extra_options['no_services']:
                 pass
             else:
                 line = 'privmsg nickserv info ' + nick
                 self.sendLine(line)            
+        if len(self.userhost_in_progress) == 0:
+            self.say(self.factory.channel, "Nicks DB Initialised")
+            
 #        print self.nicks_db.nicks_in_room
 #        print self.nicks_db.nicks_info
         
