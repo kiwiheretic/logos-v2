@@ -24,7 +24,7 @@ TRY_AGAIN_TIME = 120
 
 class WordpressPlugin(Plugin):
     
-    plugin = ('wordpress', 'Wordpress')
+    plugin = ('wp', 'Wordpress')
         
     def __init__(self, *args, **kwargs):
         super(WordpressPlugin, self).__init__(*args, **kwargs)
@@ -34,9 +34,9 @@ class WordpressPlugin(Plugin):
                           'Set the wordpress account to use'),
                          (r'get\s+wordpress\s+account$', 
                           self.get_wordpress_account, "Retrieve wordpress account details"),
-                         (r'start\s+logging$', self.start_logging,
+                         (r'on$', self.start_logging,
                           'Log all text to wordpress post'),
-                         (r'stop\s+logging$', self.stop_logging,
+                         (r'off$', self.stop_logging,
                           'Stop logging text to wordpress post'),                          
                          )
         self.wp_users = {}
@@ -46,7 +46,8 @@ class WordpressPlugin(Plugin):
         nick,_ = user.split('!')
         username = self.get_auth().get_username(nick)
         if username and username in self.wp_users:
-            if self.wp_users[username]['logging']:
+            if self.wp_users[username]['logging'] and \
+               self.wp_users[username]['channel'] == channel.lower() :
                 regex = re.match("#(.*)",message)
                 if regex :
                     text = regex.group(1)
@@ -149,7 +150,7 @@ class WordpressPlugin(Plugin):
         username = self.get_auth().get_username(nick)
         if username and 'wp' in self.wp_users[username] and \
             self.wp_users[username]['logging'] and \
-            self.wp_users[username]['channel'] == chan:
+            self.wp_users[username]['channel'] == chan.lower():
 
             wp = self.wp_users[username]['wp']
             if 'post' in self.wp_users[username]:
@@ -162,10 +163,11 @@ class WordpressPlugin(Plugin):
                     
     def onSignal_verse_search(self, source, data):
         nick = data['nick']
+        chan = data['chan']
         username = self.get_auth().get_username(nick)
         if username and 'wp' in self.wp_users[username] and \
             self.wp_users[username]['logging'] and \
-            self.wp_users[username]['channel'] == chan:
+            self.wp_users[username]['channel'] == chan.lower():
                         
             wp = self.wp_users[username]['wp']
             if 'post' in self.wp_users[username]:
@@ -217,7 +219,7 @@ class WordpressPlugin(Plugin):
                     else:
                         self._wp_init(username)                
                 self.wp_users[username]['logging'] = True
-                self.wp_users[username]['channel'] = chan
+                self.wp_users[username]['channel'] = chan.lower()
                 self.notice(nick, "WP Logging turned on")
 
         except WPCredentials.DoesNotExist:

@@ -426,7 +426,7 @@ class PluginDespatcher(object):
                     if m.plugin[0] == plugin_name:
                         if hasattr(m, 'on_activate'):
                             m.on_activate()
-                return True
+            return True
 
         except NetworkPlugins.DoesNotExist:
             return False
