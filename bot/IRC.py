@@ -353,7 +353,7 @@ class IRCBot(irc.IRCClient):
         if not self.nicks_db.nick_in_room(user, channel):
             self.nicks_db.add_nick_to_room(user, channel)
         self.plugins.userJoined(user, channel)
-        line = "WHOIS " + user
+        line = "USERHOST " + user
         self.sendLine(line)
         logger.debug(str( self.nicks_db.nicks_in_room))
         logger.debug(str( self.nicks_db.nicks_info))
@@ -566,19 +566,18 @@ class IRCBot(irc.IRCClient):
                 self.sendLine(line)        
     
     def irc_RPL_USERHOST(self, prefix, params):
-        logger.info("irc_RPL_USERHOST")
         response = params[1]
         nick_strings = response.strip().split(" ")
         for nick_str in nick_strings:
             nick, host = nick_str.split("=")
             nick = re.sub("\*","", nick)
             host = re.sub("^[~%&@\-\+]+","", host)
-            logger.info("{} = {}".format(nick, host))
+            logger.info("irc_RPL_USERHOST {} = {}".format(nick, host))
             # If the nick is in multiple rooms but it may appear in this list
             # only once so we should be careful
             if nick in self.userhost_in_progress:
                 self.userhost_in_progress.remove(nick)
-            print self.userhost_in_progress
+            logger.debug("userhosts in progress = " + str( self.userhost_in_progress))
             self.nicks_db.set_ident(nick, host)
             if self.factory.extra_options['no_services']:
                 pass
