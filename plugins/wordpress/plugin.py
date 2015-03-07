@@ -54,7 +54,7 @@ class WordpressPlugin(Plugin):
                     logger.debug("wp_users = " + str(self.wp_users))
                     wp = self.wp_users[username]['wp']
                     the_post = self.wp_users[username]['post']
-                    the_post.content += "\n" + text + "\n"
+                    the_post.content += "<br/>\n" + text + "\n"
                     wp.call(EditPost(the_post.id, the_post))
                     self.notice(nick, "-- text logged to WP --")
 
