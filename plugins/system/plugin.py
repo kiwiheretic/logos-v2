@@ -39,42 +39,42 @@ class SystemCoreCommands(Plugin):
     def __init__(self, *args):
         super(SystemCoreCommands, self).__init__(*args)
         self.commands = ( \
-                         (r'login\s+(?P<password>[a-zA-z0-9-]+)', self.login, 'Login into the bot'),
+                         (r'login\s+(?P<password>\S+)$', self.login, 'Login into the bot'),
                          (r'logout', self.logout, "Log out of bot"),
                          (r'version\s*$', self.version, "Show this bot's version info"),
                          (r'list\s+plugins', self.list_plugins, "list all plugins available"),
-                         (r'enable\s+plugin\s+(?P<room>#[a-zA-z0-9-]+)\s+(?P<plugin>[a-z_-]+)',
+                         (r'enable\s+plugin\s+(?P<room>#[a-zA-Z0-9-]+)\s+(?P<plugin>[a-z_-]+)',
                           self.enable_plugin, "Enable specified plugin for room"),
-                         (r'disable\s+plugin\s+(?P<room>#[a-zA-z0-9-]+)\s+(?P<plugin>[a-z_-]+)',
+                         (r'disable\s+plugin\s+(?P<room>#[a-zA-Z0-9-]+)\s+(?P<plugin>[a-z_-]+)',
                           self.disable_plugin, "Disable specified plugin for room"),
                          (r'net\s+enable\s+plugin\s+(?P<plugin>[a-z_-]+)',
                           self.net_enable_plugin, "Enable specified plugin for room"),
                          (r'net\s+disable\s+plugin\s+(?P<plugin>[a-z_-]+)',
                           self.net_disable_plugin, "Disable specified plugin for room"),
                          (r'list\s+(?:perms|permissions)', self.list_perms, "list all permissions available"),
-                         (r'add\s+user\s+(?P<username>\S+)\s+(?P<email>[a-zA-z0-9-]+@[a-zA-z0-9\.-]+)\s+(?P<password>[a-zA-z0-9-]+)',
+                         (r'add\s+user\s+(?P<username>\S+)\s+(?P<email>[a-zA-Z0-9-]+@[a-zA-Z0-9\.-]+)\s+(?P<password>\S+)$',
                           self.adduser, 'Add user to system'),
                          (r'list\s+users', self.listusers, 'List users in system'),
                          (r'assign\s+(?:perm|permission)\s+(?P<perm>[a-z_]+)\s+to\s+(?P<username>[^\s]+)', self.assign_net_perms, "assign permission to username"),
-                         (r'assign\s+(?:perm|permission)\s+(?P<room>#[a-zA-z0-9-]+)\s+(?P<perm>[a-z_]+)\s+to\s+(?P<username>[^\s]+)', self.assign_room_perms, "assign permission to username"),
+                         (r'assign\s+(?:perm|permission)\s+(?P<room>#[a-zA-Z0-9-]+)\s+(?P<perm>[a-z_]+)\s+to\s+(?P<username>[^\s]+)', self.assign_room_perms, "assign permission to username"),
                          (r'unassign\s+(?:perm|permission)\s+(?P<perm>[a-z_]+)\s+from\s+(?P<username>[^\s]+)', self.unassign_net_perms, "assign permission to username"),
-                         (r'unassign\s+(?:perm|permission)\s+(?P<room>#[a-zA-z0-9-]+)\s+(?P<perm>[a-z_]+)\s+from\s+(?P<username>[^\s]+)', self.unassign_room_perms, "assign permission to username"),
+                         (r'unassign\s+(?:perm|permission)\s+(?P<room>#[a-zA-Z0-9-]+)\s+(?P<perm>[a-z_]+)\s+from\s+(?P<username>[^\s]+)', self.unassign_room_perms, "assign permission to username"),
                          (r'(?:perms|permissions)\s+(?P<username>[^\s]+)', self.perms, "list permissions for user"),
-                         (r'join\s+room\s+(?P<room>#[a-zA-z0-9-]+)', self.join_room,
+                         (r'join\s+room\s+(?P<room>#[a-zA-Z0-9-]+)', self.join_room,
                           "Request bot to join a room"),
-                         (r'part\s+room\s+(?P<room>#[a-zA-z0-9-]+)', self.part_room,
+                         (r'part\s+room\s+(?P<room>#[a-zA-Z0-9-]+)', self.part_room,
                           "Request bot to part a room"), 
                          (r'cmd\s+(.*)', self.cmd, "Have bot perform an IRC command"),
-                         (r'say\s+(?P<room>#[a-zA-z0-9-]+)\s+(.*)', self.speak, "Say something into a room"),
-                         (r'act\s+(?P<room>#[a-zA-z0-9-]+)\s+(.*)', self.action, "perform a /me action in room"),
-                         (r'set\s+(?P<room>#[a-zA-z0-9-]+)\s+(?:activation|trigger)\s+\"(.)\"', self.set_trigger,
+                         (r'say\s+(?P<room>#[a-zA-Z0-9-]+)\s+(.*)', self.speak, "Say something into a room"),
+                         (r'act\s+(?P<room>#[a-zA-Z0-9-]+)\s+(.*)', self.action, "perform a /me action in room"),
+                         (r'set\s+(?P<room>#[a-zA-Z0-9-]+)\s+(?:activation|trigger)\s+\"(.)\"', self.set_trigger,
                            "Set the trigger used by the bot"),
                          (r'set\s+(?:pvt|private)\s+(?:activation|trigger)\s+\"(.)\"', self.set_pvt_trigger,
                            "Set the trigger used by the bot"),
-                         (r'set\s+(?P<room>#[a-zA-z0-9-]+)\s+greet\s+message\s+\"(.*)\"', self.set_greet, 
+                         (r'set\s+(?P<room>#[a-zA-Z0-9-]+)\s+greet\s+message\s+\"(.*)\"', self.set_greet, 
                            "Set the autogreet message"),
-                         (r'set\s+password\s+([^\s]+)', self.set_password, "Set your password"),
-                         (r'nick\s+(?P<nick>[a-zA-z0-9-_]+)', self.set_nick, "Set the bot nick"),
+                         (r'set\s+password\s+(\S+)$', self.set_password, "Set your password"),
+                         (r'nick\s+(?P<nick>[a-zA-Z0-9-_]+)', self.set_nick, "Set the bot nick"),
                          (r'actual\s+server\s*$', self.actual_host, "Set the bot nick"),
         )
         
@@ -95,14 +95,14 @@ class SystemCoreCommands(Plugin):
         self.say(chan, "Actual IRC server is {}".format(self.irc_conn.actual_host))
         
     def list_plugins(self, regex, chan, nick, **kwargs):
-        self.say(chan, "=== Plugins ===")
-        self.say(chan, "  === Network Level ===")
+        self.notice(nick, "=== Plugins ===")
+        self.notice(nick, "  === Network Level ===")
 
         for net_plugin in NetworkPlugins.objects.filter(network=self.network,\
                                                         loaded=True):
             plugin_name = net_plugin.plugin.name
             enabled = net_plugin.enabled
-            self.say(chan, "    {0:.<15} {1}".format(plugin_name, enabled))
+            self.notice(nick, "    {0:.<15} {1}".format(plugin_name, enabled))
         
         
         last_room = None            
@@ -115,13 +115,13 @@ class SystemCoreCommands(Plugin):
             if self.get_auth().is_authorised(nick, room, 'enable_plugins'):
                 if room != last_room:
                     if last_room == None:
-                        self.say(chan, "  === Room Level ===")
-                    self.say(chan, "    Room: {}".format(room))
+                        self.notice(nick, "  === Room Level ===")
+                    self.notice(nick, "    Room: {}".format(room))
                 descr = plugin.net.plugin.description
                 enabled = plugin.enabled
-                self.say(chan, "      {0:.<15} {1}".format(name, enabled))
+                self.notice(nick, "      {0:.<15} {1}".format(name, enabled))
                 last_room = room
-        self.say(chan, "*** End of List ***")  
+        self.notice(nick, "*** End of List ***")  
         
         
     @irc_room_permission_required('enable_plugins')

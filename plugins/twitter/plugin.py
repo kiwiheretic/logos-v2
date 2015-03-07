@@ -35,18 +35,18 @@ class TwitterPlugin(Plugin):
     def __init__(self, *args, **kwargs):
         Plugin.__init__(self, *args, **kwargs)
         self.commands = (\
-                         (r'list\s+follows\s+(?P<room>#[a-zA-z0-9-]+)$',
+                         (r'list\s+follows\s+(?P<room>#[a-zA-Z0-9-]+)$',
                           self.list_follows, 'list all follows for room'),
-                         (r'add\s+follow\s+(?P<room>#[a-zA-z0-9-]+)\s+(?P<follow>@[a-zA-Z_]+)', 
+                         (r'add\s+follow\s+(?P<room>#[a-zA-Z0-9-]+)\s+(?P<follow>@[a-zA-Z_]+)', 
                           self.add_follow, 
                           'Add screen name to follow'),
-                         (r'remove\s+follow\s+(?P<room>#[a-zA-z0-9-]+)\s+(?P<follow>@[a-zA-Z_]+)', 
+                         (r'remove\s+follow\s+(?P<room>#[a-zA-Z0-9-]+)\s+(?P<follow>@[a-zA-Z_]+)', 
                           self.remove_follow, 
                           'Add screen name to follow'),                          
-                         (r'set\s+(?P<room>#[a-zA-z0-9-]+)\s+twitter\s+display\s+limit\s+(?P<count>\d+)',
+                         (r'set\s+(?P<room>#[a-zA-Z0-9-]+)\s+twitter\s+display\s+limit\s+(?P<count>\d+)',
                            self.set_room_limit, 
                           'Set number of tweets to display each time in room'), 
-                         (r'reset\s+(?P<room>#[a-zA-z0-9-]+)', self.reset, 
+                         (r'reset\s+(?P<room>#[a-zA-Z0-9-]+)', self.reset, 
                           'Reset reported tweets'),
                          (r'set check time (\d+)', self.set_check_time, 
                           'set the twitter check time'),

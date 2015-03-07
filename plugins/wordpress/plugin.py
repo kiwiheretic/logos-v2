@@ -13,6 +13,11 @@ import copy
 import re
 from django.contrib.auth.models import User
 
+import logging
+from django.conf import settings
+logger = logging.getLogger(__name__)
+logging.config.dictConfig(settings.LOGGING)
+
 # Time to try the WP connection again, needs to be greater than the socket timeout
 # specified in IRC.py
 TRY_AGAIN_TIME = 120
@@ -45,10 +50,12 @@ class WordpressPlugin(Plugin):
                 regex = re.match("#(.*)",message)
                 if regex :
                     text = regex.group(1)
+                    logger.debug("wp_users = " + str(self.wp_users))
                     wp = self.wp_users[username]['wp']
                     the_post = self.wp_users[username]['post']
                     the_post.content += "\n" + text + "\n"
                     wp.call(EditPost(the_post.id, the_post))
+                    self.notice(nick, "-- text logged to WP --")
 
     
     def on_activate(self):
@@ -64,17 +71,9 @@ class WordpressPlugin(Plugin):
         username = self.get_auth().get_username(nick)
 
         self.wp_users[username] = {'nick':nick, 'user':data['user'], 
-                                   'logging':False}
+                                   'logging':False, 'wpdb':None}
         # get WP login if there is one
-        try:
-            wp = WPCredentials.objects.get(user=data['user'])
-            self.wp_users[username]['wpdb'] = wp
-#            if USE_THREADS:
-#                self.reactor.callInThread(self._wp_init, username)
-#            else:
-#                self._wp_init(username)                
-        except WPCredentials.DoesNotExist:
-            self.notice(nick, "Your wordpress credentials were not found")
+        
         
     def _get_post(self, wp):
         wp_title = "Logos Notes " + datetime.now().strftime('%d-%b-%Y')
@@ -108,7 +107,7 @@ class WordpressPlugin(Plugin):
     
                 
     def _wp_init(self, username):
-        
+        logger.debug( "_wp_init")
         wpdb = self.wp_users[username]['wpdb']
         
         try:
@@ -157,6 +156,7 @@ class WordpressPlugin(Plugin):
                     verse_txt = " ".join(verse) + "\n"
                     the_post.content += verse_txt
                 wp.call(EditPost(the_post.id, the_post))
+                self.notice(nick, "-- verse(s) logged to WP --")
                     
     def onSignal_verse_search(self, source, data):
         nick = data['nick']
@@ -171,6 +171,8 @@ class WordpressPlugin(Plugin):
                 for verse_txt in data['verses']:
                     the_post.content += verse_txt + "\n"
                 wp.call(EditPost(the_post.id, the_post))
+                self.notice(nick, "-- verses searched logged to WP --")
+
                 
     @login_required()
     def set_wordpress_account(self, regex, chan, nick, **kwargs):
@@ -197,14 +199,26 @@ class WordpressPlugin(Plugin):
     @login_required()
     def start_logging(self, regex, chan, nick, **kwargs):
         username = self.get_auth().get_username(nick)
-        if username and username in self.wp_users:
-            if not self.wp_users[username]['logging']:
-                if USE_THREADS:
-                    self.reactor.callInThread(self._wp_init, username)
-                else:
-                    self._wp_init(username)                
-            self.wp_users[username]['logging'] = True
-            self.notice(nick, "WP Logging turned on")
+        try:
+            wp = WPCredentials.objects.get(user__username=username)
+            self.wp_users[username]['wpdb'] = wp
+#            if USE_THREADS:
+#                self.reactor.callInThread(self._wp_init, username)
+#            else:
+#                self._wp_init(username)                
+
+            if username and username in self.wp_users:
+                if not self.wp_users[username]['logging']:
+                    if USE_THREADS:
+                        self.reactor.callInThread(self._wp_init, username)
+                    else:
+                        self._wp_init(username)                
+                self.wp_users[username]['logging'] = True
+                self.notice(nick, "WP Logging turned on")
+
+        except WPCredentials.DoesNotExist:
+            self.notice(nick, "Your wordpress credentials were not found")        
+
                 
         
     @login_required()
