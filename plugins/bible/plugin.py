@@ -747,7 +747,7 @@ class BibleBot(Plugin):
     def next(self, regex, chan, nick, **kwargs):
         
         result = self._next_reading(chan, nick)
-        signal_data = {'nick':nick, 'chan':chan, 'result':result}
+        signal_data = {'nick':nick, 'chan':chan, 'verses':result}
         self.signal("verse_lookup", signal_data)
         if result:
             for resp in result:

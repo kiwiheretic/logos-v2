@@ -145,9 +145,11 @@ class WordpressPlugin(Plugin):
         
     def onSignal_verse_lookup(self, source, data):
         nick = data['nick']
+        chan = data['chan']
         username = self.get_auth().get_username(nick)
         if username and 'wp' in self.wp_users[username] and \
-            self.wp_users[username]['logging']:
+            self.wp_users[username]['logging'] and \
+            self.wp_users[username]['channel'] == chan:
 
             wp = self.wp_users[username]['wp']
             if 'post' in self.wp_users[username]:
@@ -162,7 +164,8 @@ class WordpressPlugin(Plugin):
         nick = data['nick']
         username = self.get_auth().get_username(nick)
         if username and 'wp' in self.wp_users[username] and \
-            self.wp_users[username]['logging']:
+            self.wp_users[username]['logging'] and \
+            self.wp_users[username]['channel'] == chan:
                         
             wp = self.wp_users[username]['wp']
             if 'post' in self.wp_users[username]:
@@ -214,6 +217,7 @@ class WordpressPlugin(Plugin):
                     else:
                         self._wp_init(username)                
                 self.wp_users[username]['logging'] = True
+                self.wp_users[username]['channel'] = chan
                 self.notice(nick, "WP Logging turned on")
 
         except WPCredentials.DoesNotExist:
