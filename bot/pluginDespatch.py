@@ -5,6 +5,7 @@ import inspect
 import logging
 import bot
 import pdb
+import types
 from django.conf import settings
 from django.db import transaction
 
@@ -339,6 +340,7 @@ class PluginDespatcher(object):
                                         network=self.irc_conn.factory.network,
                                         defaults={'loaded': True})
                                 
+                            
                                 if hasattr(plugin_object,'system') and \
                                     plugin_object.system:
                                     net_plugin.enabled = True
@@ -351,8 +353,15 @@ class PluginDespatcher(object):
                             
                             if net_plugin.enabled:
                                 if hasattr(plugin_object, "on_activate"):
-                                    plugin_object.on_activate()
-                                
+                                    response = plugin_object.on_activate()
+                                    if type(response) == types.TupleType:
+                                        enabled, msg = response
+                                    else:
+                                        enabled = response
+                                        msg = None
+
+                                    net_plugin.enabled = enabled
+                                    net_plugin.save()                                        
                             break
             except ImportError, e:
                 logger.error("ImportError: "+str(e))
@@ -425,7 +434,8 @@ class PluginDespatcher(object):
                 for m in self._obj_list:
                     if m.plugin[0] == plugin_name:
                         if hasattr(m, 'on_activate'):
-                            m.on_activate()
+                             result, reason = m.on_activate()
+                             return (result, reason)
             return True
 
         except NetworkPlugins.DoesNotExist:

@@ -3,6 +3,7 @@ import re
 import os
 import json
 import pdb
+import types
 
 import django
 from django.contrib.auth.models import User
@@ -151,10 +152,18 @@ class SystemCoreCommands(Plugin):
     @irc_network_permission_required('net_disable_plugins')
     def net_enable_plugin(self, regex, chan, nick, **kwargs):
         plugin_name = re.sub('-','_',regex.group('plugin'))
-        if super(SystemCoreCommands, self).net_enable_plugin(plugin_name):
+        response = super(SystemCoreCommands, self).net_enable_plugin(plugin_name)
+        if type(response) == types.TupleType:
+            enabled, msg = response
+        else:
+            enabled = response
+            msg = None
+        if enabled:
             self.say(chan, "plugin enabled at network level successfully")
         else:
             self.say(chan, "plugin could not be enabled")
+            if msg:
+                self.say(chan, "Reason: "+msg)
 
     @irc_network_permission_required('net_disable_plugins')                
     def net_disable_plugin(self, regex, chan, nick, **kwargs):

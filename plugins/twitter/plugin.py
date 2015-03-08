@@ -53,9 +53,22 @@ class TwitterPlugin(Plugin):
                          (r'pull',self.pull_tweet, "Pull some tweets without waiting for timer"),
                          
                          )
-        pth = os.path.dirname(__file__)
-        f = open(os.path.join(pth,"secrets.json"), "r")
-        json_secrets = json.load(f)
+        
+
+        self.timer = task.LoopingCall(self.on_timer)
+        self.h = HTMLParser.HTMLParser()
+
+
+       
+    def on_activate(self):
+        """ When this plugin is activated for the network """
+        
+        try:
+            pth = os.path.dirname(__file__)
+            f = open(os.path.join(pth,"secrets.json"), "r")
+            json_secrets = json.load(f)
+        except IOError:
+            return (False, "Could not open secrets.json file")
         
         self.consumer_key = json_secrets['consumer_key']
         self.consumer_secret = json_secrets['consumer_secret']
@@ -65,15 +78,8 @@ class TwitterPlugin(Plugin):
         self.api = twitter.Api(consumer_key=self.consumer_key,
                       consumer_secret=self.consumer_secret,
                       access_token_key=self.access_token,
-                      access_token_secret=self.token_secret)
-
-        self.timer = task.LoopingCall(self.on_timer)
-        self.h = HTMLParser.HTMLParser()
-
-
-       
-    def on_activate(self):
-        """ When this plugin is activated for the network """
+                      access_token_secret=self.token_secret)        
+        
         check_time = get_global_option("twitter-check-time")
         if check_time:
             check_time = int(check_time)
@@ -81,6 +87,7 @@ class TwitterPlugin(Plugin):
             check_time = 30
         logger.info("Twitter check timer is every {} seconds".format(check_time))
         self.timer.start(check_time, now=False)
+        return (True, None)
 
     def on_deactivate(self):
         """ When this plugin is deactivated for the network """

@@ -70,13 +70,13 @@ class BibleBot(Plugin):
                          (r'(?:search|s)\s+((?:\w+\s+)?(?:\w+(?:-\w+)?\s+)?)\"([^"]+)\"\s*$', self.phrase_search, "perform a phrase search"),
 #                         (r'(?:search|s)\s+([^"]+)', self.search, False),
                          (r'(?:search|s)\s*$', self.next_search, "continue a search"),
-                         (r'set\s+(?P<room>#[a-zA-z0-9-]+)\s+default\s+translation\s+([a-zA-Z]+)', self.set_default_trans,\
+                         (r'set\s+(?P<room>#[a-zA-Z0-9-]+)\s+default\s+translation\s+([a-zA-Z]+)', self.set_default_trans,\
                           "set default translation for room"),
                          (r'set\s+(?:private|pvt)\s+translation\s+([a-zA-Z]+)', self.set_pvt_translation,
                           "set default translation for private chat window"),
-                         (r'set\s+(?P<room>#[a-zA-z0-9-]+)\s+search\s+limit\s+(\d+)\s*$', self.set_search_limit,
+                         (r'set\s+(?P<room>#[a-zA-Z0-9-]+)\s+search\s+limit\s+(\d+)\s*$', self.set_search_limit,
                           "set limit on number of verses searched at once"),
-                         (r'set\s+(?P<room>#[a-zA-z0-9-]+)\s+verse\s+limit\s+(\d+)\s*$', self.set_verse_limit,
+                         (r'set\s+(?P<room>#[a-zA-Z0-9-]+)\s+verse\s+limit\s+(\d+)\s*$', self.set_verse_limit,
                           "set limit on number of verses read at once"),
                          (r'(?:translations|versions)\s*$', self.versions, 
                           "display available versions or translations"),

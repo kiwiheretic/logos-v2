@@ -62,7 +62,7 @@ class WordpressPlugin(Plugin):
     def on_activate(self):
         """ When this plugin is activated for the network or startup
         occurs. """
-        pass
+        return True
     
             
     def onSignal_login(self, source, data):
