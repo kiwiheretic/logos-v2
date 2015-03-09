@@ -584,8 +584,8 @@ class IRCBot(irc.IRCClient):
             else:
                 line = 'privmsg nickserv info ' + nick
                 self.sendLine(line)            
-        if len(self.userhost_in_progress) == 0:
-            self.say(self.factory.channel, "Nicks DB Initialised")
+#        if len(self.userhost_in_progress) == 0:
+#            self.say(self.factory.channel, "Nicks DB Initialised")
             
 #        print self.nicks_db.nicks_in_room
 #        print self.nicks_db.nicks_info

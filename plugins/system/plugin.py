@@ -472,12 +472,14 @@ class SystemCoreCommands(Plugin):
     def userLeft(self, user, channel):
         if not self.is_nick_in_rooms(user):
             self.get_auth().remove(user)
-            self.signal("logout", {"nick":user })
+            username = self.get_auth().get_username(user)
+            self.signal("logout", {"nick":user, "username":username  })
         
     def userQuit(self, user, quitMessage):
         self.get_auth().remove(user)
-        self.signal("logout", {"nick":user })
-        
+        username = self.get_auth().get_username(user)
+        self.signal("logout", {"nick":user, "username":username  })
+            
     def userRenamed(self, oldname, newname):
         self.get_auth().rename(oldname, newname)
         logger.info("renamed: {}".format(str(self.get_auth().users)))
