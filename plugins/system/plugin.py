@@ -49,9 +49,9 @@ class SystemCoreCommands(Plugin):
                          (r'disable\s+plugin\s+(?P<room>#[a-zA-Z0-9-]+)\s+(?P<plugin>[a-z_-]+)',
                           self.disable_plugin, "Disable specified plugin for room"),
                          (r'activate\s+plugin\s+(?P<plugin>[a-z_-]+)',
-                          self.net_enable_plugin, "Enable specified plugin for room"),
+                          self.activate_plugin, "Enable specified plugin for room"),
                          (r'deactivate\s+plugin\s+(?P<plugin>[a-z_-]+)',
-                          self.net_disable_plugin, "Disable specified plugin for room"),
+                          self.deactivate_plugin, "Disable specified plugin for room"),
                          (r'list\s+(?:perms|permissions)', self.list_perms, "list all permissions available"),
                          (r'add\s+user\s+(?P<username>\S+)\s+(?P<email>[a-zA-Z0-9-]+@[a-zA-Z0-9\.-]+)\s+(?P<password>\S+)$',
                           self.adduser, 'Add user to system'),
@@ -149,10 +149,10 @@ class SystemCoreCommands(Plugin):
         else:
             self.say(chan, "plugin could not be disabled")
 
-    @irc_network_permission_required('net_disable_plugins')
-    def net_enable_plugin(self, regex, chan, nick, **kwargs):
+    @irc_network_permission_required('activate_plugins')
+    def activate_plugin(self, regex, chan, nick, **kwargs):
         plugin_name = re.sub('-','_',regex.group('plugin'))
-        response = super(SystemCoreCommands, self).net_enable_plugin(plugin_name)
+        response = super(SystemCoreCommands, self).activate_plugin(plugin_name)
         if type(response) == types.TupleType:
             enabled, msg = response
         else:
@@ -165,15 +165,15 @@ class SystemCoreCommands(Plugin):
             if msg:
                 self.say(chan, "Reason: "+msg)
 
-    @irc_network_permission_required('net_disable_plugins')                
-    def net_disable_plugin(self, regex, chan, nick, **kwargs):
+    @irc_network_permission_required('activate_plugins')                
+    def deactivate_plugin(self, regex, chan, nick, **kwargs):
         plugin_name = re.sub('-','_',regex.group('plugin'))
-        if super(SystemCoreCommands, self).net_disable_plugin(plugin_name):
+        if super(SystemCoreCommands, self).deactivate_plugin(plugin_name):
             self.say(chan, "plugin disabled at network level successfully")
         else:
             self.say(chan, "plugin could not be disabled")
 
-    @irc_network_permission_required('net_admin')            
+    @irc_network_permission_required('bot_admin')            
     def adduser(self, regex, chan, nick, **kwargs):
         username = regex.group('username')
         password = regex.group('password')
@@ -188,7 +188,7 @@ class SystemCoreCommands(Plugin):
         else:
             self.msg(chan, "User already exists in database")
 
-    @irc_network_permission_required('net_admin')                     
+    @irc_network_permission_required('bot_admin')                     
     def listusers(self, regex, chan, nick, **kwargs):
         self.notice(nick, "List of users....")
         for user in User.objects.all():
@@ -230,8 +230,8 @@ class SystemCoreCommands(Plugin):
 
     def perms(self, regex, chan, nick, **kwargs):
         username = regex.group('username').lower()
-        # if user is net_admin or if user is inquiring about themself...
-        if self.get_auth().is_authorised(nick,  '#', 'net_admin') or \
+        # if user is bot_admin or if user is inquiring about themself...
+        if self.get_auth().is_authorised(nick,  '#', 'bot_admin') or \
         (username == nick.lower() and self.get_auth().is_authenticated(nick)):
             try:
                 user = User.objects.get(username__iexact = username)
@@ -259,7 +259,7 @@ class SystemCoreCommands(Plugin):
             self.msg(chan, "You are not authorised or not logged in") 
 
 
-    @irc_network_permission_required('net_admin')  
+    @irc_network_permission_required('bot_admin')  
     def assign_net_perms(self, regex, chan, nick, **kwargs):
         username = regex.group('username').lower()
         try:
@@ -284,7 +284,7 @@ class SystemCoreCommands(Plugin):
         else:
             self.say(chan, "Permission not found")
             
-    @irc_network_permission_required('net_admin')  
+    @irc_network_permission_required('bot_admin')  
     def unassign_net_perms(self, regex, chan, nick, **kwargs):
         username = regex.group('username').lower()
         try:
@@ -309,7 +309,7 @@ class SystemCoreCommands(Plugin):
         else:
             self.say(chan, "Permission not found")
 
-    @irc_network_permission_required('net_admin')  
+    @irc_network_permission_required('bot_admin')  
     def assign_room_perms(self, regex, chan, nick, **kwargs):
         room = regex.group('room')
         username = regex.group('username').lower()
@@ -336,7 +336,7 @@ class SystemCoreCommands(Plugin):
         else:
             self.say(chan, "Permission not found")
             
-    @irc_network_permission_required('net_admin')  
+    @irc_network_permission_required('bot_admin')  
     def unassign_room_perms(self, regex, chan, nick, **kwargs):
         room = regex.group('room')
         username = regex.group('username').lower()

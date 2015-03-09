@@ -9,6 +9,11 @@ logger = logging.getLogger(__name__)
 
 DEBUG = True
 TEMPLATE_DEBUG = DEBUG
+
+# This is used by the test runner to avoid threaded behaviour
+# while testing.
+IM_IN_TEST_MODE = False
+
 #
 # REGENERATE_TEST_DATABASE: Whether to recreate the test database 
 # (if it doesn't already exist).  Sometimes I leave this as False because 

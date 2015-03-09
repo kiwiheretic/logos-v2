@@ -37,8 +37,8 @@ class NetworkPermissions(models.Model):
     network = models.TextField()
     class Meta:
         permissions = (
-            ('net_admin', 'Create user logins and assign permissions'),
-            ('net_disable_plugins', 'Can disable plugins network wide'),
+            ('bot_admin', 'Create user logins and assign permissions'),
+            ('activate_plugins', 'Can activate/deactivate plugins network wide'),
             ('join_or_part_room', 'Join or part bot to rooms'),
             ('irc_cmd', 'Issue arbitrary command to bot'),
             ('set_pvt_version', 'Set bible version default in private chat window'),
@@ -76,7 +76,7 @@ class NetworkPlugins(models.Model):
     # currently each bot instance handles exactly one IRC network
     network = models.TextField()
     loaded = models.BooleanField(default=False)
-    # net_admin disabling overrides room_admin enabling
+    # bot_admin disabling overrides room_admin enabling
     enabled = models.BooleanField(default=True)
     
 class RoomPlugins(models.Model):

@@ -97,7 +97,7 @@ class TwitterPlugin(Plugin):
     def privmsg(self, user, channel, message):
         pass
         
-    @irc_network_permission_required('net_admin')
+    @irc_network_permission_required('bot_admin')
     def set_check_time(self, regex, chan, nick, **kwargs):
         check_time = regex.group(1)
         set_global_option("twitter-check-time", check_time)

@@ -83,14 +83,14 @@ class AuthenticatedUsers(object):
             assert self._perm_exists(RoomPermissions, capability)
 
 
-        # Test if user is a net_admin and if so they always
+        # Test if user is a bot_admin and if so they always
         # have the capability
         try:
             net_perm = NetworkPermissions.objects.get(network=self.network)
         except NetworkPermissions.DoesNotExist:
             net_perm = None
         if net_perm:
-            qs = get_objects_for_user(user, "net_admin", NetworkPermissions)
+            qs = get_objects_for_user(user, "bot_admin", NetworkPermissions)
             if qs.filter(network=self.network).exists():
                 return True
 
@@ -202,12 +202,12 @@ class Plugin(object):
     def disable_plugin(self, channel, plugin_name):
         return self.despatcher.disable_plugin(channel, plugin_name)
         
-    def net_enable_plugin(self, plugin_name):
-        return self.despatcher.net_enable_plugin(plugin_name)
+    def activate_plugin(self, plugin_name):
+        return self.despatcher.activate_plugin(plugin_name)
         
 
-    def net_disable_plugin(self, plugin_name):
-        return self.despatcher.net_disable_plugin(plugin_name)                
+    def deactivate_plugin(self, plugin_name):
+        return self.despatcher.deactivate_plugin(plugin_name)                
     
     def is_plugin_enabled(self, channel):
         return self.despatcher.is_plugin_enabled(channel, self)
@@ -420,7 +420,7 @@ class PluginDespatcher(object):
         else:
             return False            
     
-    def net_enable_plugin(self, plugin_name):
+    def activate_plugin(self, plugin_name):
         try:
             net_plugin = NetworkPlugins.objects.get(\
                 plugin__name=plugin_name,
@@ -442,7 +442,7 @@ class PluginDespatcher(object):
             return False
 
         
-    def net_disable_plugin(self, plugin_name):
+    def deactivate_plugin(self, plugin_name):
         try:
             net_plugin = NetworkPlugins.objects.get(\
                 plugin__name=plugin_name,

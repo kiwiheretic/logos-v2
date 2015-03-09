@@ -2,7 +2,13 @@
 
 # Whether to use threads for concordance searches or not.
 # (This is an experimental feature.)
-THREADED_SEARCH = False
+
+from django.conf import settings
+
+if settings.IM_IN_TEST_MODE:
+    THREADED_SEARCH = False
+else:
+    THREADED_SEARCH = True
 
 
 import datetime
@@ -10,7 +16,6 @@ import re
 import time
 import copy
 
-import pdb
 from logos.constants import PUNCTUATION, STOP_WORDS
 from logos.utils import replace_spc_error_handler
 

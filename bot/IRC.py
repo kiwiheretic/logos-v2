@@ -529,7 +529,7 @@ class IRCBot(irc.IRCClient):
         # We use the RPL_NAMREPLY to get a list of all people currently
         # in a room when the bot first joins that room and uses that information
         # to populate the NicksDB.
-        logger.info("irc_RPL_NAMREPLY "+str(params))
+        logger.debug("irc_RPL_NAMREPLY "+str(params))
         room = params[2].lower()
 
         nicks_to_fill_in = []
@@ -572,7 +572,7 @@ class IRCBot(irc.IRCClient):
             nick, host = nick_str.split("=")
             nick = re.sub("\*","", nick)
             host = re.sub("^[~%&@\-\+]+","", host)
-            logger.info("irc_RPL_USERHOST {} = {}".format(nick, host))
+            logger.debug("irc_RPL_USERHOST {} = {}".format(nick, host))
             # If the nick is in multiple rooms but it may appear in this list
             # only once so we should be careful
             if nick in self.userhost_in_progress:

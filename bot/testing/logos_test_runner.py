@@ -6,9 +6,13 @@ from django.conf import settings
 # Because our bible database is huge, and takes a long time to generate
 # we don't want to regenerate it for every test case.
 from django.test.runner import DiscoverRunner, dependency_ordered
-import pdb
 
 class LogosDiscoverRunner(DiscoverRunner):
+
+    def __init__(self, *args, **kwargs):
+        settings.IM_IN_TEST_MODE = True
+        super(LogosDiscoverRunner, self).__init__(*args, **kwargs)
+
     def setup_databases(self, **kwargs):
         from django.db import connections, DEFAULT_DB_ALIAS
         verbosity = self.verbosity
