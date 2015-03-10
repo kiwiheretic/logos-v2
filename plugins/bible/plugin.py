@@ -232,21 +232,23 @@ class BibleBot(Plugin):
                                 + ":" + str(q.verse),
                             q.verse_text))
             timestamp = datetime.datetime.now()
-
-            self.reading_progress[nick.lower()] = \
+            if nick.lower() not in self.reading_progress:
+                self.reading_progress[nick.lower()] = {}
+            self.reading_progress[nick.lower()][chan.lower()] = \
                 {'verses_pk':qual_verses_next_pk,
                  'timestamp': timestamp}
-
         else:
             raise CommandException(nick, user, \
                 "Verse {} {}:{} not found".format(long_book_name, chapter, firstverse))
         return resp
     
     def _next_reading(self, chan, user):
-        if user.lower() not in self.reading_progress:
+        if user.lower() not in self.reading_progress or \
+        chan.lower() not in self.reading_progress[user.lower()]:
             self.say(chan, "No previous verse to read from")
+            return None
         else:
-            verses_pk = self.reading_progress[user.lower()]['verses_pk']
+            verses_pk = self.reading_progress[user.lower()][chan.lower()]['verses_pk']
             qual_verses = BibleVerses.objects.filter(pk__gte = verses_pk)
         
         # Get the maximum number of verses to display in one
@@ -265,11 +267,14 @@ class BibleBot(Plugin):
         timestamp = datetime.datetime.now()
 
         if qual_verses_next_pk:
-            self.reading_progress[user.lower()] = \
+            if user.lower() not in self.reading_progress:
+                self.reading_progress[user.lower()] = {}
+            self.reading_progress[user.lower()][chan.lower()] = \
                 {'verses_pk':qual_verses_next_pk,
                  'timestamp': timestamp}
         else:
-            del self.reading_progress[user.lower()]
+            if chan.lower() in self.reading_progress[user.lower()]:
+                del self.reading_progress[user.lower()][chan.lower()]
         return resp
     
     def _concordance_generator(self, chan, nick, trans, book_range, words, mode="simple"):
