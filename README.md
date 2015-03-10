@@ -109,9 +109,10 @@ It is now possible to set up individual users with very specific permissions (th
 First you will need to add your own nick as user replacing &lt;username&gt;, &lt;email&gt; and &lt;password&gt; with the appropriate information.
 ```
 $ python manage.py admin adduser <username> <email> <password>
-$ python manage.py admin assignperm <irc-server> '#' <username> net_admin
+$ python manage.py admin assignperm <irc-server> '#' <username> bot_admin
 ```
 (The '#' indicates that this command refers to the whole IRC network, not just any room.)  Now when you login you type on IRC network (preferrable in private window to the bot) something like the following:
+
 ```
 /nick <username>
 !login <password>
@@ -119,6 +120,13 @@ $ python manage.py admin assignperm <irc-server> '#' <username> net_admin
 You can change your own password later on with:
 ```
 !set password <newpassword>
+
+To activate the bible plugin you need to...
+!activate plugin bible
+!enable plugin #yourRoom bible
+
+The same goes for any other plugins you wish to use.  Replace the word "bible" 
+with the plugin ID of the plugin you wish to enable.
 ```
 Again this should be done in a private window to bot for security reasons.
 See the [wiki](https://github.com/kiwiheretic/logos-v2/wiki) for more details.
