@@ -66,6 +66,7 @@ class SystemCoreCommands(Plugin):
                          (r'part\s+room\s+(?P<room>#[a-zA-Z0-9-]+)', self.part_room,
                           "Request bot to part a room"), 
                          (r'get nick list$', self.debug_get_nick_list, "Inspect the Nicks DB"),
+                         (r'get room list$', self.debug_get_room_list, "Inspect the Nicks DB"),
                          (r'cmd\s+(.*)', self.cmd, "Have bot perform an IRC command"),
                          (r'say\s+(?P<room>#[a-zA-Z0-9-]+)\s+(.*)', self.speak, "Say something into a room"),
                          (r'act\s+(?P<room>#[a-zA-Z0-9-]+)\s+(.*)', self.action, "perform a /me action in room"),
@@ -98,6 +99,10 @@ class SystemCoreCommands(Plugin):
         for k,v in nicks_db.nicks_info.iteritems():
             self.notice(nick, "{} : {}".format(k, str(v)))
     
+    def debug_get_room_list(self, regex, chan, nick, **kwargs):
+        nicks_db = self.irc_conn.nicks_db
+        for k,v in nicks_db.nicks_in_room.iteritems():
+            self.notice(nick, "{} : {}".format(k, str(v)))
     def actual_host(self, regex, chan, nick, **kwargs):
         self.say(chan, "Actual IRC server is {}".format(self.irc_conn.actual_host))
         

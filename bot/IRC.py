@@ -111,7 +111,7 @@ class NicksDB:
         
     def add_nick_to_room(self, user, channel, opstatus = None):
         channel_info = {'nick': user, 'opdata': opstatus }
-        nick_info = {'ident': None, 'nickserv_approved':None}
+        nick_info = {'host': None, 'nickserv_approved':None}
         keep_list = []
         found = False
         if channel.lower() not in self.nicks_in_room:
@@ -134,17 +134,17 @@ class NicksDB:
             
     def get_host(self, user):
         try:
-            if 'ident' in self.nicks_info[user.lower()]:
-                return self.nicks_info[user.lower()]['ident']
+            if 'host' in self.nicks_info[user.lower()]:
+                return self.nicks_info[user.lower()]['host']
             else:
                 return None
         except KeyError:
             # This can fail on slow servers, notably undernet
             return None
 
-    def set_ident(self, user, ident):
-        logger.debug("Setting Ident for %s = %s" % (user, ident))
-        self.nicks_info[user.lower()]['ident'] = ident
+    def set_host(self, user, host):
+        logger.debug("Setting host for %s = %s" % (user, host))
+        self.nicks_info[user.lower()]['host'] = host
     
     def get_op_status(self, user, room):
         found = False
@@ -223,10 +223,10 @@ class IRCBot(irc.IRCClient):
         return self.factory.nickname
     nickname = property(_get_nickname)
 
-    def do_whois(self, nick):
-        logger.debug( "do_whois " + nick)
-        line = "whois " + nick
-        self.sendLine(line)
+#    def do_whois(self, nick):
+#        logger.debug( "do_whois " + nick)
+#        line = "whois " + nick
+#        self.sendLine(line)
         
     def get_room_nicks(self, room):
         return self.nicks_db.get_room_nicks(room)
@@ -398,7 +398,7 @@ class IRCBot(irc.IRCClient):
         self.nicks_db.rename_user(oldname, newname)
         self.plugins.userRenamed(oldname, newname)
         
-        self.factory.reactor.callLater(5, self.do_whois, newname)
+#        self.factory.reactor.callLater(5, self.do_whois, newname)
         logger.debug(str( self.nicks_db.nicks_in_room))
         logger.debug(str( self.nicks_db.nicks_info))
         
@@ -551,8 +551,8 @@ class IRCBot(irc.IRCClient):
 
             if not self.nicks_db.nick_in_room(this_name, room):
                 self.nicks_db.add_nick_to_room(this_name, room, opstatus=opstatus)
-                ident = self.nicks_db.get_host(this_name)
-                if ident == None:
+                host = self.nicks_db.get_host(this_name)
+                if host == None:
                     # need to strip opstatus off first
                     nicks_to_fill_in.append(this_name)
                            
@@ -578,7 +578,7 @@ class IRCBot(irc.IRCClient):
             if nick in self.userhost_in_progress:
                 self.userhost_in_progress.remove(nick)
             logger.debug("userhosts in progress = " + str( self.userhost_in_progress))
-            self.nicks_db.set_ident(nick, host)
+            self.nicks_db.set_host(nick, host)
             if self.factory.extra_options['no_services']:
                 pass
             else:
