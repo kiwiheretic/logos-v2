@@ -264,6 +264,9 @@ LOGGING = {
         'verbose': {
             'format': ' %(asctime)s %(levelname)s %(module)s %(process)d %(thread)d %(message)s'
         },
+        'timeLog': {
+            'format': ' %(asctime)s %(levelname)s %(module)s %(message)s'
+        },
         'simple': {
             'format': '%(levelname)s %(message)s'
         },
@@ -297,7 +300,7 @@ LOGGING = {
             'level': 'DEBUG',
             'class': 'logging.FileHandler',
             'filename': os.path.join(LOG_DIR, 'logos-log.txt'),
-            'formatter': 'verbose'
+            'formatter': 'timeLog'
         },        
     },
     'loggers': {

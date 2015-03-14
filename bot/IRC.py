@@ -603,8 +603,9 @@ class IRCBot(irc.IRCClient):
             nicks_batch = nicks_to_fill_in[ii*5:5*(ii+1)]
             nicks_to_get_hosts = " ".join(nicks_batch)
             self.userhost_in_progress.extend(nicks_batch)
-            if nicks_to_get_hosts.strip != "":
+            if nicks_to_get_hosts.strip() != "":
                 line = "userhost " + nicks_to_get_hosts
+                logger.debug(line)
 #            print line
                 self.sendLine(line)        
     
