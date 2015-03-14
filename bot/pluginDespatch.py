@@ -655,3 +655,9 @@ class PluginDespatcher(object):
             # nick changes are not channel specific
             if hasattr(m, 'userRenamed'):
                 m.userRenamed(oldname, newname)
+
+    def onIdleCheckCompleted(self):
+        for m in self._obj_list:
+            # nick changes are not channel specific
+            if hasattr(m, 'onIdleCheckCompleted'):
+                m.onIdleCheckCompleted(oldname, newname)

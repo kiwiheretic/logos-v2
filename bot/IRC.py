@@ -33,6 +33,7 @@ IRC_NETWORK = '127.0.0.1' # usually something like irc.server.net
 IRC_ROOM_NAME = '#room'
 NICKSERV = ''
 QUEUE_TIMER = 0.50
+IDLE_CHECK_SECONDS = 60
 
 from logos.settings import LOGGING
 logger = logging.getLogger(__name__)
@@ -47,6 +48,16 @@ class NicksDB:
     def get_rooms(self):
         return self.nicks_in_room.keys()
         
+    def get_all_nicks(self):
+        rooms = self.get_rooms()
+        nick_list = []
+        for rm in rooms:
+            nicks = self.get_room_nicks(rm)
+            nick_list.extend(nicks)
+        return set(nick_list)
+            
+            
+    
     def get_room_nicks(self, channel):
         nick_list = []
         try:
@@ -111,7 +122,8 @@ class NicksDB:
         
     def add_nick_to_room(self, user, channel, opstatus = None):
         channel_info = {'nick': user, 'opdata': opstatus }
-        nick_info = {'host': None, 'nickserv_approved':None}
+        nick_info = {'host': None, 'nickserv_approved':None,
+                     'idle_time':None}
         keep_list = []
         found = False
         if channel.lower() not in self.nicks_in_room:
@@ -162,6 +174,9 @@ class NicksDB:
         else:
             return False
 
+    def set_idle_time(self, nick, idle):
+        self.nicks_info[nick.lower()]['idle_time'] = idle
+
     def get_nickserv_response(self, user):
         if 'nickserv_approved' in self.nicks_info[user.lower()]:
             return self.nicks_info[user.lower()]['nickserv_approved']
@@ -183,10 +198,11 @@ class IRCBot(irc.IRCClient):
         self.actual_host = None
 
         self.timer = task.LoopingCall(self.onTimer)
+        self.idle_check_timer = task.LoopingCall(self.onIdleCheckTimer)
         self.log_flush_timer = task.LoopingCall(self.onLogFlushTimer)
         self.log_flush_timer.start(30)
         self.channel_queues = {}
-#        self.whois_in_progress = []
+        self.check_these_for_idle_times = None
         self.userhost_in_progress = []
 
         
@@ -245,6 +261,18 @@ class IRCBot(irc.IRCClient):
             except OSError:
                 pass
         
+    def onIdleCheckTimer(self):
+        self.check_these_for_idle_times = self.nicks_db.get_all_nicks()
+        try:
+            nick = self.check_these_for_idle_times.pop()
+            self.send_whois_whois(nick)
+        except KeyError:
+            pass
+    
+    def send_whois_whois(self, nick):
+        line = 'whois {} {} '.format(nick,nick)
+        self.sendLine(line)  
+    
     def onTimer(self):
         for chan in self.channel_queues:
             # If the bot is in the channel or if the message
@@ -282,6 +310,19 @@ class IRCBot(irc.IRCClient):
         self.actual_host = prefix
         logger.info("Connected to IRC Server: {}".format(prefix))
         irc.IRCClient.irc_RPL_YOURHOST(self, prefix, params)
+        
+    def irc_RPL_WHOISIDLE(self, prefix, params):
+        logger.info ("irc_RPL_WHOISIDLE {} {}".format(prefix,params))
+        nick = params[1]
+        idle = int(params[2])
+        self.nicks_db.set_idle_time(nick, idle)
+       
+    def irc_RPL_ENDOFWHOIS(self, prefix, params):
+        try:
+            nick = self.check_these_for_idle_times.pop()
+            self.send_whois_whois(nick)
+        except KeyError:
+            self.plugins.onIdleCheckCompleted()
         
     def signedOn(self):
         """ After we sign on to the server we need to mark this irc
@@ -331,7 +372,9 @@ class IRCBot(irc.IRCClient):
                 f.close()
             except IOError:
                 pass
-        self.timer.start(QUEUE_TIMER)        
+        self.timer.start(QUEUE_TIMER)
+        if self.factory.extra_options['monitor_idle_times']:
+            self.idle_check_timer.start(IDLE_CHECK_SECONDS)
 
     def sendLine(self, line):
         if self.irc_line_log:

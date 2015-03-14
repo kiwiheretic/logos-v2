@@ -45,6 +45,8 @@ class Command(BaseCommand):
                     help="The bot control password.  Defaults to 'zxcvbnm'"),
         make_option('--no-services', action='store_true',
                     help="Don't try and use IRC services"),
+        make_option('--monitor-idle-times', action='store_true',
+                    help="Actively monitor the idle times of nicks"),
         make_option('--startup-script', action='store',
                     help="path to the startup script of IRC commands"),                    
         make_option('--room-key', action='store',
@@ -101,6 +103,7 @@ class Command(BaseCommand):
         extra_options['no_services'] = options['no_services']
         extra_options['room_key'] = options['room_key']
         extra_options['startup_script'] = options['startup_script']
+        extra_options['monitor_idle_times'] = options['monitor_idle_times']
 
         irc.instantiateIRCBot(server, port, engine_room, nickname, \
                               sys_password, nick_password, web_port, rpc_port, \
