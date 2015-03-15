@@ -44,13 +44,13 @@ class SystemCoreCommands(Plugin):
                          (r'logout', self.logout, "Log out of bot"),
                          (r'version\s*$', self.version, "Show this bot's version info"),
                          (r'list\s+plugins', self.list_plugins, "list all plugins available"),
-                         (r'enable\s+plugin\s+(?P<room>#[a-zA-Z0-9-]+)\s+(?P<plugin>[a-z_-]+)',
+                         (r'enable\s+plugin\s+(?P<room>#[a-zA-Z0-9-]+)\s+(?P<plugin>[a-z0-9_-]+)',
                           self.enable_plugin, "Enable specified plugin for room"),
-                         (r'disable\s+plugin\s+(?P<room>#[a-zA-Z0-9-]+)\s+(?P<plugin>[a-z_-]+)',
+                         (r'disable\s+plugin\s+(?P<room>#[a-zA-Z0-9-]+)\s+(?P<plugin>[a-z0-9_-]+)',
                           self.disable_plugin, "Disable specified plugin for room"),
-                         (r'activate\s+plugin\s+(?P<plugin>[a-z_-]+)',
+                         (r'activate\s+plugin\s+(?P<plugin>[a-z0-9_-]+)',
                           self.activate_plugin, "Enable specified plugin for room"),
-                         (r'deactivate\s+plugin\s+(?P<plugin>[a-z_-]+)',
+                         (r'deactivate\s+plugin\s+(?P<plugin>[a-z0-9_-]+)',
                           self.deactivate_plugin, "Disable specified plugin for room"),
                          (r'list\s+(?:perms|permissions)', self.list_perms, "list all permissions available"),
                          (r'add\s+user\s+(?P<username>\S+)\s+(?P<email>[a-zA-Z0-9-]+@[a-zA-Z0-9\.-]+)\s+(?P<password>\S+)$',
@@ -65,8 +65,7 @@ class SystemCoreCommands(Plugin):
                           "Request bot to join a room"),
                          (r'part\s+room\s+(?P<room>#[a-zA-Z0-9-]+)', self.part_room,
                           "Request bot to part a room"), 
-                         (r'get nick list$', self.debug_get_nick_list, "Inspect the Nicks DB"),
-                         (r'get room list$', self.debug_get_room_list, "Inspect the Nicks DB"),
+                         
                          (r'cmd\s+(.*)', self.cmd, "Have bot perform an IRC command"),
                          (r'say\s+(?P<room>#[a-zA-Z0-9-]+)\s+(.*)', self.speak, "Say something into a room"),
                          (r'act\s+(?P<room>#[a-zA-Z0-9-]+)\s+(.*)', self.action, "perform a /me action in room"),
@@ -94,15 +93,7 @@ class SystemCoreCommands(Plugin):
                      "Room trigger is {} private windows trigger is {}".\
                          format(room_trigger,pvt_trigger))
 
-    def debug_get_nick_list(self, regex, chan, nick, **kwargs):
-        nicks_db = self.irc_conn.nicks_db
-        for k,v in nicks_db.nicks_info.iteritems():
-            self.notice(nick, "{} : {}".format(k, str(v)))
-    
-    def debug_get_room_list(self, regex, chan, nick, **kwargs):
-        nicks_db = self.irc_conn.nicks_db
-        for k,v in nicks_db.nicks_in_room.iteritems():
-            self.notice(nick, "{} : {}".format(k, str(v)))
+
     def actual_host(self, regex, chan, nick, **kwargs):
         self.say(chan, "Actual IRC server is {}".format(self.irc_conn.actual_host))
         
@@ -164,9 +155,9 @@ class SystemCoreCommands(Plugin):
             enabled = response
             msg = None
         if enabled:
-            self.say(chan, "plugin enabled at network level successfully")
+            self.say(chan, "plugin activated successfully")
         else:
-            self.say(chan, "plugin could not be enabled")
+            self.say(chan, "plugin could not be activated")
             if msg:
                 self.say(chan, "Reason: "+msg)
 

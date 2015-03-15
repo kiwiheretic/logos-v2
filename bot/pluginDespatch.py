@@ -187,6 +187,13 @@ class Plugin(object):
         """Get all nicks in a particular room"""
         return self.irc_conn.get_room_nicks(room)
 
+    def get_nick_idle_times(self, nick):
+        """ Get idle time and last time checked for a given nick.
+        Returns (idle_time, time_last_checked).  idle_time is an
+        integer and time_last_checked is a standard datetime object
+        in the UTC timezone. """
+        return self.irc_conn.get_nick_idle_times(nick)
+        
     def is_nick_in_rooms(self, nick):
         """ Is nick in any room that the bot knows
         about """
@@ -660,4 +667,4 @@ class PluginDespatcher(object):
         for m in self._obj_list:
             # nick changes are not channel specific
             if hasattr(m, 'onIdleCheckCompleted'):
-                m.onIdleCheckCompleted(oldname, newname)
+                m.onIdleCheckCompleted()

@@ -6,8 +6,10 @@ import email_settings
 logger = logging.getLogger(__name__)
 
 
+# Probably best to leave DEBUG = False unless testing or debugging.  If set
+# to true this uses up an inordinate amount of RAM over a period of time.
+DEBUG = False
 
-DEBUG = True
 TEMPLATE_DEBUG = DEBUG
 
 # This is used by the test runner to avoid threaded behaviour

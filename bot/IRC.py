@@ -9,6 +9,7 @@ import types
 import time
 import signal
 import socket
+from datetime import datetime
 
 from simple_webserver import SimpleWeb
 from simple_rpcserver import SimpleRPC
@@ -28,12 +29,12 @@ from django.conf import settings
 # LINE_RATE - The number of lines per second in IRC
 LINE_RATE = 0.5
 
-BOT_NAME = 'SkeletonBot'
-IRC_NETWORK = '127.0.0.1' # usually something like irc.server.net
-IRC_ROOM_NAME = '#room'
-NICKSERV = ''
+#BOT_NAME = 'SkeletonBot'
+#IRC_NETWORK = '127.0.0.1' # usually something like irc.server.net
+#IRC_ROOM_NAME = '#room'
+#NICKSERV = ''
 QUEUE_TIMER = 0.50
-IDLE_CHECK_SECONDS = 60
+IDLE_CHECK_SECONDS = 60*10
 
 from logos.settings import LOGGING
 logger = logging.getLogger(__name__)
@@ -123,7 +124,7 @@ class NicksDB:
     def add_nick_to_room(self, user, channel, opstatus = None):
         channel_info = {'nick': user, 'opdata': opstatus }
         nick_info = {'host': None, 'nickserv_approved':None,
-                     'idle_time':None}
+                     'idle_last_checked':None, 'idle_time':None}
         keep_list = []
         found = False
         if channel.lower() not in self.nicks_in_room:
@@ -176,7 +177,16 @@ class NicksDB:
 
     def set_idle_time(self, nick, idle):
         self.nicks_info[nick.lower()]['idle_time'] = idle
+        self.nicks_info[nick.lower()]['idle_last_checked'] = datetime.utcnow()
 
+    def get_nick_idle_times(self, nick):
+        try:
+            idle_time = self.nicks_info[nick.lower()]['idle_time']
+            idle_check_time = self.nicks_info[nick.lower()]['idle_last_checked']
+            return (idle_time, idle_check_time)
+        except KeyError:
+            return (None, None)
+        
     def get_nickserv_response(self, user):
         if 'nickserv_approved' in self.nicks_info[user.lower()]:
             return self.nicks_info[user.lower()]['nickserv_approved']
@@ -247,6 +257,9 @@ class IRCBot(irc.IRCClient):
     def get_room_nicks(self, room):
         return self.nicks_db.get_room_nicks(room)
 
+    def get_nick_idle_times(self, nick):
+        return self.nicks_db.get_nick_idle_times(nick)
+
     def onLogFlushTimer(self):
         # Getting flushed file output to actually appear inside the text file
         # is hard because windows still caches the output in OS buffers even after
@@ -312,7 +325,7 @@ class IRCBot(irc.IRCClient):
         irc.IRCClient.irc_RPL_YOURHOST(self, prefix, params)
         
     def irc_RPL_WHOISIDLE(self, prefix, params):
-        logger.info ("irc_RPL_WHOISIDLE {} {}".format(prefix,params))
+        logger.debug ("irc_RPL_WHOISIDLE {} {}".format(prefix,params))
         nick = params[1]
         idle = int(params[2])
         self.nicks_db.set_idle_time(nick, idle)
