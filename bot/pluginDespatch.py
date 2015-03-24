@@ -6,6 +6,7 @@ import logging
 import bot
 import pdb
 import types
+from twisted.internet import reactor
 from django.conf import settings
 from django.db import transaction
 
@@ -300,6 +301,7 @@ class PluginDespatcher(object):
         the plugins folder """
         
         self._obj_list = []  # the plugin object list of all loaded plugins
+        self._signal_data = [] # signals waiting to be processed
         self.irc_conn = irc_conn
         self.authenticated_users = AuthenticatedUsers(self.irc_conn.factory.network)
         NetworkPlugins.objects.filter(network=self.irc_conn.factory.network).update(loaded=False)
@@ -467,7 +469,19 @@ class PluginDespatcher(object):
             return False   
             
                                        
-        
+    def is_plugin_activated(self, plugin_name):
+        try:
+            net_plugin = NetworkPlugins.objects.get(\
+                plugin__name=plugin_name,
+                network = self.irc_conn.factory.network,
+                )
+
+            if net_plugin.enabled:
+                return True
+
+        except NetworkPlugins.DoesNotExist:
+            return False
+         
     def install_plugin(self, channel, plugin_name, enabled=False):
         if channel[0] =='#':
             net_plugin = NetworkPlugins.objects.get(\
@@ -522,8 +536,21 @@ class PluginDespatcher(object):
         for m in self._obj_list:
             if source != m:
                 if hasattr(m, 'onSignal_'+signal_id):
-                    fn = getattr(m, 'onSignal_'+signal_id)
-                    fn(source, data)
+                    plugin_name, _ = m.plugin
+                    if self.is_plugin_activated(plugin_name):
+                        fn = getattr(m, 'onSignal_'+signal_id)
+                        self._signal_data.append([fn, source, data])
+                        reactor.callLater(0,  self.process_signals)
+#                    fn(source, data)
+                    
+    def process_signals(self):
+        while self._signal_data:
+            signal = self._signal_data.pop(0)
+            fn = signal.pop(0)
+            source = signal.pop(0)
+            data = signal.pop(0)
+            print fn, source, data
+            fn(source, data)
 
     # ---- delegate methods below --------
 
