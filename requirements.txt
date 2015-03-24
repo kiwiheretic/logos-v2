@@ -9,4 +9,5 @@ GitPython==0.3.6
 python-dateutil==2.4.0
 python-twitter==2.2
 pytz==2014.10
-python-wordpress-xmlrpc==2.3
+beautifulsoup4==4.3.2
+lxml==3.4.2
