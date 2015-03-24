@@ -1,0 +1,41 @@
+{% load staticfiles %}
+<!DOCTYPE HTML>
+<html>
+<head>
+    <title>Splat Notes</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link href='http://fonts.googleapis.com/css?family=Montserrat' rel='stylesheet' type='text/css'>
+    <link rel="stylesheet" type="text/css" href="{% static 'cloud_notes/style.css' %}">    
+</head>
+<body>
+<div id="container">
+
+<div class="smart-green">
+    <h1>Splat's Cloud Notes
+        <span>without all the nonsence javascripts</span>
+    </h1>
+</div> <!-- smart-green -->    
+    <ul id="button-menu-container">
+        <li><a href="{% url 'cloud_notes.views.list' %}" class="button-link">Note List</a></li>
+        <li><a href="{% url 'cloud_notes.views.new_memo' %}" class="button-link">New Note</a></li>
+        <li><a href="#" class="button-link">Filters</a></li>
+        <li><a href="#" class="button-link">Tags</a></li>
+        <li><a href="#" class="button-link">Folders</a></li>
+        <li><a href="#" class="button-link">Preferences</a></li>
+        <li><a href="/accounts/logout/" class="button-link">Logout</a></li>
+    </ul>
+    <div id="notes-container">
+        {% block content %}
+        {% endblock %}
+    </div>       
+
+
+
+   
+</div> <!-- container -->
+<br/>
+<br/>
+</body>
+
+</html>

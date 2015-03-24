@@ -5,9 +5,10 @@ from django.contrib import admin
 
 # Remove RegistrationProfile widget from admin interface
 from registration.admin import RegistrationProfile
+admin.autodiscover()
 admin.site.unregister(RegistrationProfile)
 
-admin.autodiscover()
+
 
 urlpatterns = patterns('',
     # Examples:
@@ -18,6 +19,9 @@ urlpatterns = patterns('',
     # url(r'^admin/doc/', include('django.contrib.admindocs.urls')),
     url(r'^accounts/', include('registration.backends.default.urls')),
     url(r'^accounts/profile/', 'logos.views.profile'),
+    
+    url(r'^memos/', include('cloud_notes.urls')),
+    
     url(r'^bots/approve/(\d+)', 'logos.views.bot_approval'),
     url(r'^bots/deny/(\d+)', 'logos.views.bot_deny'),
     

@@ -1,0 +1,16 @@
+[
+  {
+    "model": "cloud_notes.folder",
+    "pk": 1,
+    "fields": {
+      "name": "Main"
+    }
+  },
+  {
+    "model": "cloud_notes.folder",
+    "pk": 2,
+    "fields": {
+      "name": "Trash"
+    }
+  }
+]

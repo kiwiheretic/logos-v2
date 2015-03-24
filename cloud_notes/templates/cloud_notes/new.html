@@ -1,0 +1,28 @@
+{% extends "cloud_notes/base.html" %}
+
+{% block content %}
+    
+    <!-- Form based on http://www.sanwebe.com/2013/10/css-html-form-styles -->
+    <form action="" method="post" >
+        {% csrf_token %}
+        <input type="hidden" name="id" value="{{note.id}}"/>
+        <label>
+            <span>Title :</span>
+            <input id="name" type="text" name="title" value="{{note.title}}" placeholder="The title of your note" />
+        </label>
+        
+       
+        <label>
+            <span>Contents :</span>
+            <textarea id="message" rows="20" name="note" placeholder="Type your note in here">{{note.note}}</textarea>
+        </label> 
+         <label>
+            <span>&nbsp;</span> 
+            <input type="submit" class="button" value="Send" /> 
+        </label> 
+         <label>
+            <span>&nbsp;</span> 
+            <input type="submit" class="button" style="float:right;" value="Cancel" /> 
+        </label>             
+    </form>
+{% endblock %}

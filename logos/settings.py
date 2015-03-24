@@ -7,7 +7,7 @@ logger = logging.getLogger(__name__)
 
 
 # Probably best to leave DEBUG = False unless testing or debugging.  If set
-# to true this uses up an inordinate amount of RAM over a period of time.
+# to true this uses up an inordinate amount of RAM over a short period of time.
 DEBUG = False
 
 TEMPLATE_DEBUG = DEBUG
@@ -33,6 +33,8 @@ ADMINS = (
 
 MANAGERS = ADMINS
 DB_ROOT = os.path.join(os.path.dirname(os.path.realpath(__file__)), "..", "sqlite-databases")
+
+
 
 DATABASES = {
     'default' : {
@@ -123,7 +125,7 @@ BIBLES_DIR = os.path.join(BASE_DIR, 'bibles')
 
 # Hosts/domain names that are valid for this site; required if DEBUG is False
 # See https://docs.djangoproject.com/en/1.5/ref/settings/#allowed-hosts
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['127.0.0.1', 'localhost']
 
 # Local time zone for this installation. Choices can be found here:
 # http://en.wikipedia.org/wiki/List_of_tz_zones_by_name
@@ -244,6 +246,7 @@ INSTALLED_APPS = (
     'guardian',
 
     'logos',
+    'cloud_notes',
     # Uncomment the next line to enable the admin:
      'django.contrib.admin',
     # Uncomment the next line to enable admin documentation:
@@ -315,6 +318,11 @@ LOGGING = {
             'handlers': ['null'],
             'propagate': False,
             'level': 'DEBUG',
+        },
+        'cloud_notes': {
+            'handlers': ['console_debug', 'file'],
+            'level': 'DEBUG',
+            'propagate': False,
         },
         'logos': {
             'handlers': ['console', 'file'],

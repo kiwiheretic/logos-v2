@@ -1,0 +1,36 @@
+{% extends "cloud_notes/base.html" %}
+
+{% block content %}
+<ul class="splat-notes">
+    {% for note in notes %}
+    <li><a class="note-title" href="{% url 'cloud_notes.views.preview' note.id %}">{{note.title}}</a>
+    <div class="note-date">Created: {{ note.created_at }}</div>
+    <div class="note-date">Modified: {{ note.modified_at }}</div>
+    <div class="note-excerpt">{{note.note|truncatewords:20}}</div></li>
+    {% empty %}
+    <li><span id="no-notes">Sorry, no notes found in this folder</span></li>
+    {% endfor %}
+</ul>    
+
+
+<div class="tag-cloud">
+<h2>Tag Cloud <span>(most recently used)</span></h2>
+<p id="tags"><span class="tag-size1">#bible</span>
+<span class="tag-size3">#kingdom</span>
+<span class="tag-size2">#teaching</span>
+</p>
+</div>
+{% if notes.has_other_pages %}
+<div class="pagination">
+                <a href="?page=1" class="page gradient">first</a>
+                {% if notes.has_previous %}
+                <a href="?page={{notes.previous_page_number}}" class="page gradient">prev</a>
+                {% endif %}
+                <span class="page active">{{notes.number}}</span>
+                {% if notes.has_next %}
+                <a href="?page={{notes.next_page_number}}" class="page gradient">next</a>
+                {% endif %}
+                <a href="?page={{notes.paginator.num_pages}}" class="page gradient">last</a>
+</div> <!-- pagination -->        
+{% endif %}
+{% endblock %}

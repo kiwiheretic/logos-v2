@@ -262,9 +262,9 @@ def populate_concordance(options):
         idx = 0
         iidx = 0
         for vs in bv:
-
-            text = re.sub(r"[^a-zA-Z0-9\s]", "",  vs.verse_text)
-            text = re.sub(PUNCTUATION, "", text)
+            text = re.sub(r"-", " ",  vs.verse_text)
+            text = re.sub(r"[^a-zA-Z0-9\s]", "",  text)
+#            text = re.sub(PUNCTUATION, "", text)
             if not text:
                 continue
             words = re.split('\s+', text.lower().strip())
