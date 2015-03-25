@@ -243,12 +243,25 @@ select {
 
 /*--------------------------------------------------------*/
 /* Based on http://usabilitypost.com/2012/01/10/pressed-button-state-with-css3/ */
+
+#main-button-menu-title {
+    margin-left: 10px;
+}
+
+#top-button-menu-container a.button-link {
+    background: #4479BA;
+    color: #FFF;
+}
+#app-button-menu-container a.button-link {
+    background: #272;
+    color: #FFF;
+}
+
 a.button-link {
     font-size: large;
     text-decoration: none;
     padding: 10px 25px;
-    background: #4479BA;
-    color: #FFF;
+
     display:block;
     width: 150px;
     margin-right: 15px;
@@ -289,15 +302,15 @@ a.small-button-link {
     box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.4), 0 1px 1px rgba(0, 0, 0, 0.2);            
 }
 
-ul#button-menu-container li {
+ul.btn-menu-container li {
     display: inline;
     float: left;
 }
-ul#button-menu-container li a {
+ul.btn-menu-container li a {
     display: block;
 }
 
-ul#button-menu-container {
+ul.btn-menu-container {
     list-style-type: none;
     margin-left: 20px;
 

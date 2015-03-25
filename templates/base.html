@@ -7,6 +7,12 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link href='http://fonts.googleapis.com/css?family=Montserrat' rel='stylesheet' type='text/css'>
     <link rel="stylesheet" type="text/css" href="{% static 'cloud_notes/style.css' %}">    
+    
+    <style>
+        {% block style %}
+        {% endblock %}
+    </style>
+    
 </head>
 <body>
 <div id="container">
@@ -17,16 +23,15 @@
     </h1>
 </div> <!-- smart-green -->
     {% if not suppress_menu and request.user.is_authenticated %}
-    <ul id="button-menu-container">
-        <li><a href="{% url 'cloud_notes.views.list' %}" class="button-link">Note List</a></li>
-        <li><a href="{% url 'cloud_notes.views.new_memo' %}" class="button-link">New Note</a></li>
-        <li><a href="#" class="button-link">Filters</a></li>
-        <li><a href="#" class="button-link">Labels</a></li>
-        <li><a href="{% url 'cloud_notes.views.folders' %}" class="button-link">Folders</a></li>
-        <li><a href="#" class="button-link">Preferences</a></li>
-        <li><a href="{% url 'cloud_notes.views.export' %}" class="button-link">Export</a></li>
+    {% block button_menu %}
+    <h2 id="main-button-menu-title">Main Menu</h2>
+    <ul id="top-button-menu-container" class="btn-menu-container">
+        <li><a href="{% url 'cloud_notes.views.list' %}" class="button-link">Notes</a></li>
+        <li><a href="#" class="button-link">Memos</a></li>
+        <li><a href="#" class="button-link">Forums</a></li>
         <li><a href="/accounts/logout/" class="button-link">Logout</a></li>
     </ul>
+    {% endblock %}
     {% endif %}
     <div id="notes-container">
         {% block content %}

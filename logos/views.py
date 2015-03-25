@@ -43,61 +43,63 @@ def _get_rpc_url():
 
 @login_required()
 def profile(request):
+    context = {}
+    return render(request, 'logos/profile.html', context) 
+    
+#    if request.method == 'GET':
+#        settings = _get_settings()
+#        host = settings.get('rpc_host', None)
+#        port = settings.get('rpc_port', None)
+#        form = SettingsForm(initial=settings)
+#    elif request.method == 'POST':
+#        form = SettingsForm(request.POST)
+#        s = Settings()
+#        if form.is_valid():
+#            for fld in form:
+#                try:
+#                    obj = Settings.objects.get(option = fld.name)
+#                    obj.option = fld.name
+#                    obj.value = fld.value()
+#                    obj.save()
+#                except Settings.DoesNotExist:
+#                    obj = Settings(option=fld.name, value=fld.value())
+#                    obj.save()
 
-    if request.method == 'GET':
-        settings = _get_settings()
-        host = settings.get('rpc_host', None)
-        port = settings.get('rpc_port', None)
-        form = SettingsForm(initial=settings)
-    elif request.method == 'POST':
-        form = SettingsForm(request.POST)
-        s = Settings()
-        if form.is_valid():
-            for fld in form:
-                try:
-                    obj = Settings.objects.get(option = fld.name)
-                    obj.option = fld.name
-                    obj.value = fld.value()
-                    obj.save()
-                except Settings.DoesNotExist:
-                    obj = Settings(option=fld.name, value=fld.value())
-                    obj.save()
+#        settings = _get_settings()
+#        host = settings.get('rpc_host', None)
+#        port = settings.get('rpc_port', None)
+        
+#    if not host or not port:
+#        context = {'form':form, 'errors': 'Missing connection parameters'}
+#        return render(request, 'logos/profile.html', context)        
+#    try:
+#        url = _get_rpc_url()
+#        srv = xmlrpclib.Server(url)
+#        network = srv.get_network_name()
+        
+#        # Can't send/receive objects across twisted RPC, must pickle
+#        nicks_pickle = srv.get_nicks_db()
+#        nicks_db = pickle.loads(nicks_pickle)
+        
+#        rooms = nicks_db.get_rooms()
+#        room_info = nicks_db.nicks_in_room
+#        nicks_info = nicks_db.nicks_info
+        
+#        # fix a problem with the fact that templates don't
+#        # like hyphenated variables in templates
+#        for k in nicks_info.keys():
+#            if 'bot-status' in nicks_info[k]:
+#                nicks_info[k]['bot_status'] = nicks_info[k]['bot-status']
+#            else:
+#                nicks_info[k]['bot_status'] = False
 
-        settings = _get_settings()
-        host = settings.get('rpc_host', None)
-        port = settings.get('rpc_port', None)
+#        context = {'network': network, 'rooms': rooms, 'rooms_info': room_info,
+#                   'nicks_info': nicks_info, 'form':form}
         
-    if not host or not port:
-        context = {'form':form, 'errors': 'Missing connection parameters'}
-        return render(request, 'logos/profile.html', context)        
-    try:
-        url = _get_rpc_url()
-        srv = xmlrpclib.Server(url)
-        network = srv.get_network_name()
-        
-        # Can't send/receive objects across twisted RPC, must pickle
-        nicks_pickle = srv.get_nicks_db()
-        nicks_db = pickle.loads(nicks_pickle)
-        
-        rooms = nicks_db.get_rooms()
-        room_info = nicks_db.nicks_in_room
-        nicks_info = nicks_db.nicks_info
-        
-        # fix a problem with the fact that templates don't
-        # like hyphenated variables in templates
-        for k in nicks_info.keys():
-            if 'bot-status' in nicks_info[k]:
-                nicks_info[k]['bot_status'] = nicks_info[k]['bot-status']
-            else:
-                nicks_info[k]['bot_status'] = False
-
-        context = {'network': network, 'rooms': rooms, 'rooms_info': room_info,
-                   'nicks_info': nicks_info, 'form':form}
-        
-        return render(request, 'logos/profile.html', context)
-    except socket.error:
-        context = {'form':form, 'errors': 'Could not connect to Logos bot'}
-        return render(request, 'logos/profile.html', context)
+#        return render(request, 'logos/profile.html', context)
+#    except socket.error:
+#        context = {'form':form, 'errors': 'Could not connect to Logos bot'}
+#        return render(request, 'logos/profile.html', context)
 
 @login_required()    
 def bot_approval(request, req_id):

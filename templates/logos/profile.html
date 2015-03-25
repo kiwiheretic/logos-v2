@@ -1,111 +1,12 @@
-{% extends "base_nav.html" %}
-{% load cycle from future %}
+{% extends "base.html" %}
 
 {% block style %}
-h2 {
-    text-decoration: underline;
-}
-#bot-info {
-    text-align: left;
-    margin-left: 10px;
-}
 
-.odd-row {
-   background: #e0ffb8;
-}
-
-.even-row {
-}
-
-input[type="submit"] {
-    float: left;
-}
-
-#settings-fieldset {
-    margin-top: 10px;
-}
 
 {% endblock %}
 
 {% block content %}
 
-{% if errors %}
-<div class="messages">{{errors}}</div>
 
-{% endif %}
-
-<div id="bot-info">
-
-<fieldset id="settings-fieldset">
-    <legend id="settings-legend">Settings</legend>
-<form id="logos-settings" method="POST">{% csrf_token %}
-
-{% include "partials/form_fields.html" %}
-<input type="submit" value="Save"/>
-</form>
-</fieldset>
-{% if not errors %}
-<h1>Network: {{network}} </h1>
-<br/>
-<br/>
-<h2>Logos Bot User Database</h2>
-<br/>
-<h3>Room Info</h3>
-<table>
-<thead>
-<tr>
-<th>Room</th>        
-<th>Nick</th>
-<th>Ops</th>
-</tr>    
-</thead>    
-<tbody>
-
-{% for rm, rm_val in rooms_info.items %}
-
-    {% for r in rm_val %}
-    <tr class="{% cycle 'odd-row' 'even-row' %}">
-        <td>{{rm}}</td>
-        <td>{{r.nick}}</td>
-        <td>{{r.opdata|default_if_none:""}}</td>
-    </tr>
-    {% endfor %}
-{% endfor %}
-</tbody>
-</table>
-
-
-<br/>
-
-<h3>Nick Info</h3>
-<table>
-<thead>
-<tr>
-<th>Nick</th>        
-<th>Registered?</th>
-<th>Ident</th>
-<th>Bot?</th>
-</tr>
-
-</thead>
-<tbody>
-{% for k,v in nicks_info.items %}
-
-<tr  class="{% cycle 'odd-row' 'even-row' %}">
-    <td>{{k}}</td>
-    <td>{{v.nickserv_approved|yesno:"yes,no"}}</td>
-    <td>{{v.ident}}</td>
-    <td>{{v.bot_status|yesno}}</td>
-</tr>
-{% endfor %}
-</tbody>
-</table>
-
-
-
-
-
-</div>  <!-- dashboard -->
-{% endif %}
 
 {% endblock content %}
