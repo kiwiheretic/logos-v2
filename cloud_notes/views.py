@@ -8,6 +8,12 @@ from models import Note, Folder
 from datetime import datetime
 
 @login_required()
+def folders(request):
+    folders = Folder.objects.all()
+    context = {'folders':folders}
+    return render(request, 'cloud_notes/folders.html', context)
+    
+@login_required()
 def list(request):
     notes_list = Note.objects.filter(folder__name = "Main", user=request.user).\
         order_by('-modified_at')
@@ -98,4 +104,5 @@ def trash_memo(request, note_id):
     
 @login_required()
 def export(request):
-    pass
+    context = {}
+    return render(request, 'cloud_notes/export.html', context)

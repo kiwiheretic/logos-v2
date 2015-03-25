@@ -8,4 +8,5 @@ urlpatterns = patterns('cloud_notes.views',
     url(r'^edit/(\d+)', 'edit_memo'),
     url(r'^trash/(\d+)', 'trash_memo'),
     url(r'^export/', 'export'),
+    url(r'^folders/', 'folders'),
 )
