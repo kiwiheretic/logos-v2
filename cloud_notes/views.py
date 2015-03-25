@@ -14,8 +14,15 @@ def list(request):
     paginator = Paginator(notes_list, 10) # Show 10 contacts per page
 
     page = request.GET.get('page')
+    
+    # work with the page in session as we use the session
+    # to keep track of what page we were last on.
+    if page is None and 'page' in request.session:
+        page = request.session['page']
+
     try:
         notes = paginator.page(page)
+        request.session['page'] = page
     except PageNotAnInteger:
         # If page is not an integer, deliver first page.
         notes = paginator.page(1)
@@ -71,6 +78,7 @@ def edit_memo(request, note_id):
             note = Note.objects.get(pk=note_id)
             note.title = request.POST['title']
             note.note = request.POST['note']
+            note.modified_at = datetime.utcnow()
             note.save()
         else:
             print "note not saved"
