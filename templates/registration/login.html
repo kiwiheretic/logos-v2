@@ -1,4 +1,4 @@
-{% extends "base_nav.html" %}
+{% extends "base.html" %}
 
 {% block style %}
 
@@ -23,7 +23,8 @@
 <input type="hidden" name="next" value="{{ next }}" />
 </form>
 <p id="register-link">If you don't have an account you will need to 
-<a href='/accounts/register/'>register</a> first.</p>
+<a href='/accounts/register/'>register</a> first.</p>  (Registration doesn't actually 
+work right now because I don't have an outbound mail port yet!)
 </fieldset>
 </div>
 {% endblock content %}

@@ -8,7 +8,7 @@ logger = logging.getLogger(__name__)
 
 # Probably best to leave DEBUG = False unless testing or debugging.  If set
 # to true this uses up an inordinate amount of RAM over a short period of time.
-DEBUG = False
+DEBUG = True
 
 TEMPLATE_DEBUG = DEBUG
 

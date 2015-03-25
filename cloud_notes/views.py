@@ -9,7 +9,8 @@ from datetime import datetime
 
 @login_required()
 def list(request):
-    notes_list = Note.objects.order_by('-modified_at')
+    notes_list = Note.objects.filter(folder__name = "Main", user=request.user).\
+        order_by('-modified_at')
     paginator = Paginator(notes_list, 10) # Show 10 contacts per page
 
     page = request.GET.get('page')
@@ -33,7 +34,7 @@ def preview(request, note_id):
 @login_required()
 def new_memo(request):
     if request.method == 'GET':
-        context = {}
+        context = {'suppress_menu':True}
         return render(request, 'cloud_notes/new.html', context)
     elif request.method == 'POST':
         form = NoteForm(request.POST)
@@ -69,5 +70,17 @@ def edit_memo(request, note_id):
         return redirect('cloud_notes.views.preview', note_id)
     else: # GET
         note = Note.objects.get(pk=note_id)
-        context = {'note':note}
-        return render(request, 'cloud_notes/new.html', context)            
+        context = {'note':note, 'suppress_menu':True}
+        return render(request, 'cloud_notes/new.html', context)
+        
+@login_required()
+def trash_memo(request, note_id):
+    trash = Folder.objects.get(name="Trash")
+    note = Note.objects.get(pk=note_id)
+    note.folder = trash
+    note.save()
+    return redirect('cloud_notes.views.list')
+    
+@login_required()
+def export(request):
+    pass

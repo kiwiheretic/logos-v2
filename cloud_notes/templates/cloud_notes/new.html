@@ -3,7 +3,7 @@
 {% block content %}
     
     <!-- Form based on http://www.sanwebe.com/2013/10/css-html-form-styles -->
-    <form action="" method="post" >
+    <form class="note-form" style="margin-left:2px;" action="" method="post" >
         {% csrf_token %}
         <input type="hidden" name="id" value="{{note.id}}"/>
         <label>

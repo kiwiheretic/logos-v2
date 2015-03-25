@@ -12,10 +12,11 @@
 <div id="container">
 
 <div class="smart-green">
-    <h1>Splat's Cloud Notes
+    <h1>Splat's Cloud MemoServ/Forum/Anything you like ;)
         <span>without all the nonsence javascripts</span>
     </h1>
-</div> <!-- smart-green -->    
+</div> <!-- smart-green -->
+    {% if not suppress_menu and request.user.is_authenticated %}
     <ul id="button-menu-container">
         <li><a href="{% url 'cloud_notes.views.list' %}" class="button-link">Note List</a></li>
         <li><a href="{% url 'cloud_notes.views.new_memo' %}" class="button-link">New Note</a></li>
@@ -23,8 +24,10 @@
         <li><a href="#" class="button-link">Tags</a></li>
         <li><a href="#" class="button-link">Folders</a></li>
         <li><a href="#" class="button-link">Preferences</a></li>
+        <li><a href="{% url 'cloud_notes.views.export' %}" class="button-link">Export</a></li>
         <li><a href="/accounts/logout/" class="button-link">Logout</a></li>
     </ul>
+    {% endif %}
     <div id="notes-container">
         {% block content %}
         {% endblock %}

@@ -18,7 +18,8 @@ urlpatterns = patterns('',
     # Uncomment the admin/doc line below to enable admin documentation:
     # url(r'^admin/doc/', include('django.contrib.admindocs.urls')),
     url(r'^accounts/', include('registration.backends.default.urls')),
-    url(r'^accounts/profile/', 'logos.views.profile'),
+#    url(r'^accounts/profile/', 'logos.views.profile'),
+    url(r'^accounts/profile/', include('cloud_notes.urls')),
     
     url(r'^memos/', include('cloud_notes.urls')),
     

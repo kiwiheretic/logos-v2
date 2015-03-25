@@ -15,7 +15,15 @@ h2 span {
 
     width:100%;
 }
+/* ------- login panels ------------- */
+#login-fieldset {
+    border-radius: 5px;
 
+}
+
+.fieldset-wrapper {
+    float: left;
+}
 
 /*######## Smart Green ########*/
 .smart-green {
@@ -42,6 +50,11 @@ h2 span {
     border-bottom:1px solid #89AF4C;
 
 }
+
+a {
+    margin:0;
+    
+}
 .smart-green h1>span {
     display: block;
     font-size: 11px;
@@ -57,7 +70,7 @@ label>span {
     margin-top: 10px;
     color: #5E5E5E;
 }
-input[type="text"], input[type="email"], textarea, select {
+.note-form input[type="text"], input[type="email"], textarea, select {
     color: #555;
     height: 40px;
     line-height:15px;
@@ -117,7 +130,15 @@ select {
 }  
 .splat-notes .note-date {
     text-indent: 1.3em;
-}   
+    font-size: small;
+}  
+
+.splat-notes .note-date span {
+    display:block;
+
+    margin-left: 10px;
+}
+  
 .splat-notes .note-excerpt {
     margin-left: 1em;
     margin-top: 1em;
@@ -243,16 +264,20 @@ a.button-link {
     box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.4), 0 1px 1px rgba(0, 0, 0, 0.2);            
 }
 
+#small-btn-container {
+    width:100%;
+}
 a.small-button-link {
     xfont-size: large;
     text-decoration: none;
     padding: 5px 15px;
     background: #4479BA;
     color: #FFF;
-    display:block;
-    width: 50px;
-    margin-right: 15px;
-    margin-bottom: 10px;
+    display:inline;
+    width: 60px;
+    margin-left: 5px !important;
+    margin-right: 10px;
+    margin-bottom: 20px;
             
     -webkit-border-radius: 4px;
     -moz-border-radius: 4px;
