@@ -37,36 +37,43 @@ def new_memo(request):
         context = {'suppress_menu':True}
         return render(request, 'cloud_notes/new.html', context)
     elif request.method == 'POST':
-        form = NoteForm(request.POST)
-        context = {'form':form}
-        
-        if form.is_valid():
-            # do stuff
-            # ...
-            main = Folder.objects.get(name="Main")
-            obj = Note()
-            obj.title = form.cleaned_data['title']
-            obj.note = form.cleaned_data['note']
-            obj.post_type = 'note'
-            obj.created_at = datetime.utcnow()
-            obj.modified_at = datetime.utcnow()
-            obj.user = request.user
-            obj.folder = main
-            obj.save()
-            
+        print request.POST
+        if "cancel" in request.POST:
             return redirect('cloud_notes.views.list')
         else:
-            print form.errors
-            return render(request, 'cloud_notes/new.html', context)
+            form = NoteForm(request.POST)
+            context = {'form':form}
+            
+            if form.is_valid():
+                # do stuff
+                # ...
+                main = Folder.objects.get(name="Main")
+                obj = Note()
+                obj.title = form.cleaned_data['title']
+                obj.note = form.cleaned_data['note']
+                obj.post_type = 'note'
+                obj.created_at = datetime.utcnow()
+                obj.modified_at = datetime.utcnow()
+                obj.user = request.user
+                obj.folder = main
+                obj.save()
+                
+                return redirect('cloud_notes.views.list')
+            else:
+                print form.errors
+                return render(request, 'cloud_notes/new.html', context)
 
 @login_required()
 def edit_memo(request, note_id):
     if request.method == 'POST':
-        print request.POST
-        note = Note.objects.get(pk=note_id)
-        note.title = request.POST['title']
-        note.note = request.POST['note']
-        note.save()
+        if "save" in request.POST:
+            print request.POST
+            note = Note.objects.get(pk=note_id)
+            note.title = request.POST['title']
+            note.note = request.POST['note']
+            note.save()
+        else:
+            print "note not saved"
         return redirect('cloud_notes.views.preview', note_id)
     else: # GET
         note = Note.objects.get(pk=note_id)
