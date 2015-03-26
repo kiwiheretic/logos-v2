@@ -1,0 +1,7 @@
+{% load widget_tweaks %}
+
+<p class="field">
+    {{ field.errors }}
+    <label for="id_subject">{{ field.label }}:</label>
+    {{ field|add_class:"input-xxlarge"|attr:"rows:5" }}
+</p>

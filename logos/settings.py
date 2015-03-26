@@ -249,6 +249,8 @@ INSTALLED_APPS = (
 
     'logos',
     'cloud_notes',
+    'pybb',
+    'widget_tweaks',
 #    'simple_forums',
     # Uncomment the next line to enable the admin:
      'django.contrib.admin',

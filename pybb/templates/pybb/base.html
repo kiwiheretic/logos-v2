@@ -1,0 +1,35 @@
+{% extends 'base.html' %}
+
+{% block meta_description%}{% block pybb_meta_description %}{% endblock %}{% endblock %}
+{% block meta_keywords %}{% block pybb_meta_keywords %}{% endblock %}{% endblock %}
+{% block title %}{% block pybb_title %}{% endblock %}{% endblock %}
+
+{% block extra_js %}
+    {% block pybb_extra_js %}{% endblock %}
+{% endblock %}
+
+{% block button_menu %}
+<ul id="app-button-menu-container" class="btn-menu-container">
+    <li><a href="{% url 'pybb:pybb.views.home_page' %}" class="button-link">Forum Top</a></li>
+    <li><a href="{% url 'logos.views.profile' %}" class="button-link">Main Menu</a></li>
+</ul>
+
+<!--    url(r'^$', 'home_page', name='home_page'),-->
+<!--    url(r'^forum/(\d+)$', 'forum_page', name='forum_page'),-->
+<!--    url(r'^topic/(\d+)$', 'topic_page', name='topic_page'),-->
+<!--    url(r'^post/add$', 'post_add', name='post_add'),-->
+<!--    url(r'^topic/add$', 'topic_add', name='topic_add'),-->
+<!--    url(r'^topic/(\d+)/delete$', 'topic_delete', name='topic_delete'),-->
+{% endblock %}
+
+{% block crumbs %}
+<ul class="breadcrumb">
+    <li><a href="/">Начало</a> <span class="divider">/</span></li>
+    <li><a href="{% url 'pybb:home_page' %}">Форум</a> <span class="divider">/</span></li>
+    {% block pybb_crumbs %}{% endblock %}
+</ul>
+{% endblock %}
+
+{% block content %}
+    {% block pybb_content %}{% endblock %}
+{% endblock %}

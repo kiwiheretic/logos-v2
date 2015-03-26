@@ -22,7 +22,7 @@ urlpatterns = patterns('',
 #    url(r'^accounts/profile/', include('cloud_notes.urls')),
     
     url(r'^notes/', include('cloud_notes.urls')),
-    
+    url(r'^forum/', include('pybb.urls', namespace='pybb')),
     url(r'^bots/approve/(\d+)', 'logos.views.bot_approval'),
     url(r'^bots/deny/(\d+)', 'logos.views.bot_deny'),
     
