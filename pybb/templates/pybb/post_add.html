@@ -6,7 +6,7 @@
 {% endblock %}
 
 {% block content %}
-<h1>Ответ в тему {{ topic }}</h1>
+<h1>Reply to this topic {{ topic }}</h1>
 <form method="post">
     {% csrf_token %}
     {{ form.as_p }}
