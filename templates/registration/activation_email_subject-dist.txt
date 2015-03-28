@@ -1,0 +1,1 @@
+Activate your your.server.here account - you have {{ expiration_days }} days!

@@ -1,1 +1,0 @@
-Activate your chatopia account - you have {{ expiration_days }} days!
