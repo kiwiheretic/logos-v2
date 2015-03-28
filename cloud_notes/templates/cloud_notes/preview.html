@@ -3,8 +3,8 @@
 
 <h1>{{note.title}}</h1>
 <div id="small-btn-container">
-<a href="{% url 'cloud_notes.views.edit_memo' note.id %}" class="small-button-link" style="margin-left:4em;">Edit</a>
-<a href="{% url 'cloud_notes.views.trash_memo' note.id %}" class="small-button-link" style="margin-left:4em;">Trash</a>  
+<a href="{% url 'cloud_notes.views.edit_note' note.id %}" class="small-button-link" style="margin-left:4em;">Edit</a>
+<a href="{% url 'cloud_notes.views.trash_note' note.id %}" class="small-button-link" style="margin-left:4em;">Trash</a>  
 </div>
 <div class="note-preview">
 {{note.note|linebreaks}}

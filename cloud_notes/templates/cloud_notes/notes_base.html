@@ -1,10 +1,11 @@
 {% extends "base.html" %}
 
+{% block menu_title %}Notes Menu{% endblock %}
 {% block button_menu %}
 <ul id="app-button-menu-container" class="btn-menu-container">
 
     <li><a href="{% url 'cloud_notes.views.list' %}" class="button-link">Note List</a></li>
-    <li><a href="{% url 'cloud_notes.views.new_memo' %}" class="button-link">New Note</a></li>
+    <li><a href="{% url 'cloud_notes.views.new_note' %}" class="button-link">New Note</a></li>
     <li><a href="#" class="button-link">Filters</a></li>
     <li><a href="#" class="button-link">Labels</a></li>
     <li><a href="{% url 'cloud_notes.views.folders' %}" class="button-link">Folders</a></li>

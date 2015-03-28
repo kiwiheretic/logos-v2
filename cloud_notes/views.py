@@ -45,7 +45,7 @@ def preview(request, note_id):
     return render(request, 'cloud_notes/preview.html', context)
     
 @login_required()
-def new_memo(request):
+def new_note(request):
     if request.method == 'GET':
         context = {'suppress_menu':True}
         return render(request, 'cloud_notes/new.html', context)
@@ -77,7 +77,7 @@ def new_memo(request):
                 return render(request, 'cloud_notes/new.html', context)
 
 @login_required()
-def edit_memo(request, note_id):
+def edit_note(request, note_id):
     if request.method == 'POST':
         if "save" in request.POST:
             print request.POST
@@ -95,7 +95,7 @@ def edit_memo(request, note_id):
         return render(request, 'cloud_notes/new.html', context)
         
 @login_required()
-def trash_memo(request, note_id):
+def trash_note(request, note_id):
     trash = Folder.objects.get(name="Trash")
     note = Note.objects.get(pk=note_id)
     note.folder = trash
