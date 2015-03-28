@@ -47,7 +47,7 @@ class NotesPlugin(Plugin):
                 utc_tz = pytz.timezone("UTC")                
                 note.modified_at = utc_tz.localize(dt)
                 note.save()
-                self.notice(nick, "-- text logged to WP --")
+                self.notice(nick, "-- text logged to cloud notes --")
 
     def onSignal_verse_lookup(self, source, data):
         nick = data['nick']
@@ -115,7 +115,7 @@ class NotesPlugin(Plugin):
         username = self.get_auth().get_username(nick)
         if username in self.user_notes:
             del self.user_notes[username]
-        self.say(chan, "Note logging turned on for "+nick)    
+        self.say(chan, "Note logging turned off for "+nick)    
         
     @login_required()
     def list_notes(self, regex, chan, nick, **kwargs):
