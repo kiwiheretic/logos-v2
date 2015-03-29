@@ -6,16 +6,42 @@ from forms import NoteForm
 from models import Note, Folder
 # Create your views here.
 from datetime import datetime
+from forms import NewFolderForm
 
 @login_required()
 def folders(request):
     folders = Folder.objects.all()
     context = {'folders':folders}
-    return render(request, 'cloud_notes/folders.html', context)
+    if request.method == 'POST':
+        # changing to a different folder
+        if "change_folder" in request.POST:
+            request.session['notes_folder'] = request.POST['folder']
+            # If we are changing folders we don't 
+            # want to keep to what page we were on in
+            # the other folder.
+            if 'page' in request.session:
+                del request.session['page']
+            return redirect('cloud_notes.views.list')
+        if "create_folder" in request.POST:
+            form = NewFolderForm(request.POST)
+            if form.is_valid():
+                folder_name = form.cleaned_data['folder']
+                folder = Folder(name = folder_name)
+                folder.save()
+                return redirect('cloud_notes.views.list')
+            else:
+                context['form'] = form
+                return render(request, 'cloud_notes/folders.html', context)
+    else:
+        return render(request, 'cloud_notes/folders.html', context)
     
 @login_required()
 def list(request):
-    notes_list = Note.objects.filter(folder__name = "Main", user=request.user).\
+    if 'notes_folder' in request.session:
+        folder = Folder.objects.get(pk = request.session['notes_folder'])
+    else:
+        folder = Folder.objects.get(name = "Main")
+    notes_list = Note.objects.filter(folder = folder, user=request.user).\
         order_by('-modified_at')
     paginator = Paginator(notes_list, 10) # Show 10 contacts per page
 
@@ -35,14 +61,24 @@ def list(request):
     except EmptyPage:
         # If page is out of range (e.g. 9999), deliver last page of results.
         notes = paginator.page(paginator.num_pages)
-    context = {'notes':notes}
+    context = {'notes':notes, 'folder':folder}
     return render(request, 'cloud_notes/list.html', context)
     
 @login_required()
 def preview(request, note_id):
     note = Note.objects.get(pk=note_id)
-    context = {'note':note}
-    return render(request, 'cloud_notes/preview.html', context)
+    if request.method == "POST":
+        if "move_folder" in request.POST:
+            folder = Folder.objects.get(pk=request.POST['folder'])
+            note.folder = folder
+            note.save()
+            return redirect('cloud_notes.views.list')
+            
+
+    else:
+        folders = Folder.objects.all()
+        context = {'note':note, 'folders':folders}
+        return render(request, 'cloud_notes/preview.html', context)
     
 @login_required()
 def new_note(request):
@@ -101,7 +137,13 @@ def trash_note(request, note_id):
     note.folder = trash
     note.save()
     return redirect('cloud_notes.views.list')
-    
+
+@login_required()
+def delete_note(request, note_id):
+    note = Note.objects.get(pk=note_id)
+    note.delete()
+    return redirect('cloud_notes.views.list')
+        
 @login_required()
 def export(request):
     context = {}

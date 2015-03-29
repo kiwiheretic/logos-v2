@@ -1,0 +1,32 @@
+{% extends "cloud_memos\memos_base.html" %}
+
+{% block content %}
+    
+    <!-- Form based on http://www.sanwebe.com/2013/10/css-html-form-styles -->
+    <form class="note-form" style="margin-left:2px;" action="" method="post" >
+        {% csrf_token %}
+        <label>
+            <span>To :</span>
+            <input id="to" type="text" name="to" value="{{note.title}}" placeholder="The title of your note" />
+        </label>
+        <label>
+            <span>Subject :</span>
+            <input id="subject" type="text" name="subject" value="{{note.title}}" placeholder="The title of your note" />
+        </label>        
+       
+        <label>
+            <span>Message :</span>
+            <textarea id="message" rows="20" name="message" placeholder="Type your message here">{{note.note}}</textarea>
+        </label> 
+         <label>
+            <span>&nbsp;</span> 
+            <input type="submit" name="save" class="button" value="Save" /> 
+        </label> 
+         <label>
+            <span>&nbsp;</span> 
+            <input type="submit" name="cancel" class="button" style="float:right;" value="Cancel" /> 
+        </label>             
+    </form>
+    <br/>
+    <br/>
+{% endblock %}

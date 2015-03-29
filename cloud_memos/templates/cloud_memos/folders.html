@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% block content %}
+
+<h1>Folders</h1>
+
+<form style="margin-left:2px;" action="" method="post" >
+    {% csrf_token %}
+
+    <label style="float:left;">
+        <span>Select Folder</span><select name="selection" >
+        <option value="0">Select Folder</option>
+        {% for folder in folders %}
+        <option value="{{folder.id}}">{{folder.name}}</option>
+        {% endfor %}
+        </select>
+    </label>    
+   
+   
+    <label style="float:left; clear:left;">
+        <span>&nbsp;</span> 
+        <input type="submit" name="cancel" class="button" value="Change Folder" /> 
+    </label>             
+</form>
+{% for folder in folders %}
+
+{% endfor %}
+
+{% endblock %}

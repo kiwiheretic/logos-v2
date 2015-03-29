@@ -4,8 +4,26 @@
 <h1>{{note.title}}</h1>
 <div id="small-btn-container">
 <a href="{% url 'cloud_notes.views.edit_note' note.id %}" class="small-button-link" style="margin-left:4em;">Edit</a>
+{% if note.folder.name == "Trash" %}
+<a href="{% url 'cloud_notes.views.delete_note' note.id %}" class="small-button-link" style="margin-left:4em;">Delete Permanently</a>  
+{% else %}
 <a href="{% url 'cloud_notes.views.trash_note' note.id %}" class="small-button-link" style="margin-left:4em;">Trash</a>  
+{% endif %}
 </div>
+<form action="" method="post">
+        {% csrf_token %}
+    <label>
+        <span>Select Folder to move note to: </span><select name="folder" >
+        {% for folder in folders %}
+        <option value="{{folder.id}}">{{folder.name}}</option>
+        {% endfor %}
+        </select>
+    </label>
+    <label>
+        <span>&nbsp;</span> 
+        <input type="submit" name="move_folder" class="button" value="Move To Folder" /> 
+    </label>          
+</form>
 <div class="note-preview">
 {{note.note|linebreaks}}
 </div>    

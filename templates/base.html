@@ -6,7 +6,7 @@
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link href='http://fonts.googleapis.com/css?family=Montserrat' rel='stylesheet' type='text/css'>
-    <link rel="stylesheet" type="text/css" href="{% static 'cloud_notes/style.css' %}">    
+    <link rel="stylesheet" type="text/css" href="{% static 'style.css' %}">    
     
     <style>
         {% block style %}
@@ -18,20 +18,24 @@
 <div id="container">
 
 <div class="smart-green">
-    <h1>Splat's Cloud MemoServ/Forum/Anything you like ;)
+    <h1>Splat's Cloud NoteServ / MemoServ / ForumServ / Anything you like ;)
         <span>without all the nonsence javascripts</span>
     </h1>
 </div> <!-- smart-green -->
     {% if not suppress_menu and request.user.is_authenticated %}
+    <div id="menu-title">
+        <h2>{% block menu_title %}Main Menu{% endblock %}</h2>
+    </div>
+    <div id="button-menu-div">
     {% block button_menu %}
-    <h2 id="main-button-menu-title">Main Menu</h2>
     <ul id="top-button-menu-container" class="btn-menu-container">
         <li><a href="{% url 'cloud_notes.views.list' %}" class="button-link">Notes</a></li>
-        <li><a href="#" class="button-link">Memos</a></li>
+        <li><a href="{% url 'cloud_memos.views.inbox' %}" class="button-link">Memos</a></li>
         <li><a href="{% url 'pybb:home_page' %}" class="button-link">Forums</a></li>
         <li><a href="/accounts/logout/" class="button-link">Logout</a></li>
     </ul>
     {% endblock %}
+    </div>
     {% endif %}
     <div id="notes-container">
         {% block content %}

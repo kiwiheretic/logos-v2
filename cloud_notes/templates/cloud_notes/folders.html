@@ -1,4 +1,4 @@
-{% extends "base.html" %}
+{% extends "cloud_notes/notes_base.html" %}
 {% block content %}
 
 <h1>Folders</h1>
@@ -6,9 +6,8 @@
 <form style="margin-left:2px;" action="" method="post" >
     {% csrf_token %}
 
-    <label style="float:left;">
-        <span>Select Folder</span><select name="selection" >
-        <option value="0">Select Folder</option>
+    <label>
+        <span>Select Folder</span><select name="folder" >
         {% for folder in folders %}
         <option value="{{folder.id}}">{{folder.name}}</option>
         {% endfor %}
@@ -16,13 +15,28 @@
     </label>    
    
    
-    <label style="float:left; clear:left;">
+    <label>
         <span>&nbsp;</span> 
-        <input type="submit" name="cancel" class="button" value="Change Folder" /> 
+        <input type="submit" name="change_folder" class="button" value="Change Folder" /> 
     </label>             
 </form>
-{% for folder in folders %}
 
+
+
+<form action="" method="post" >
+    {% csrf_token %}
+{% for field, error in form.errors.iteritems %}
+<div class="field-error">{{field}} - {{error.0}}</div>
 {% endfor %}
+    <label>
+        <div>Create New Folder</div>
+        <input id="name" type="text" name="folder" value="{{form.folder.value}}" placeholder="The name of the folder to create" />
+    </label>    
+
+    <label>
+        <span>&nbsp;</span> 
+        <input type="submit" name="create_folder" class="button" value="Create Folder" /> 
+    </label>             
+</form>
 
 {% endblock %}

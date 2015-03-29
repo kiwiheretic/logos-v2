@@ -249,6 +249,7 @@ INSTALLED_APPS = (
 
     'logos',
     'cloud_notes',
+    'cloud_memos',
     'pybb',
     'widget_tweaks',
 #    'simple_forums',

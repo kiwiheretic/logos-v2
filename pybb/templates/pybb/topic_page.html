@@ -31,7 +31,7 @@
         {% csrf_token %}
         {% include "pybb/form_field.html" with field=post_form.content %}
         <p>
-            <button class="btn">Reply</button>
+            <button>Reply</button>
         </a>
     </form>
     {% else %}

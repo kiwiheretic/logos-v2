@@ -11,6 +11,11 @@ h2 span {
     font-size: small;
 }
 
+form {
+    float: left;
+    clear: left;
+    margin-bottom: 10px;
+}
 #container {
 
     width:100%;
@@ -53,8 +58,8 @@ h2 span {
 
 a {
     margin:0;
-    
 }
+
 .smart-green h1>span {
     display: block;
     font-size: 11px;
@@ -70,7 +75,22 @@ label>span {
     margin-top: 10px;
     color: #5E5E5E;
 }
-.note-form input[type="text"], input[type="email"], textarea, select {
+
+
+input[type="submit"] {
+    background: #272;
+    color: #FFF;
+    padding: 5px;
+    min-width:100px;
+    border-radius: 5px;
+    border: solid 1px #20538D;
+    text-shadow: 0 -1px 0 rgba(0, 0, 0, 0.4);
+    -webkit-box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.4), 0 1px 1px rgba(0, 0, 0, 0.2);
+    -moz-box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.4), 0 1px 1px rgba(0, 0, 0, 0.2);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.4), 0 1px 1px rgba(0, 0, 0, 0.2);                
+}
+
+input[type="text"],  input[type="email"], textarea, select {
     color: #555;
     height: 40px;
     line-height:15px;
@@ -147,7 +167,9 @@ select {
 }
 
 .note-preview {
-    font-size: large;    
+    font-size: large; 
+    float: left;
+    clear: left;   
 }
 
 #notes-container {
@@ -160,13 +182,6 @@ select {
 }
 
 /* ---------------------- */
-.btn {
-    display: inline-block;
-    padding: 10px;
-    border-radius: 5px; /*optional*/
-    color: #aaa;
-    font-size: .875em;
-}
 
 .pagination {
     background: #f2f2f2;
