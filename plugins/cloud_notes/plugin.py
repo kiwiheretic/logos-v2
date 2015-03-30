@@ -99,7 +99,8 @@ class NotesPlugin(Plugin):
 
     def onSignal_logout(self, source, data):
         username = data['username']
-        logger.debug("cloud notes: onSignal_logout " + username)
+        logger.debug("cloud notes: onSignal_logout " + repr(username))
+        logger.debug("cloud notes: self.user_notes " + repr(self.user_notes))
         if username in self.user_notes:
             del self.user_notes[username]
                 
@@ -190,7 +191,7 @@ class NotesPlugin(Plugin):
         else:
             notes = Note.objects.filter(user__username = nick.lower()).\
                 exclude(folder__name = 'Trash').order_by('-id')[:num_to_list]
-            lidx = notes[num_to_list-1].id
+            lidx = notes[len(notes)-1].id
             self._update_usernotes_hash(username, {'list_index':lidx-1})
                             
         if notes:
@@ -208,7 +209,8 @@ class NotesPlugin(Plugin):
                 ridx = self.user_notes[username]['ridx']
                 try:
                     ridx2 = reading.rindex(" ", ridx, ridx+READ_SIZE)                
-                    notestr = reading[ridx:ridx2].strip()
+                    notestr = reading[ridx:ridx2].replace("\n", " ").strip()
+                    self.user_notes[username]['ridx'] = ridx2
                     if notestr != "":
                         self.say(chan, notestr)
                     else:
@@ -225,7 +227,7 @@ class NotesPlugin(Plugin):
             note = Note.objects.get(pk=note_id)
             notestr = re.sub(r'\n', ' ', note.note)
             ridx = notestr.rindex(" ", 0, READ_SIZE)
-            self._update_usernotes_hash(self, username, {'reading':note, 'ridx':ridx})
+            self._update_usernotes_hash(username, {'reading':note, 'ridx':ridx})
 
             self.say(chan, notestr[0:ridx])
         except Note.DoesNotExist:
