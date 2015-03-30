@@ -9,7 +9,12 @@ logger = logging.getLogger(__name__)
 
 # Probably best to leave DEBUG = False unless testing or debugging.  If set
 # to true this uses up an inordinate amount of RAM over a short period of time.
-DEBUG = True
+# However CSS information doesn't show when running off the development server
+# if DEBUG == True.
+if socket.gethostname() == "LenovoGlennOff":
+    DEBUG = True
+else:
+    DEBUG = False
 
 TEMPLATE_DEBUG = DEBUG
 
