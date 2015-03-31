@@ -1,0 +1,22 @@
+{% extends "cloud_notes/notes_base.html" %}
+
+{% block content %}
+    <!-- Form based on http://www.sanwebe.com/2013/10/css-html-form-styles -->
+    <form class="note-form" style="margin-left:2px;" 
+    action="" method="post" enctype="multipart/form-data">
+        {% csrf_token %}
+        {{ form }}
+
+         <label>
+            <span>&nbsp;</span> 
+            <input type="submit" name="upload" class="button" value="Upload" /> 
+        </label> 
+<!--         <label>-->
+<!--            <span>&nbsp;</span> -->
+<!--            <input type="submit" name="cancel" class="button" style="float:right;" value="Cancel" /> -->
+<!--        </label>             -->
+    </form>
+    <br style="float: left; clear: left;"/>
+    <br style="float: left; clear: left;"/>
+    <hr/>
+{% endblock %}

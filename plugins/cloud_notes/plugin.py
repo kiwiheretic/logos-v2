@@ -156,7 +156,7 @@ class NotesPlugin(Plugin):
                     filter(user__username = nick.lower(), pk__lte = lidx).\
                     exclude(folder__name = 'Trash').\
                     order_by('-id')[:num_to_list]
-                fidx = notes[num_to_list-1].id
+                fidx = notes[len(notes)-1].id
                 self._update_usernotes_hash(username, {'list_index':fidx-1})
             elif mch2:
                 fidx = int(mch2.group(1))

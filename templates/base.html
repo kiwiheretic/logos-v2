@@ -37,6 +37,13 @@
     {% endblock %}
     </div>
     {% endif %}
+
+    {% if form.errors %}
+    <div id="form-errors">
+    {{ form.errors }}
+    </div>
+    {% endif %}
+
     <div id="notes-container">
         {% block content %}
         {% endblock %}

@@ -7,13 +7,13 @@
         <input type="hidden" name="id" value="{{note.id}}"/>
         <label>
             <span>Title :</span>
-            <input id="name" type="text" name="title" value="{{note.title}}" placeholder="The title of your note" />
+            <input id="name" type="text" name="title" value="{{form.data.title}}" placeholder="The title of your note" />
         </label>
         
        
         <label>
             <span>Contents :</span>
-            <textarea id="message" rows="20" name="note" placeholder="Type your note in here">{{note.note}}</textarea>
+            <textarea id="message" rows="20" name="note" placeholder="Type your note in here">{{form.data.note}}</textarea>
         </label> 
          <label>
             <span>&nbsp;</span> 

@@ -1,12 +1,17 @@
 from django.shortcuts import render, redirect
 from django.contrib.auth.decorators import login_required
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
+from django.core import serializers
+from itertools import chain
+from django.http import HttpResponse, HttpResponseRedirect
+import os
+import json
 
 from forms import NoteForm
 from models import Note, Folder
 # Create your views here.
 from datetime import datetime
-from forms import NewFolderForm
+from forms import NewFolderForm, UploadFileForm
 
 @login_required()
 def folders(request):
@@ -86,7 +91,6 @@ def new_note(request):
         context = {'suppress_menu':True}
         return render(request, 'cloud_notes/new.html', context)
     elif request.method == 'POST':
-        print request.POST
         if "cancel" in request.POST:
             return redirect('cloud_notes.views.list')
         else:
@@ -147,4 +151,58 @@ def delete_note(request, note_id):
 @login_required()
 def export(request):
     context = {}
-    return render(request, 'cloud_notes/export.html', context)
+    folders = serializers.serialize('json', Folder.objects.all())
+    notes = serializers.serialize('json',Note.objects.all())
+    data = [ folders, notes ]
+    all_data = json.dumps(data)
+    response = HttpResponse(all_data, content_type='application/json')
+    response['Content-Disposition'] = 'attachment; filename="notes.json"'
+    return response
+
+@login_required()
+def import_file(request):
+    if request.method == 'POST':
+        form = UploadFileForm(request.POST, request.FILES)
+        context = {'form':form}
+        if form.is_valid():
+            handle_uploaded_file(request.FILES['file'], request.user)
+            return redirect('cloud_notes.views.list')            
+    else:
+        form = UploadFileForm()
+        context = {'form':form}
+    return render(request, 'cloud_notes/import_file.html', context)
+
+def handle_uploaded_file(f, user):
+    with open('notes.json', 'wb+') as destination:
+        for chunk in f.chunks():
+            destination.write(chunk)
+        f.close()
+    with open('notes.json', 'r') as fh:
+        json_data = json.load(fh)
+        fh.close()
+    folder_data, notes_data = json_data
+    folders = json.loads(folder_data)
+    notes = json.loads(notes_data)
+    for folder in folders:
+        fname = folder['fields']['name']
+        if not Folder.objects.filter(name = fname).exists():
+            fldr = Folder(name = fname)
+            fldr.save()
+    for note in notes:
+        title = note['fields']['title'] 
+        created = note['fields']['created_at'] 
+        modified = note['fields']['modified_at'] 
+#        post_type = note['fields']['post_type'] 
+        note_txt = note['fields']['note']
+        foldr_id = note['fields']['folder']
+        folder = Folder.objects.get(pk=foldr_id)
+        if not Note.objects.filter(title = title, created_at = created).exists():
+            new_note = Note(title = title, created_at = created, user = user,
+                        modified_at = modified, note = note_txt, folder = folder)
+            new_note.save()
+        
+
+#@login_required()
+#def file_uploaded(request):
+#    context = {}
+#    return render(request, 'cloud_notes/file_uploaded.html', context)
