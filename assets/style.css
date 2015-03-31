@@ -91,13 +91,14 @@ input[type="submit"] {
     box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.4), 0 1px 1px rgba(0, 0, 0, 0.2);                
 }
 
-input[type="text"],  input[type="email"], textarea, select {
+input, textarea, select {
     color: #555;
     height: 40px;
     line-height:15px;
     width: 100%;
     padding: 0px 0px 0px 10px;
     margin-top: 2px;
+    margin-bottom: 5px;
     border: 1px solid #E5E5E5;
     background: #FBFBFB;
     outline: 0;

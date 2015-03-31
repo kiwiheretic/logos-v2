@@ -620,6 +620,10 @@ class PluginDespatcher(object):
                             if regex2:
                                 # clean_line is line without the plugin id
                                 kwargs['clean_line'] = re.sub(plugin_id + "\s+", "", msg)
+                                logger.debug(\
+                                    "Invoking exact command for plugin {} of \"{}\"".\
+                                    format(m.plugin[0], msg))
+                                    
                                 f(regex2, chan, nick, **kwargs)
                                 return
                             elif regex:
@@ -641,11 +645,13 @@ class PluginDespatcher(object):
             
             # If we found the one and only regex
             if len(matched_fn) == 1:
-                logger.debug("Invoking command of {} plugin".format(matched_fn[0][2]))
+                logger.debug("** Invoking command of {} plugin for \"{}\"".\
+                             format(matched_fn[0][2], msg))
                 fn, regex, _ = matched_fn[0]
                 fn(regex, adj_chan, nick, **kwargs)
             # regex not found 
             elif len(matched_fn) == 0:
+                logger.debug("plugin command not found")
                 raise CommandException(nick, chan, "Command not found")
             # otherwise more than one regex was found
             else:

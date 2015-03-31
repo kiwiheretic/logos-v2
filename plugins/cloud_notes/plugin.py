@@ -48,8 +48,9 @@ class NotesPlugin(Plugin):
         if username not in self.user_notes:
             self.user_notes[username] = dict_values
         else:
-            for k, v in self.user_notes[username].iteritems():
+            for k, v in dict_values.iteritems():
                 self.user_notes[username][k] = v
+
     def privmsg(self, user, channel, message):
         
         nick,_ = user.split('!')
@@ -141,6 +142,7 @@ class NotesPlugin(Plugin):
     
     @login_required()
     def list_notes(self, regex, chan, nick, **kwargs):
+        logger.debug("list_notes: " + str(self.user_notes))
         num_to_list = 4
         username = self.get_auth().get_username(nick)
         notes = None
@@ -179,6 +181,7 @@ class NotesPlugin(Plugin):
             elif mch4:
                 if self._in_usernotes(username, 'list_index'):
                     idx = self.user_notes[username]['list_index']
+                    logger.debug( "cloud_notes: idx = " + str(idx))
                     notes = Note.objects.\
                         filter(user__username = nick.lower(), pk__lte = idx).\
                         exclude(folder__name = 'Trash').\
@@ -200,6 +203,7 @@ class NotesPlugin(Plugin):
 
     @login_required()
     def read_more(self, regex, chan, nick, **kwargs):
+        logger.debug("read more: " + str(self.user_notes))
         username = self.get_auth().get_username(nick)
         if username not in self.user_notes:
             self.say(chan, "Nothing to read")
@@ -218,9 +222,12 @@ class NotesPlugin(Plugin):
 
                 except ValueError:
                     self.say(chan, "**Note End**")
+            else:
+                self.say(chan, "Nothing to read")
 
     @login_required()
     def read(self, regex, chan, nick, **kwargs):
+        logger.debug("read: " + str(self.user_notes))
         note_id = regex.group('note_id')
         username = self.get_auth().get_username(nick)
         try:
