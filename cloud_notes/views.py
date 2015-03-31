@@ -152,7 +152,7 @@ def delete_note(request, note_id):
 def export(request):
     context = {}
     folders = serializers.serialize('json', Folder.objects.all())
-    notes = serializers.serialize('json',Note.objects.all())
+    notes = serializers.serialize('json',Note.objects.filter(user=request.user))
     data = [ folders, notes ]
     all_data = json.dumps(data)
     response = HttpResponse(all_data, content_type='application/json')
