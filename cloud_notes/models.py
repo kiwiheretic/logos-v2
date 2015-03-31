@@ -10,7 +10,7 @@ class Note(models.Model):
     folder = models.ForeignKey(Folder)
     title = models.CharField(max_length=120)
     # note_type is something like "memo", "web-page", ... etc
-    note_type = models.CharField(max_length=15)
+    note_type = models.CharField(blank=True, default="", max_length=15)
     created_at = models.DateTimeField()
     modified_at = models.DateTimeField()
     note = models.TextField()
