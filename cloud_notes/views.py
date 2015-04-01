@@ -131,7 +131,8 @@ def edit_note(request, note_id):
         return redirect('cloud_notes.views.preview', note_id)
     else: # GET
         note = Note.objects.get(pk=note_id)
-        context = {'note':note, 'suppress_menu':True}
+        form = NoteForm(note)
+        context = {'form':form, 'suppress_menu':True}
         return render(request, 'cloud_notes/new.html', context)
         
 @login_required()
@@ -159,6 +160,18 @@ def export(request):
     response['Content-Disposition'] = 'attachment; filename="notes.json"'
     return response
 
+@login_required()
+def export_all(request):
+    if request.user.is_superuser:
+        context = {}
+        folders = serializers.serialize('json', Folder.objects.all())
+        notes = serializers.serialize('json',Note.objects.all())
+        data = [ 0.1, folders, notes ] # data version 0.1
+        all_data = json.dumps(data)
+        response = HttpResponse(all_data, content_type='application/json')
+        response['Content-Disposition'] = 'attachment; filename="notes_0.1.json"'
+        return response
+    
 @login_required()
 def import_file(request):
     if request.method == 'POST':
