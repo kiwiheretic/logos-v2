@@ -160,16 +160,22 @@ select {
     font-size: large;
     content: "\0BB \020";
 }  
+
+.splat-notes div {
+    text-indent: 1.3em;    
+}  
+
+
 .splat-notes .note-date {
-    text-indent: 1.3em;
+
     font-size: small;
 }  
 
-.splat-notes .note-date span {
-    display:block;
+/*.splat-notes .note-date span {*/
+/*    display:block;*/
 
-    margin-left: 10px;
-}
+/*    margin-left: 10px;*/
+/*}*/
   
 .splat-notes .note-excerpt {
     margin-left: 1em;
@@ -177,7 +183,9 @@ select {
     margin-bottom: 1.5em;
     font-size: 16px;
 }
-
+.note-id {
+    font-size: small;
+}
 .note-preview {
     font-size: large; 
     float: left;

@@ -5,8 +5,9 @@
 <ul class="splat-notes">
     {% for note in notes %}
     <li><a class="note-title" href="{% url 'cloud_notes.views.preview' note.id %}">{{note.title}}</a>
-    <div class="note-date">Created<span>{{ note.created_at }}</span></div>
-    <div class="note-date">Modified<span>{{ note.modified_at }}</span></div>
+    <div class="note-id">Note ID: {{note.id}}</div>
+    <div class="note-date">Created <span>{{ note.created_at }}</span></div>
+    <div class="note-date">Modified <span>{{ note.modified_at }}</span></div>
     <div class="note-excerpt">{{note.note|truncatewords:20}}</div></li>
     {% empty %}
     <li><span id="no-notes">Sorry, no notes found in this folder</span></li>
