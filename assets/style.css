@@ -82,7 +82,7 @@ input[type="submit"] {
     background: #272;
     color: #FFF;
     padding: 5px;
-    min-width:100px;
+    width:100px;
     border-radius: 5px;
     border: solid 1px #20538D;
     text-shadow: 0 -1px 0 rgba(0, 0, 0, 0.4);
