@@ -164,13 +164,26 @@ def export(request):
 def export_all(request):
     if request.user.is_superuser:
         context = {}
-        folders = serializers.serialize('json', Folder.objects.all())
-        notes = serializers.serialize('json',Note.objects.all())
+        folders = json.loads(serializers.serialize('json', Folder.objects.all()))
+        notes = json.loads(serializers.serialize('json',Note.objects.all()))
         data = [ 0.1, folders, notes ] # data version 0.1
         all_data = json.dumps(data)
         response = HttpResponse(all_data, content_type='application/json')
         response['Content-Disposition'] = 'attachment; filename="notes_0.1.json"'
         return response
+
+@login_required()
+def import_all(request):
+    if request.method == 'POST':
+        form = UploadFileForm(request.POST, request.FILES)
+        context = {'form':form}
+        if form.is_valid():
+            handle_uploaded_file(request.FILES['file'], request.user)
+            return redirect('cloud_notes.views.list')            
+    else:
+        form = UploadFileForm()
+        context = {'form':form}
+    return render(request, 'cloud_notes/import_file.html', context)
     
 @login_required()
 def import_file(request):
@@ -193,9 +206,8 @@ def handle_uploaded_file(f, user):
     with open('notes.json', 'r') as fh:
         json_data = json.load(fh)
         fh.close()
-    folder_data, notes_data = json_data
-    folders = json.loads(folder_data)
-    notes = json.loads(notes_data)
+    import pdb; pdb.set_trace()
+    version, folder_data, notes_data = json_data
     for folder in folders:
         fname = folder['fields']['name']
         if not Folder.objects.filter(name = fname).exists():

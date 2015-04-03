@@ -139,6 +139,11 @@ class NotesPlugin(Plugin):
         self.say(chan, "Note logging turned off for "+nick)    
 
 
+    @login_required()
+    def list_folders(self, regex, chan, nick, **kwargs):
+        username = self.get_auth().get_username(nick)
+        user = User.objects.get(username = username)
+        
     
     @login_required()
     def list_notes(self, regex, chan, nick, **kwargs):

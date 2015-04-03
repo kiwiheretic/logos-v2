@@ -11,6 +11,10 @@
     <li><a href="#" class="button-link">Preferences</a></li>
     <li><a href="{% url 'cloud_notes.views.import_file' %}" class="button-link">Import</a></li>
     <li><a href="{% url 'cloud_notes.views.export' %}" class="button-link">Export</a></li>
+    {% if request.user.is_superuser %}
+    <li><a href="{% url 'cloud_notes.views.import_all' %}" class="button-link">Import All</a></li>
+    <li><a href="{% url 'cloud_notes.views.export_all' %}" class="button-link">Export All</a></li>
+    {% endif %}
     <li><a href="{% url 'logos.views.profile' %}" class="button-link">Main Menu</a></li>
 </ul>
 {% endblock %}
