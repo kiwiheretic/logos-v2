@@ -9,6 +9,7 @@ import json
 
 from forms import NoteForm
 from models import Note, Folder
+from django.contrib.auth.models import User
 # Create your views here.
 from datetime import datetime
 from forms import NewFolderForm, UploadFileForm
@@ -164,12 +165,15 @@ def export(request):
 def export_all(request):
     if request.user.is_superuser:
         context = {}
+        users = json.loads(serializers.serialize('json', User.objects.all()))
         folders = json.loads(serializers.serialize('json', Folder.objects.all()))
         notes = json.loads(serializers.serialize('json',Note.objects.all()))
-        data = [ 0.1, folders, notes ] # data version 0.1
+        data_version = 0.11
+        data = [ data_version, users, folders, notes ] # data version 0.1
         all_data = json.dumps(data)
         response = HttpResponse(all_data, content_type='application/json')
-        response['Content-Disposition'] = 'attachment; filename="notes_0.1.json"'
+        response['Content-Disposition'] = \
+            "attachment; filename=\"notes_{}.json\"".format(data_version)
         return response
 
 @login_required()
