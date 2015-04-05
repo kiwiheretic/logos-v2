@@ -5,7 +5,7 @@ from django.contrib.auth.models import User
 class Folder(models.Model):
     name = models.CharField(max_length=30)
     # Folders really need to be specific to User (TO DO)
-    #user = models.ForeignKey(User)
+    user = models.ForeignKey(User)
 
 class Note(models.Model):
     user = models.ForeignKey(User)

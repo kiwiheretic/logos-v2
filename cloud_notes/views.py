@@ -2,6 +2,7 @@ from django.shortcuts import render, redirect
 from django.contrib.auth.decorators import login_required
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from django.core import serializers
+from django.db import transaction
 from itertools import chain
 from django.http import HttpResponse, HttpResponseRedirect
 import os
@@ -16,7 +17,7 @@ from forms import NewFolderForm, UploadFileForm
 
 @login_required()
 def folders(request):
-    folders = Folder.objects.all()
+    folders = Folder.objects.filter(user=request.user)
     context = {'folders':folders}
     if request.method == 'POST':
         # changing to a different folder
@@ -46,7 +47,9 @@ def list(request):
     if 'notes_folder' in request.session:
         folder = Folder.objects.get(pk = request.session['notes_folder'])
     else:
-        folder = Folder.objects.get(name = "Main")
+        folder, _ = Folder.objects.get_or_create(name = "Main", user=request.user)
+        trash_folder, _ = Folder.objects.get_or_create(name = "Trash", user=request.user)
+        
     notes_list = Note.objects.filter(folder = folder, user=request.user).\
         order_by('-modified_at')
     paginator = Paginator(notes_list, 10) # Show 10 contacts per page
@@ -82,7 +85,7 @@ def preview(request, note_id):
             
 
     else:
-        folders = Folder.objects.all()
+        folders = Folder.objects.filter(user = request.user)
         context = {'note':note, 'folders':folders}
         return render(request, 'cloud_notes/preview.html', context)
     
@@ -101,7 +104,7 @@ def new_note(request):
             if form.is_valid():
                 # do stuff
                 # ...
-                main = Folder.objects.get(name="Main")
+                main = Folder.objects.get(name="Main", user=request.user)
                 obj = Note()
                 obj.title = form.cleaned_data['title']
                 obj.note = form.cleaned_data['note']
@@ -138,7 +141,7 @@ def edit_note(request, note_id):
         
 @login_required()
 def trash_note(request, note_id):
-    trash = Folder.objects.get(name="Trash")
+    trash = Folder.objects.get(name="Trash", user=request.user)
     note = Note.objects.get(pk=note_id)
     note.folder = trash
     note.save()
@@ -153,7 +156,7 @@ def delete_note(request, note_id):
 @login_required()
 def export(request):
     context = {}
-    folders = serializers.serialize('json', Folder.objects.all())
+    folders = serializers.serialize('json', Folder.objects.filter(user=request.user))
     notes = serializers.serialize('json',Note.objects.filter(user=request.user))
     data = [ folders, notes ]
     all_data = json.dumps(data)
@@ -164,12 +167,23 @@ def export(request):
 @login_required()
 def export_all(request):
     if request.user.is_superuser:
-        context = {}
-        users = json.loads(serializers.serialize('json', User.objects.all()))
-        folders = json.loads(serializers.serialize('json', Folder.objects.all()))
-        notes = json.loads(serializers.serialize('json',Note.objects.all()))
+        note_list = []
+        notes = Note.objects.all()
+        for note in notes:
+            note_dict = {}
+            
+            note_dict['created_at'] = str(note.created_at )
+            note_dict['modified_at'] = str(note.modified_at)
+            note_dict['post_type'] = note.note_type 
+            note_dict['title'] = note.title
+            note_dict['note'] = note.note
+            note_dict['folder'] = note.folder.name
+            note_dict['user']  = note.user.username
+            note_list.append(note_dict)
+      
         data_version = 0.11
-        data = [ data_version, users, folders, notes ] # data version 0.1
+
+        data = [ data_version, note_list ] # data version 0.1
         all_data = json.dumps(data)
         response = HttpResponse(all_data, content_type='application/json')
         response['Content-Disposition'] = \
@@ -202,7 +216,17 @@ def import_file(request):
         context = {'form':form}
     return render(request, 'cloud_notes/import_file.html', context)
 
+@transaction.atomic
 def handle_uploaded_file(f, user):
+    
+    def convert_date(str_date):
+        new_str = str_date.replace('+00:00','')
+        try:
+            new_dt = datetime.strptime(new_str, '%Y-%m-%d %H:%M:%S.%f')
+        except ValueError:
+            new_dt = datetime.strptime(new_str, '%Y-%m-%d %H:%M:%S')
+        return new_dt
+    
     with open('notes.json', 'wb+') as destination:
         for chunk in f.chunks():
             destination.write(chunk)
@@ -210,25 +234,43 @@ def handle_uploaded_file(f, user):
     with open('notes.json', 'r') as fh:
         json_data = json.load(fh)
         fh.close()
-    import pdb; pdb.set_trace()
-    version, folder_data, notes_data = json_data
-    for folder in folders:
-        fname = folder['fields']['name']
-        if not Folder.objects.filter(name = fname).exists():
-            fldr = Folder(name = fname)
-            fldr.save()
+    
+    version, notes = json_data
+    
+    for user in User.objects.all():
+        if not Folder.objects.filter(user = user, name = "Main").exists():
+            folder = Folder(name="Main", user = user)
+            folder.save()
+        if not Folder.objects.filter(user = user, name = "Trash").exists():
+            folder = Folder(name="Trash", user = user)
+            folder.save()  
+          
     for note in notes:
-        title = note['fields']['title'] 
-        created = note['fields']['created_at'] 
-        modified = note['fields']['modified_at'] 
-#        post_type = note['fields']['post_type'] 
-        note_txt = note['fields']['note']
-        foldr_id = note['fields']['folder']
-        folder = Folder.objects.get(pk=foldr_id)
-        if not Note.objects.filter(title = title, created_at = created).exists():
-            new_note = Note(title = title, created_at = created, user = user,
-                        modified_at = modified, note = note_txt, folder = folder)
+        created_at = convert_date(note['created_at'])
+        title = note['title']
+        username = note['user']
+        user = User.objects.get(username = username)        
+        
+        if not Note.objects.filter(title = title, 
+                               created_at = created_at).exists():
+            new_note = Note()
+            new_note.title =  title
+            new_note.created_at = created_at
+            new_note.modified_at = convert_date(note['modified_at'])
+            new_note.note_type = note['post_type'] 
+            new_note.note = note['note']
+            foldr = note['folder']
+            
+            
+            try:
+                folder = Folder.objects.get(name = foldr, user = user)
+            except Folder.DoesNotExist:
+                folder = Folder(name = foldr, user = user)
+                folder.save()
+            new_note.folder = folder
+            new_note.user = user
             new_note.save()
+        
         
 
 #@login_required()

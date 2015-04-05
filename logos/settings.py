@@ -6,15 +6,22 @@ import logging
 import email_settings
 logger = logging.getLogger(__name__)
 
-
+# BASE_DIR is deemed to be one directory above this file's directory
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
+LOG_DIR = os.path.join(BASE_DIR, "logs")
+FILE_DIR = os.path.dirname(os.path.realpath(__file__))
 # Probably best to leave DEBUG = False unless testing or debugging.  If set
 # to true this uses up an inordinate amount of RAM over a short period of time.
 # However CSS information doesn't show when running off the development server
 # if DEBUG == True.
-if socket.gethostname() == "LenovoGlennOff":
-    DEBUG = True
-else:
-    DEBUG = False
+
+DEBUG_HOSTS_PATH = os.path.join(FILE_DIR, "debug_hosts.txt")
+DEBUG = False
+if os.path.isfile(DEBUG_HOSTS_PATH):
+    f = open(DEBUG_HOSTS_PATH, "r")
+    for line in f.readlines():
+        if line.strip() == socket.gethostname():
+            DEBUG = True
 
 TEMPLATE_DEBUG = DEBUG
 
@@ -114,9 +121,7 @@ DEFAULT_FROM_EMAIL = email_settings.DEFAULT_FROM_EMAIL
 SERVER_EMAIL = email_settings.SERVER_EMAIL
 ###### End -- Email Settings
 
-# BASE_DIR is deemed to be one directory above this file's directory
-BASE_DIR = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
-LOG_DIR = os.path.join(BASE_DIR, "logs")
+
 
 SQLITE_DB_DIR = os.path.join(BASE_DIR, "sqlite-databases")
 
@@ -132,7 +137,13 @@ BIBLES_DIR = os.path.join(BASE_DIR, 'bibles')
 # Hosts/domain names that are valid for this site; required if DEBUG is False
 # See https://docs.djangoproject.com/en/1.5/ref/settings/#allowed-hosts
 ALLOWED_HOSTS = ['127.0.0.1', 'localhost']
-ALLOWED_HOSTS.append(socket.gethostname())
+allowed_hosts = os.path.join(BASE_DIR, "allowed_hosts.txt")
+f = open(allowed_hosts, "r")
+for line in f.readlines():
+    hostname = line.strip()
+    ALLOWED_HOSTS.append(hostname)
+f.close()
+#ALLOWED_HOSTS.append(socket.gethostname())
 
 # Local time zone for this installation. Choices can be found here:
 # http://en.wikipedia.org/wiki/List_of_tz_zones_by_name

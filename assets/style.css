@@ -12,9 +12,8 @@ h2 span {
 }
 
 form {
-    float: left;
-    clear: left;
     margin-bottom: 10px;
+    margin-right:20px;
 }
 #container {
 
@@ -70,6 +69,9 @@ a {
 label {
     display: block;
     margin: 0px 0px 5px;
+    float:left;
+    clear: left;
+    width:100%;
 }
 label>span {
     float: left;
@@ -82,7 +84,6 @@ input[type="submit"] {
     background: #272;
     color: #FFF;
     padding: 5px;
-    width:100px;
     border-radius: 5px;
     border: solid 1px #20538D;
     text-shadow: 0 -1px 0 rgba(0, 0, 0, 0.4);
@@ -91,11 +92,15 @@ input[type="submit"] {
     box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.4), 0 1px 1px rgba(0, 0, 0, 0.2);                
 }
 
+input:not([type="submit"]) {
+    width: 100%;
+}
+
 input, textarea, select {
     color: #555;
     height: 40px;
     line-height:15px;
-    width: 100%;
+
     padding: 0px 0px 0px 10px;
     margin-top: 2px;
     margin-bottom: 5px;
@@ -104,30 +109,30 @@ input, textarea, select {
     outline: 0;
     -webkit-box-shadow: inset 1px 1px 2px rgba(238, 238, 238, 0.2);
     box-shadow: inset 1px 1px 2px rgba(238, 238, 238, 0.2);
-    font: normal 25px/25px Arial, Helvetica, sans-serif;
+    font: normal 20px Arial, Helvetica, sans-serif;
 }
 textarea{
     height:250px;
     padding-top: 10px;
     line-height: 2.3ex;
     font-size: large;
+    width:100%;
 }
 select {
     background: url('down-arrow.png') no-repeat right, -moz-linear-gradient(top, #FBFBFB 0%, #E9E9E9 100%);
     background: url('down-arrow.png') no-repeat right, -webkit-gradient(linear, left top, left bottom, color-stop(0%,#FBFBFB), color-stop(100%,#E9E9E9));
-   appearance:none;
     -webkit-appearance:none; 
    -moz-appearance: none;
     text-indent: 0.01px;
     text-overflow: '';
-    width:100%;
+/*    width:100%;*/
     height:30px;
 }
 .button {
     background-color: #9DC45F;
     border-radius: 5px;
-    -webkit-border-radius: 5px;
-    -moz-border-border-radius: 5px;
+/*    -webkit-border-radius: 5px;*/
+/*    -moz-border-border-radius: 5px;*/
     border: none;
     padding: 10px 25px 10px 25px;
     color: #FFF;
@@ -181,6 +186,7 @@ select {
     margin-left: 1em;
     margin-top: 1em;
     margin-bottom: 1.5em;
+    margin-right: 1.5em;
     font-size: 16px;
 }
 .note-id {
@@ -293,12 +299,12 @@ select {
 }
 
 a.button-link {
-    font-size: large;
+    font-size: 15px;
     text-decoration: none;
     padding: 10px 25px;
 
     display:block;
-    width: 150px;
+    min-width: 120px;
     margin-right: 15px;
     margin-bottom: 5px;
             

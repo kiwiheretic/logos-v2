@@ -134,4 +134,7 @@ See the [wiki](https://github.com/kiwiheretic/logos-v2/wiki) for more details.
 ### Developing or modifying the bot ###
 See the [wiki](https://github.com/kiwiheretic/logos-v2/wiki) for more details.
 
-
+# Using the Website #
+For working with the website you need to copy the file _allowed_hosts-dist.txt_ 
+to _allowed_hosts.txt_ and add in your domain name (or ip address) to the list.  If you have
+more than one domain name add one per line.

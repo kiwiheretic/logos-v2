@@ -30,6 +30,8 @@ class NotesPlugin(Plugin):
                          (r'list (?P<range>\d*-\d*)', self.list_notes, 'list all notes'),
                          (r'read (?P<note_id>\d+)', self.read, 'read a note'),
                          (r'read more', self.read_more, 'more reading of note'),
+                         (r'folders', self.list_folders, 'List note folders'),
+                         (r'sel(ect)? folder (?P<folder_id>\d+)', self.sel_folder, 'Select folder'),
                          (r'notes on$', self.start_logging, 'start logging bible notes'),
                          (r'notes off$', self.stop_logging, 'start logging bible notes'),
                          )
@@ -97,7 +99,15 @@ class NotesPlugin(Plugin):
             note.modified_at = utc_tz.localize(dt)
             note.save()
             self.notice(nick, "-- verses searched logged to cloud notes --")
-
+    
+    def onSignal_login(self, source, data):
+        nick = data['nick']
+        username = self.get_auth().get_username(nick)
+        user = User.objects.get(username=username)
+        main = Folder.objects.get(name="Main", user=user)
+        self._update_usernotes_hash(username, {'folder':main})
+        
+        
     def onSignal_logout(self, source, data):
         username = data['username']
         logger.debug("cloud notes: onSignal_logout " + repr(username))
@@ -109,7 +119,7 @@ class NotesPlugin(Plugin):
     def start_logging(self, regex, chan, nick, **kwargs):
         username = self.get_auth().get_username(nick)
         user = User.objects.get(username = username)
-        
+
         post_title = "Logos Notes " + datetime.now().strftime('%d-%b-%Y')
         dt = datetime.utcnow()
         utc_tz = pytz.timezone("UTC")
@@ -117,7 +127,7 @@ class NotesPlugin(Plugin):
             note = Note.objects.get(title = post_title)
             
         except Note.DoesNotExist:
-            main = Folder.objects.get(name="Main")
+            main = Folder.objects.get(name="Main", user=user)
             
             
             note = Note(title = post_title,
@@ -143,13 +153,28 @@ class NotesPlugin(Plugin):
     def list_folders(self, regex, chan, nick, **kwargs):
         username = self.get_auth().get_username(nick)
         user = User.objects.get(username = username)
-        
+        for folder in Folder.objects.filter(user=user):
+            self.notice(nick, str(folder.id)+" " +folder.name)
+        self.notice(nick,'--end of list--')
     
+    @login_required()
+    def sel_folder(self, regex, chan, nick, **kwargs):
+        username = self.get_auth().get_username(nick)
+        user = User.objects.get(username = username)
+        try:
+            folder = Folder.objects.get(pk=regex.group('folder_id'),
+                                        user = user)
+            self._update_usernotes_hash(username, {'folder':folder})
+            self.notice(nick, "--Folder successfully opened--")
+        except Folder.DoesNotExist:
+            self.notice(nick, "--Folder does not exist--")
+
     @login_required()
     def list_notes(self, regex, chan, nick, **kwargs):
         logger.debug("list_notes: " + str(self.user_notes))
         num_to_list = 4
         username = self.get_auth().get_username(nick)
+        folder = self.user_notes[username]['folder']
         notes = None
         if 'range' in regex.groupdict():
             range = regex.group('range')
@@ -160,16 +185,14 @@ class NotesPlugin(Plugin):
             if mch1:
                 lidx = int(mch1.group(1))
                 notes = Note.objects.\
-                    filter(user__username = nick.lower(), pk__lte = lidx).\
-                    exclude(folder__name = 'Trash').\
+                    filter(folder=folder, user__username = nick.lower(), pk__lte = lidx).\
                     order_by('-id')[:num_to_list]
                 fidx = notes[len(notes)-1].id
                 self._update_usernotes_hash(username, {'list_index':fidx-1})
             elif mch2:
                 fidx = int(mch2.group(1))
                 notes = Note.objects.\
-                    filter(user__username = nick.lower(), pk__gte = fidx).\
-                    exclude(folder__name = 'Trash').\
+                    filter(folder=folder, user__username = nick.lower(), pk__gte = fidx).\
                     order_by('id')[:num_to_list]
                 idx = notes[0].id
                 notes = reversed(notes)
@@ -178,9 +201,8 @@ class NotesPlugin(Plugin):
                 fidx = int(mch3.group(1))
                 lidx = int(mch3.group(2))
                 notes = Note.objects.\
-                    filter(user__username = nick.lower(), pk__gte = fidx, \
+                    filter(folder=folder, user__username = nick.lower(), pk__gte = fidx, \
                            pk__lte = lidx).\
-                    exclude(folder__name = 'Trash').\
                     order_by('-id')[:num_to_list]                
                 self._update_usernotes_hash(username, {'list_index':fidx-1})
             elif mch4:
@@ -188,8 +210,7 @@ class NotesPlugin(Plugin):
                     idx = self.user_notes[username]['list_index']
                     logger.debug( "cloud_notes: idx = " + str(idx))
                     notes = Note.objects.\
-                        filter(user__username = nick.lower(), pk__lte = idx).\
-                        exclude(folder__name = 'Trash').\
+                        filter(folder=folder, user__username = nick.lower(), pk__lte = idx).\
                         order_by('-id')[:num_to_list]
                     if notes: #if any found
                         idx = notes[len(notes)-1].id
@@ -197,8 +218,8 @@ class NotesPlugin(Plugin):
                     else:
                         self.say(chan, "**No more notes found***")
         else:
-            notes = Note.objects.filter(user__username = nick.lower()).\
-                exclude(folder__name = 'Trash').order_by('-id')[:num_to_list]
+            notes = Note.objects.filter(folder=folder, user__username = nick.lower()).\
+                order_by('-id')[:num_to_list]
             lidx = notes[len(notes)-1].id
             self._update_usernotes_hash(username, {'list_index':lidx-1})
                             
@@ -217,9 +238,14 @@ class NotesPlugin(Plugin):
                 reading = self.user_notes[username]['reading'].note
                 ridx = self.user_notes[username]['ridx']
                 try:
-                    ridx2 = reading.rindex(" ", ridx, ridx+READ_SIZE)                
-                    notestr = reading[ridx:ridx2].replace("\n", " ").strip()
-                    self.user_notes[username]['ridx'] = ridx2
+                    if len(reading[ridx:]) > READ_SIZE:
+                        ridx2 = reading.rindex(" ", ridx, ridx+READ_SIZE)                
+                        notestr = reading[ridx:ridx2].replace("\n", " ").strip()
+                        self.user_notes[username]['ridx'] = ridx2
+                    else:
+                        notestr = reading[ridx:].replace("\n", " ").strip()
+                        del self.user_notes[username]['reading']
+                        del self.user_notes[username]['ridx']
                     if notestr != "":
                         self.say(chan, notestr)
                     else:
@@ -236,12 +262,14 @@ class NotesPlugin(Plugin):
         note_id = regex.group('note_id')
         username = self.get_auth().get_username(nick)
         try:
-            note = Note.objects.get(pk=note_id)
+            note = Note.objects.get(pk=note_id, user__username=username)
             notestr = re.sub(r'\n', ' ', note.note)
-            ridx = notestr.rindex(" ", 0, READ_SIZE)
-            self._update_usernotes_hash(username, {'reading':note, 'ridx':ridx})
-
-            self.say(chan, notestr[0:ridx])
+            if len(notestr) > READ_SIZE:
+                ridx = notestr.rindex(" ", 0, READ_SIZE)
+                self._update_usernotes_hash(username, {'reading':note, 'ridx':ridx})
+                self.say(chan, notestr[0:ridx])
+            else:
+                self.say(chan, notestr)
         except Note.DoesNotExist:
             self.notice(nick, "Note does not exist")
         
