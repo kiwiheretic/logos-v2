@@ -32,8 +32,9 @@ class NotesPlugin(Plugin):
                          (r'read more', self.read_more, 'more reading of note'),
                          (r'folders', self.list_folders, 'List note folders'),
                          (r'sel(ect)? folder (?P<folder_id>\d+)', self.sel_folder, 'Select folder'),
-                         (r'notes on$', self.start_logging, 'start logging bible notes'),
-                         (r'notes off$', self.stop_logging, 'start logging bible notes'),
+                         (r'on$', self.start_logging, 'start logging bible notes'),
+                         (r'on (?P<note_id>\d+)', self.log_to_note, 'start logging to specified note'),
+                         (r'off$', self.stop_logging, 'start logging bible notes'),
                          )
         self.user_notes = {}
 
@@ -76,6 +77,7 @@ class NotesPlugin(Plugin):
         username = self.get_auth().get_username(nick)
         if username and username in self.user_notes:
             note = self.user_notes[username]['note']
+            note.note += "\n"
             for verse in data['verses']:
                 verse_txt = " ".join(verse) + "\n"
                 note.note += verse_txt
@@ -115,6 +117,19 @@ class NotesPlugin(Plugin):
         if username in self.user_notes:
             del self.user_notes[username]
                 
+    
+    @login_required()
+    def log_to_note(self, regex, chan, nick, **kwargs):
+        username = self.get_auth().get_username(nick)
+        note_id = regex.group('note_id')
+        username = self.get_auth().get_username(nick)
+        try:
+            note = Note.objects.get(pk=note_id, user__username=username)
+            self._update_usernotes_hash(username, {'note':note})
+            self.say(chan, "Note logging to {} on for {}".format(note.title, nick))
+        except Note.DoesNotExist:
+            self.say(nick, "Note does not exist")
+
     @login_required()
     def start_logging(self, regex, chan, nick, **kwargs):
         username = self.get_auth().get_username(nick)
@@ -225,7 +240,7 @@ class NotesPlugin(Plugin):
                             
         if notes:
             for note in notes:
-                self.say(chan, str(note.id) + " " + note.title)
+                self.notice(nick, str(note.id) + " " + note.title)
 
     @login_required()
     def read_more(self, regex, chan, nick, **kwargs):
