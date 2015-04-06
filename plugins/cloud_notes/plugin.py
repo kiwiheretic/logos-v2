@@ -61,15 +61,16 @@ class NotesPlugin(Plugin):
         if username and username in self.user_notes:
             regex = re.match("#(.*)",message)
             if regex :
-                text = regex.group(1)
+                text = regex.group(1).strip()
                 logger.debug("note_users = " + str(self.user_notes))
-                note = self.user_notes[username]['note']
-                note.note += "\n" + text + "\n"
-                dt = datetime.utcnow()
-                utc_tz = pytz.timezone("UTC")                
-                note.modified_at = utc_tz.localize(dt)
-                note.save()
-                self.notice(nick, "-- text logged to cloud notes --")
+                if 'note' in self.user_notes[username]:
+                    note = self.user_notes[username]['note']
+                    note.note += "\n" + text + "\n"
+                    dt = datetime.utcnow()
+                    utc_tz = pytz.timezone("UTC")                
+                    note.modified_at = utc_tz.localize(dt)
+                    note.save()
+                    self.notice(nick, "-- text logged to cloud notes --")
 
     def onSignal_verse_lookup(self, source, data):
         nick = data['nick']
@@ -138,13 +139,10 @@ class NotesPlugin(Plugin):
         post_title = "Logos Notes " + datetime.now().strftime('%d-%b-%Y')
         dt = datetime.utcnow()
         utc_tz = pytz.timezone("UTC")
+        main = Folder.objects.get(name="Main", user=user)
         try:
-            note = Note.objects.get(title = post_title)
-            
+            note = Note.objects.get(title = post_title, user=user, folder=main)
         except Note.DoesNotExist:
-            main = Folder.objects.get(name="Main", user=user)
-            
-            
             note = Note(title = post_title,
                         folder = main,
                         user = user,
