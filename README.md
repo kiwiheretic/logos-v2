@@ -5,10 +5,11 @@ This is the Logos-V2 project, a Django/Twisted IRC bot  originally based (in con
 ### Features ###
 
 Features include:
+  * User and developer documentation on [wiki](https://github.com/kiwiheretic/logos-v2/wiki)
   * Written in Python using Twisted and Django frameworks
   * Compatible with CancelBot bible translations
   * Easy to customise for your own personalised bot
-  * Optional Django webserver for setup (work in progress)
+  * Cloud Notes system accessible from web and IRC.  Useful for storing bible notes.
   * Fine grained permission system based on Django-guardian (new feature)
 
 Plugins:
@@ -136,5 +137,16 @@ See the [wiki](https://github.com/kiwiheretic/logos-v2/wiki) for more details.
 
 # Using the Website #
 For working with the website you need to copy the file _allowed_hosts-dist.txt_ 
-to _allowed_hosts.txt_ and add in your domain name (or ip address) to the list.  If you have
-more than one domain name add one per line.
+to _allowed_hosts.txt_ and add in your domain name (or ip address) to the list.  
+If you have more than one domain name add one per line.  If this step is missed
+or forgotten your web browser will receive a 400 error.
+
+If running on the development server (ie: python manage.py runserver) then 
+you need to add your computer's hostname.  To find your hostname simply run the following from a python shell:
+
+```python
+import socket
+print socket.gethostname()
+```
+
+Put this in the file debug_hosts.txt and place that file in the logos\ folder.
