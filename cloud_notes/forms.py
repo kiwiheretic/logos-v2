@@ -3,11 +3,11 @@ from django import forms
 import re
 
 class NoteForm(forms.Form):
-    title = forms.CharField(max_length=30,required=True) 
-    note = forms.CharField(required=True)
+    title = forms.CharField(max_length=120,required=True) 
+    note = forms.CharField(required=False)
 
 class NewFolderForm(forms.Form):
-    folder = forms.CharField(max_length=120,required=True)
+    folder = forms.CharField(max_length=30,required=True)
     def clean_folder(self):
         data = self.cleaned_data['folder']
         if not re.match("[a-zA-Z_]+$", data):
