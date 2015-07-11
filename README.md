@@ -45,6 +45,7 @@ If you want to use the email registration edit the email_settings.py file and
 put in valid settings for your email server.  If not, then just copy the file email_settings-dist.py to email_settings.py in order to suppress any errors.
 ```
 $ cp logos/email_settings-dist.py logos/email_settings.py
+$ cp allowed_hosts-dist.txt allowed_hosts.txt
 $ python manage.py syncdb
 $ python manage.py syncdb --database=bibles
 $ python manage.py syncdb --database=game-data
@@ -70,6 +71,7 @@ If you want to use the email registration edit the email_settings.py file and
 put in valid settings for your email server.  If not, then just copy the file email_settings-dist.py to email_settings.py in order to suppress any errors.
 ```
 $ cp logos/email_settings-dist.py logos/email_settings.py
+$ cp allowed_hosts-dist.txt allowed_hosts.txt
 $ python manage.py syncdb
 $ python manage.py syncdb --database=bibles
 $ python manage.py syncdb --database=settings
