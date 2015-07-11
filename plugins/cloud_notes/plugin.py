@@ -107,7 +107,11 @@ class NotesPlugin(Plugin):
         nick = data['nick']
         username = self.get_auth().get_username(nick)
         user = User.objects.get(username=username)
-        main = Folder.objects.get(name="Main", user=user)
+        try:
+            main = Folder.objects.get(name="Main", user=user)
+        except Folder.DoesNotExist:
+            main = Folder(name="Main", user=user)
+            main.save()
         self._update_usernotes_hash(username, {'folder':main})
         
         
@@ -187,7 +191,12 @@ class NotesPlugin(Plugin):
         logger.debug("list_notes: " + str(self.user_notes))
         num_to_list = 4
         username = self.get_auth().get_username(nick)
-        folder = self.user_notes[username]['folder']
+        try:
+            folder = self.user_notes[username]['folder']
+        except KeyError:
+            self.say(chan, "**No notes found***")
+            return
+            
         notes = None
         if 'range' in regex.groupdict():
             range = regex.group('range')
@@ -233,8 +242,11 @@ class NotesPlugin(Plugin):
         else:
             notes = Note.objects.filter(folder=folder, user__username = nick.lower()).\
                 order_by('-id')[:num_to_list]
-            lidx = notes[len(notes)-1].id
-            self._update_usernotes_hash(username, {'list_index':lidx-1})
+            if notes:
+                lidx = notes[len(notes)-1].id
+                self._update_usernotes_hash(username, {'list_index':lidx-1})
+            else:
+                self.say(chan, '** No Notes found **')
                             
         if notes:
             for note in notes:
