@@ -1,11 +1,14 @@
 {% extends "cloud_memos/memos_base.html" %}
 
 {% block content %}
-<ul class="splat-notes">
+<ul class="splat-memos">
     {% for memo in memos %}
-    <li><a class="memo-title" href="{% url 'cloud_memos.views.preview' memo.id %}">{{memo.title}}</a>
-    <div class="memo-date">Created<span>{{ memo.created }}</span></div>
-    <div class="memo-text">{{memo.text|truncatewords:20}}</div></li>
+    
+	<li><span class="memo-sender">Recipient: <span>{{ memo.to_user.username }}</span>
+	<div class="memo-subject">Subject: <a class="memo-subject" href="{% url 'cloud_memos.views.preview' memo.id %}">{{memo.subject}}</a></div>
+    <div class="memo-date">Sent: <span>{{ memo.created }}</span></div>
+    <div class="memo-text">{{memo.text|truncatewords:20}}</div>
+	<br/></li>
     {% empty %}
     <li><span id="no-memos">Sorry, no memos found in this box</span></li>
     {% endfor %}

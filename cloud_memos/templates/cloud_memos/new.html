@@ -7,20 +7,20 @@
         {% csrf_token %}
         <label>
             <span>To :</span>
-            <input id="to" type="text" name="to" value="{{note.title}}" placeholder="The title of your note" />
+            <input id="to" type="text" name="recipient" value="{{form.recipient.value}}" placeholder="The recipient of your memo" />
         </label>
         <label>
             <span>Subject :</span>
-            <input id="subject" type="text" name="subject" value="{{note.title}}" placeholder="The title of your note" />
+            <input id="subject" type="text" name="subject" value="{{form.subject.value}}" placeholder="The title of your note" />
         </label>        
        
         <label>
             <span>Message :</span>
-            <textarea id="message" rows="20" name="message" placeholder="Type your message here">{{note.note}}</textarea>
+            <textarea id="message" rows="20" name="message" placeholder="Type your message here">{{form.message.value}}</textarea>
         </label> 
          <label>
             <span>&nbsp;</span> 
-            <input type="submit" name="save" class="button" value="Save" /> 
+            <input type="submit" name="send" class="button" value="Send" /> 
         </label> 
          <label>
             <span>&nbsp;</span> 

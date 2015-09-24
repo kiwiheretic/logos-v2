@@ -2,7 +2,7 @@
 <!DOCTYPE HTML>
 <html>
 <head>
-    <title>Splat Notes</title>
+    <title>{% block title %}Splat Notes{% endblock %}</title>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
     <meta name="viewport" content="width=320, initial-scale=1.0">
 <!--    <meta name="viewport" content="width=320, initial-scale=1.0, minimum-scale=1.0, maximum-scale=4.0">-->
@@ -38,9 +38,13 @@
     {% endblock %}
     </div>
     {% endif %}
+	<!-- pre-content is used for headers, titles, anything really
+	 that a specific user function category might want. -->
+	{% block pre_content %}{% endblock %}
 
     {% if form.errors %}
     <div id="form-errors">
+	<span>There were form errors:</span>
     {{ form.errors }}
     </div>
     {% endif %}

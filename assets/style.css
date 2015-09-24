@@ -160,8 +160,14 @@ select {
     /* remove extra left indent to bullet point */
     padding-left: 1.4em;
 }
+
+#category-title {
+	margin-top: 100px;
+	margin-left: 20px;
+	
+}
 /* ------------------------------ */
-.splat-notes {
+.splat-memos, .splat-notes {
     list-style: none;
     margin-left: -30px;
 }
@@ -171,7 +177,11 @@ select {
 .splat-notes li:before {
     font-size: large;
     content: "\0BB \020";
-}  
+}
+
+.splat-memos   li:before {
+    content: "\0BB \020";
+}
 
 .splat-notes div {
     text-indent: 1.3em;    
@@ -208,7 +218,7 @@ select {
 #notes-container {
     font-family: Arial, Helvetica, sans-serif;
     margin-left: 5px;
-    margin-top: 20px;
+    //margin-top: 20px;
     float: left;
     clear: left;
     width: 100%;

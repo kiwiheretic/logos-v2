@@ -16,7 +16,7 @@ FILE_DIR = os.path.dirname(os.path.realpath(__file__))
 # if DEBUG == True.
 
 DEBUG_HOSTS_PATH = os.path.join(FILE_DIR, "debug_hosts.txt")
-DEBUG = False
+DEBUG = True
 if os.path.isfile(DEBUG_HOSTS_PATH):
     f = open(DEBUG_HOSTS_PATH, "r")
     for line in f.readlines():

@@ -1,15 +1,21 @@
 {% extends "base.html" %}
 
+{% block title %}Memos{% endblock %}
 {% block menu_title %}Memos Menu{% endblock %}
 
 {% block button_menu %}
 <ul id="app-button-menu-container" class="btn-menu-container">
     <li><a href="{% url 'cloud_memos.views.new' %}" class="button-link">New Memo</a></li>
     <li><a href="{% url 'cloud_memos.views.inbox' %}" class="button-link">Inbox</a></li>
-    <li><a href="#" class="button-link">Outbox</a></li>
+    <li><a href="{% url 'cloud_memos.views.outbox' %}" class="button-link">Outbox</a></li>
 
     <li><a href="#" class="button-link">Preferences</a></li>
     <li><a href="#" class="button-link">Export</a></li>
     <li><a href="{% url 'logos.views.profile' %}" class="button-link">Main Menu</a></li>
 </ul>
+
+{% endblock %}
+
+{% block pre_content %}
+<h2 id="category-title">{% block category_title %}{{cat_title}}{% endblock %}</h2>
 {% endblock %}

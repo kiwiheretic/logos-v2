@@ -1,13 +1,11 @@
 {% extends "cloud_memos/memos_base.html" %}
 {% block content %}
 
-<h1>{{note.title}}</h1>
-<div id="small-btn-container">
-<a href="{% url 'cloud_notes.views.edit_memo' note.id %}" class="small-button-link" style="margin-left:4em;">Edit</a>
-<a href="{% url 'cloud_notes.views.trash_memo' note.id %}" class="small-button-link" style="margin-left:4em;">Trash</a>  
-</div>
+<h3>Subject: {{memo.subject}}</h3>
 <div class="note-preview">
-{{note.note|linebreaks}}
+{{memo.text|linebreaks}}
 </div>    
-      
+<div id="small-btn-container">
+<a href="{% url 'cloud_memos.views.trash_memo' memo.id %}" class="small-button-link" style="margin-left:4em;clear:left;float:left;">Trash this memo</a>  
+</div>      
 {% endblock %}
