@@ -34,19 +34,10 @@ def new(request):
         frm = MemoForm(request.POST)
         context.update({'form':frm})
         if frm.is_valid():
-            outbox = get_object_or_404(Folder, user=request.user, name='outbox')
             to_user = User.objects.get(username=frm.cleaned_data['recipient'])
-            memo = Memo(to_user=to_user, 
-                from_user=request.user, 
-                subject=frm.cleaned_data['subject'], 
-                text=frm.cleaned_data['message'])
-            memo.save()
-            outbox.memos.add(memo)
-            outbox.save()
-
-            inbox = get_object_or_404(Folder, user=request.user, name='inbox')
-            inbox.memos.add(memo)
-            inbox.save()
+            Memo.send_memo(request.user, to_user,
+                frm.cleaned_data['subject'], 
+                frm.cleaned_data['message'])
             return redirect('cloud_memos.views.inbox')
         else:
             return render(request, 'cloud_memos/new.html', context)

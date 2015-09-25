@@ -26,6 +26,20 @@ class Memo(models.Model):
     created = models.DateTimeField(auto_now_add = True)
     text = models.TextField()
 
+    @staticmethod
+    def send_memo(sender, recipient, subject, message):
+        memo = Memo(to_user=recipient, 
+                from_user=sender, 
+                subject=subject, 
+                text=message)
+        memo.save()
+        inbox = Folder.objects.get(user=recipient, name='inbox')
+        outbox = Folder.objects.get(user=sender, name='outbox')
+        inbox.memos.add(memo)
+        inbox.save()    
+        outbox.memos.add(memo)
+        outbox.save()
+        
 @receiver(post_save, sender=User)
 def user_post_save_handler(sender, instance, created, **kwargs):
     if created:
