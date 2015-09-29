@@ -3,6 +3,7 @@ from django.conf.urls import patterns, include, url
 
 urlpatterns = patterns('cloud_memos.views',
     url(r'^$', 'index'),
+    url(r'^listing/', 'listing'),
     url(r'^inbox/', 'inbox'),
     url(r'^outbox/', 'outbox'),
     url(r'^new/', 'new'),

@@ -9,8 +9,8 @@ class MemoTestCase(TestCase):
     def setUp(self):
         # create test users
         #  https://docs.djangoproject.com/en/1.8/topics/auth/default/#creating-users
-        fred = User.objects.create_user("fred", "fred@nowhere.com", "pass123")
-        john = User.objects.create_user("john", "john@nowhere.com", "pass456")
+        self.u1 = fred = User.objects.create_user("fred", "fred@nowhere.com", "pass123")
+        self.u2 = john = User.objects.create_user("john", "john@nowhere.com", "pass456")
 
     def test_memos(self):
         fred = authenticate(username='fred', password='pass123')
@@ -34,3 +34,7 @@ class MemoTestCase(TestCase):
         
         with self.assertRaises(Folder.DoesNotExist):
             Folder.objects.get(name='outbox',memos__from_user__username="fred")
+
+    def tearDown(self):
+        self.u1.delete()
+        self.u2.delete()

@@ -16,12 +16,13 @@ class Folder(models.Model):
 class Memo(models.Model):
     subject = models.CharField(max_length=30)
     # conversation = models.ForeignKey(Conversation)
-    from_user = models.ForeignKey(User, related_name='memos_from')
-    to_user = models.ForeignKey(User, related_name='memos_to')
-    in_reply_to  = models.ForeignKey('Memo', null=True, blank=True, default = None)
+    from_user = models.ForeignKey(User, related_name='memo_from')
+    to_user = models.ForeignKey(User, related_name='memo_to')
+    in_reply_to  = models.ForeignKey('Memo', related_name='memo_reply_to', null=True, blank=True, default = None)
+    forwarded_by  = models.ForeignKey('Memo', related_name='memo_forwarded_by', null=True, blank=True, default = None)
     
     # Has the memo been viewed by the recipient yet
-    viewed = models.DateTimeField(null=True, blank=True)
+    viewed_on = models.DateTimeField(null=True, blank=True)
     
     created = models.DateTimeField(auto_now_add = True)
     text = models.TextField()

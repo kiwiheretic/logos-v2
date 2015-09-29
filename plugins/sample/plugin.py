@@ -6,6 +6,12 @@ from logos.settings import LOGGING
 logger = logging.getLogger(__name__)
 logging.config.dictConfig(LOGGING)
 
+# To test this plugin remember to type the following
+# commands on IRC where the bot can see them:
+# !activste plugin sample
+# !enable plugin #myroom sample
+# Change #myroom to be whatever room you are in.
+
 # If using this file as a starting point for your plugin
 # then remember to change the class name 'MyBotPlugin' to
 # something more meaningful.
@@ -17,7 +23,9 @@ class MyBotPlugin(Plugin):
     #plugin = ('sample', 'My Bot Plugin')
     
     def __init__(self, *args, **kwargs):
-        Plugin.__init__(self, *args, **kwargs)
+        # Change the line below to match the name of the class
+        # you change this plugin to.
+        super(MyBotPlugin, self).__init__(*args, **kwargs)
         self.commands = ((r'nicks', self.nicks, 'show nicks in room'),
                          (r'demo', self.demo, 'demonstrate say, describe and notice'),
                          (r'convo', self.convo, 'echo last lines of conversation'),

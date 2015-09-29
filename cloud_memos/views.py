@@ -26,6 +26,9 @@ def outbox(request):
     context = {'memos':memos, 'cat_title':'Outbox'}
     return render(request, 'cloud_memos/list.html', context)
 
+@login_required()
+def listing(request):
+    pass
     
 @login_required()
 def new(request):

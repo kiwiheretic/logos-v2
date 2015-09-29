@@ -1,0 +1,39 @@
+from plugins.cloud_memos.plugin import MemosPlugin
+from django.contrib.auth.models import User
+from django.contrib.auth import authenticate
+# Subclass your test class from LogosTestCase
+from bot.testing.utils import LogosTestCase
+
+class TestMemos(LogosTestCase):
+    # set plugin_class to the actual class
+    # of the plugin you wish to test
+    plugin_class = MemosPlugin
+ 
+    
+    def setUp(self):
+        # create test users
+        #  https://docs.djangoproject.com/en/1.8/topics/auth/default/#creating-users
+        self.u1 = fred = User.objects.create_user("fred", "fred@nowhere.com", "pass123")
+        self.u2 = john = User.objects.create_user("john", "john@nowhere.com", "pass456")
+ 
+ 
+    def testMemoSend(self):
+        
+        self.set_nick("fred")
+        self.login('pass123')
+        
+        output = self.plugin.send_command("send john Hi, How are you")
+        self.assertIn('Memo sent', output)
+
+        self.set_nick("john")
+        self.login("pass456")
+        output = self.plugin.send_command("check")
+        self.assertIn('1 unread', output)
+
+        
+        
+
+    def tearDown(self):
+        print ("deleting test users.")
+        self.u1.delete()
+        self.u2.delete()

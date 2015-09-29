@@ -54,7 +54,7 @@ class FakePlugin(object):
         self.plugin_output.append("{} {}: {}".format('action', channel, action))
 
     def notice(self, user, message):
-        self.plugin_output.append("{} {}: {}".format('notice', channel, message))
+        self.plugin_output.append("{} {}: {}".format('notice', user, message))
 
     def kick(self, channel, user, reason=None):    
         pass
@@ -107,9 +107,22 @@ class LogosTestCase(unittest.TestCase):
     def create_user(self, username, email, password):
         user = User.objects.create_user(username, email, password)
         user.save()
+        return user
     
     def assign_room_permission(self, username, room, permission):
         assignperm(self.plugin.network, \
                    room, username, permission)
     
-    
+    def login(self, password):
+        host = self.plugin.get_host(self.plugin.nickname)
+
+        try:
+            user = User.objects.get(username__iexact = self.plugin.nickname.lower())
+        except User.DoesNotExist:
+            print("Invalid Nick")
+            return
+        
+        if user.check_password(password):
+            self.plugin.get_auth().add(self.plugin.nickname, host, user)
+            return user
+        return None

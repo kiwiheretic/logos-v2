@@ -1,10 +1,26 @@
 {% extends "base.html" %}
 
 {% block title %}Memos{% endblock %}
+
+{% block style %}
+
+#category-title {
+	float:left;
+	clear:left;
+	margin-left: 20px;
+}
+
+{% endblock %}
+
 {% block menu_title %}Memos Menu{% endblock %}
 
 {% block button_menu %}
+{% comment %}
+Look at using menu highlights ....
+http://stackoverflow.com/questions/7665514/django-highlight-navigation-based-on-current-page
+{% endcomment %}
 <ul id="app-button-menu-container" class="btn-menu-container">
+    <li><a href="{% url 'cloud_memos.views.listing' %}" class="button-link">Home</a></li>
     <li><a href="{% url 'cloud_memos.views.new' %}" class="button-link">New Memo</a></li>
     <li><a href="{% url 'cloud_memos.views.inbox' %}" class="button-link">Inbox</a></li>
     <li><a href="{% url 'cloud_memos.views.outbox' %}" class="button-link">Outbox</a></li>

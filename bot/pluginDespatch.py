@@ -662,9 +662,12 @@ class PluginDespatcher(object):
             
                     
         except CommandException as e:
-            self.irc_conn.queue_message('say', self.irc_conn.factory.channel, e.user + " typed: " + act + msg)
-            self.irc_conn.queue_message('say', self.irc_conn.factory.channel, e.chan + ":" + e.msg)
-            logger.debug('CommandException: ' + str( (e.user, e.chan, e.msg)))
+            if hasattr( self.irc_conn, 'queue_message'):
+                self.irc_conn.queue_message('say', self.irc_conn.factory.channel, e.user + " typed: " + act + msg)
+                self.irc_conn.queue_message('say', self.irc_conn.factory.channel, e.chan + ":" + e.msg)
+                logger.debug('CommandException: ' + str( (e.user, e.chan, e.msg)))
+            else:  # Probably run from test suite with mock plugins
+                print ('CommandException: ' + str( (e.user, e.chan, e.msg)))
 
 
     def joined(self, channel):
