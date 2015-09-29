@@ -19,6 +19,18 @@ form {
 
     width:100%;
 }
+
+#django-messages {
+	float:left;
+	clear:left;
+	border: 1px dotted blue;
+	margin-left: 15px;
+	background-color: PowderBlue;
+	padding-right: 10px;
+	border-radius: 10px;
+	
+}
+
 /* ------- login panels ------------- */
 #login-fieldset {
     border-radius: 5px;

@@ -10,7 +10,7 @@ class MemoForm(forms.Form):
     def clean_recipient(self):
         recipient = self.cleaned_data['recipient']
         try:
-            u = User.objects.get(username = recipient)
+            u = User.objects.get(username__iexact = recipient)
         except User.DoesNotExist:
             raise forms.ValidationError('Recipient does not exist')
         return recipient

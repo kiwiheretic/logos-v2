@@ -26,7 +26,13 @@ http://stackoverflow.com/questions/7665514/django-highlight-navigation-based-on-
     <li><a href="{% url 'cloud_memos.views.outbox' %}" class="button-link">Outbox</a></li>
 
     <li><a href="#" class="button-link">Preferences</a></li>
-    <li><a href="#" class="button-link">Export</a></li>
+	<li><a href="{% url 'cloud_memos.views.export' %}" class="button-link">Export</a></li>
+	
+	{% if request.user.is_superuser %}
+	<li><a href="{% url 'cloud_memos.views.superuser_import' %}" class="button-link">Superuser Import</a></li>
+	<li><a href="{% url 'cloud_memos.views.superuser_export' %}" class="button-link">Superuser Export</a></li>
+	{% endif %}
+	
     <li><a href="{% url 'logos.views.profile' %}" class="button-link">Main Menu</a></li>
 </ul>
 

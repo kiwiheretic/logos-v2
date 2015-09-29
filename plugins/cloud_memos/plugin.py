@@ -15,7 +15,7 @@ from bot.logos_decorators import login_required
 
 READ_SIZE = 250
 class MemosPlugin(Plugin):
-    plugin = ('memos', 'Cloud Memos')
+    plugin = ('memo', 'Cloud Memos')
     
     def __init__(self, *args, **kwargs):
         # Plugin.__init__(self, *args, **kwargs)
@@ -26,6 +26,7 @@ class MemosPlugin(Plugin):
                          (r'send (?P<recipient>\S+) (?P<message>.*)$', self.send_memo, 'send new memos'),
                          (r'check$', self.check, 'check for unread memos'),
                          (r'read (?P<memo_id>\d+)', self.read, 'read a memo'),
+                         (r'delete (?P<memo_id>\d+)', self.delete_memo, 'delete a memo'),
                          (r'folders', self.list_folders, 'List memo folders'),
                          )
         # self.user_memos = {}
@@ -105,13 +106,14 @@ class MemosPlugin(Plugin):
         recipient = regex.group('recipient')
         message = regex.group('message')
         username = self.get_auth().get_username(nick)
-        user = User.objects.get(username = username)
+        user = User.objects.get(username__iexact = username)
         try:
             recip = User.objects.get(username = recipient)
         except User.DoesNotExist:
             self.notice(nick, "I do not know this user")
             return
-        Memo.send_memo(user, recip, "Memo", message)
+        subject = message[:20] + "..."
+        Memo.send_memo(user, recip, subject, message)
         self.notice(nick, "Memo sent")
         
     @login_required()
@@ -154,6 +156,8 @@ class MemosPlugin(Plugin):
             memo = memos[memo_id]
             text = re.sub(r'\n', ' ', memo.text)
             self.notice(nick, text)
+            memo.receipt_to.viewed_on = datetime.now(pytz.utc)
+            memo.receipt_to.save()
             memo.viewed_on = datetime.now(pytz.utc)
             memo.save()
         except IndexError:
@@ -161,3 +165,16 @@ class MemosPlugin(Plugin):
 
         
 
+    @login_required()
+    def delete_memo(self, regex, chan, nick, **kwargs):
+        memos = self._get_memos_obj(nick)
+        memo_id = int(regex.group('memo_id'))
+        logger.debug("delete memo: %s %s %d" % (chan, nick, memo_id))
+
+        try:
+            memo = memos[memo_id]
+            subject = memo.subject
+            memo.delete()
+            self.notice(nick, "Memo %d %s deleted" % (memo_id, subject))
+        except IndexError:
+            self.notice(nick, "Memo not in list")

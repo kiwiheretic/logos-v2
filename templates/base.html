@@ -42,6 +42,16 @@
 	 that a specific user function category might want. -->
 	{% block pre_content %}{% endblock %}
 
+	{% if messages %}
+	<div id="django-messages">
+	<ul>
+    {% for message in messages %}
+    <li{% if message.tags %} class="{{ message.tags }}"{% endif %}>{{ message }}</li>
+    {% endfor %}
+	</ul>
+	</div>
+	{% endif %}
+
     {% if form.errors %}
     <div id="form-errors">
 	<span>There were form errors:</span>

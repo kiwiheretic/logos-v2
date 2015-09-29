@@ -10,6 +10,10 @@ urlpatterns = patterns('cloud_memos.views',
     url(r'^preview/(\d+)', 'preview'),
 #    url(r'^edit/(\d+)', 'edit_memo'),
     url(r'^trash_memo/(\d+)', 'trash_memo'),
-#    url(r'^export/', 'export'),
-#    url(r'^folders/', 'folders'),
+    url(r'^export/', 'export'),
+
+    url(r'^su-export/', 'superuser_export'),
+    url(r'^su-import/', 'superuser_import'),
+
+    #    url(r'^folders/', 'folders'),
 )

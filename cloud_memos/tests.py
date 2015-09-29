@@ -19,21 +19,21 @@ class MemoTestCase(TestCase):
         self.assertIsNotNone(john)
         
         Memo.send_memo(john, fred, "This is a test", "Some body text")
-        memo_in_inbox = Memo.objects.filter(to_user = fred)
+        memo_in_inbox = Memo.objects.filter(folder__name='inbox', to_user = fred)
         self.assertIsNotNone(memo_in_inbox)
-        memo_in_outbox = Memo.objects.filter(from_user = john)
+        memo_in_outbox = Memo.objects.filter(folder__name='outbox', from_user = john)
         self.assertIsNotNone(memo_in_outbox)
         
-        # Make sure the right folders are used
-        Folder.objects.get(name='inbox',memos__to_user__username="fred")
-        Folder.objects.get(name='inbox',memos__from_user__username="john")
+        # Memos should be cloned, not just referenced!
+        self.assertNotEqual(memo_in_inbox, memo_in_outbox)
+        
         
         # These folder tests should fail
-        with self.assertRaises(Folder.DoesNotExist):
-            Folder.objects.get(name='inbox',memos__to_user__username="john")
+        with self.assertRaises(Memo.DoesNotExist):
+            Memo.objects.get(folder__name='inbox',to_user__username="john")
         
-        with self.assertRaises(Folder.DoesNotExist):
-            Folder.objects.get(name='outbox',memos__from_user__username="fred")
+        with self.assertRaises(Memo.DoesNotExist):
+            Memo.objects.get(folder__name='outbox',from_user__username="fred")
 
     def tearDown(self):
         self.u1.delete()

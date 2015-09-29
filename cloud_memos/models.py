@@ -8,17 +8,15 @@ from django.dispatch import receiver
 class Folder(models.Model):
     name = models.CharField(max_length=30)
     user = models.ForeignKey(User, related_name='folder_user')
-    memos = models.ManyToManyField('Memo')
 
-# class Conversation(models.Model):
-    # title = models.CharField(max_length=30)
 
 class Memo(models.Model):
     subject = models.CharField(max_length=30)
-    # conversation = models.ForeignKey(Conversation)
+    folder = models.ForeignKey('Folder')
+
     from_user = models.ForeignKey(User, related_name='memo_from')
     to_user = models.ForeignKey(User, related_name='memo_to')
-    in_reply_to  = models.ForeignKey('Memo', related_name='memo_reply_to', null=True, blank=True, default = None)
+    receipt_to  = models.ForeignKey('Memo', related_name='memo_receipt_to', null=True, blank=True, default = None)
     forwarded_by  = models.ForeignKey('Memo', related_name='memo_forwarded_by', null=True, blank=True, default = None)
     
     # Has the memo been viewed by the recipient yet
@@ -33,13 +31,18 @@ class Memo(models.Model):
                 from_user=sender, 
                 subject=subject, 
                 text=message)
-        memo.save()
-        inbox = Folder.objects.get(user=recipient, name='inbox')
         outbox = Folder.objects.get(user=sender, name='outbox')
-        inbox.memos.add(memo)
-        inbox.save()    
-        outbox.memos.add(memo)
-        outbox.save()
+        memo.folder = outbox
+        memo.save()
+        m1 = memo.pk
+        
+        # now clone the memo
+        memo.id = None
+        
+        inbox = Folder.objects.get(user=recipient, name='inbox')
+        memo.folder = inbox
+        memo.receipt_to = Memo.objects.get(pk = m1)
+        memo.save()
         
 @receiver(post_save, sender=User)
 def user_post_save_handler(sender, instance, created, **kwargs):

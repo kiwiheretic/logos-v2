@@ -36,6 +36,11 @@ class TestMemos(LogosTestCase):
         output = self.plugin.send_command("check")
         self.assertIn('no unread', output)
         
+        output = self.plugin.send_command("delete 0")
+        self.assertIn('deleted', output)
+        
+        output = self.plugin.send_command("list")
+        self.assertIn('No memos found', output)
 
     def tearDown(self):
         print ("deleting test users.")

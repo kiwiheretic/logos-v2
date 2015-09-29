@@ -1,7 +1,7 @@
 {% extends "cloud_memos/memos_base.html" %}
 
 {% block content %}
-    
+    <span id="valid-users">Valid recipients are: {{userlist|join:", "}}</span>
     <!-- Form based on http://www.sanwebe.com/2013/10/css-html-form-styles -->
     <form class="note-form" style="margin-left:2px;" action="" method="post" >
         {% csrf_token %}
