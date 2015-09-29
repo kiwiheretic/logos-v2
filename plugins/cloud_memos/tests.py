@@ -29,8 +29,12 @@ class TestMemos(LogosTestCase):
         self.login("pass456")
         output = self.plugin.send_command("check")
         self.assertIn('1 unread', output)
-
         
+        output = self.plugin.send_command("read 0")
+        self.assertIn('How are you', output)
+        
+        output = self.plugin.send_command("check")
+        self.assertIn('no unread', output)
         
 
     def tearDown(self):

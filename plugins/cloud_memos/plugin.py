@@ -22,7 +22,7 @@ class MemosPlugin(Plugin):
         super(MemosPlugin, self).__init__(*args, **kwargs)
 
         self.commands = ((r'list$', self.list_memos, 'list all memos'),
-                         (r'list new$', self.list_new_memos, 'list new memos'),
+                         (r'list unread$', self.list_unread_memos, 'list new memos'),
                          (r'send (?P<recipient>\S+) (?P<message>.*)$', self.send_memo, 'send new memos'),
                          (r'check$', self.check, 'check for unread memos'),
                          (r'read (?P<memo_id>\d+)', self.read, 'read a memo'),
@@ -54,16 +54,11 @@ class MemosPlugin(Plugin):
         logger.debug("cloud memos: onSignal_logout " + repr(username))
         # del self.user_memos[username.lower()]       
     
-    def _get_memos_obj(self, nick, folder_name='inbox', new=False):
+    def _get_memos_obj(self, nick, folder_name='inbox'):
         username = self.get_auth().get_username(nick)
         user = User.objects.get(username = username)
-        if new:
-            memos = Memo.objects.filter(folder__name=folder_name, 
-                to_user__username = nick.lower(),
-                viewed_on__isnull = True).order_by('-id')
-        else:
-            memos = Memo.objects.filter(folder__name=folder_name, 
-                to_user__username = nick.lower()).order_by('-id')
+        memos = Memo.objects.filter(folder__name=folder_name, 
+            to_user__username = nick.lower()).order_by('-id')
         return memos
     
     def _check(self, nick):
@@ -75,7 +70,9 @@ class MemosPlugin(Plugin):
             to_user = user, viewed_on__isnull = True).count()
         if unread_memos > 0:
             self.notice(nick,'You have %d unread memos!' % (unread_memos,))
-    
+        else:
+            self.notice(nick,'You have no unread memos!')
+        
     @login_required()
     def check(self, regex, chan, nick, **kwargs):
         """  check for unread memos """
@@ -132,13 +129,16 @@ class MemosPlugin(Plugin):
 
 
     @login_required()
-    def list_new_memos(self, regex, chan, nick, **kwargs):
+    def list_unread_memos(self, regex, chan, nick, **kwargs):
         num_to_list = 10
-        memos = self._get_memos_obj(nick, new=True)
+        memos = self._get_memos_obj(nick)
                         
         if memos:
-            for idx, memo in enumerate(memos):
-                self.notice(nick, str(idx) + " " + memo.from_user.username + " " + memo.subject)
+            idx = 0
+            for memo in memos:
+                if not memo.viewed_on:
+                    self.notice(nick, str(idx) + " " + memo.from_user.username + " " + memo.subject)
+                idx += 1
                 if idx >= num_to_list: break
                 
         else:
@@ -154,6 +154,8 @@ class MemosPlugin(Plugin):
             memo = memos[memo_id]
             text = re.sub(r'\n', ' ', memo.text)
             self.notice(nick, text)
+            memo.viewed_on = datetime.now(pytz.utc)
+            memo.save()
         except IndexError:
             self.notice(nick, "Memo not in list")
 
