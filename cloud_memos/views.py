@@ -36,7 +36,7 @@ def outbox(request):
 
 @login_required()
 def listing(request):
-    pass
+    return redirect('cloud_memos.views.inbox')
     
 @login_required()
 def new(request):
