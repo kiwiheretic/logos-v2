@@ -9,6 +9,8 @@ class Folder(models.Model):
     name = models.CharField(max_length=30)
     user = models.ForeignKey(User, related_name='folder_user')
 
+    def __unicode__(self):
+        return self.name
 
 class Memo(models.Model):
     subject = models.CharField(max_length=30)
@@ -16,7 +18,9 @@ class Memo(models.Model):
 
     from_user = models.ForeignKey(User, related_name='memo_from')
     to_user = models.ForeignKey(User, related_name='memo_to')
-    receipt_to  = models.ForeignKey('Memo', related_name='memo_receipt_to', null=True, blank=True, default = None)
+    
+    # where to check for read receipts
+    corresponding  = models.ForeignKey('Memo', related_name='memo_receipt_to', null=True, blank=True, default = None)
     forwarded_by  = models.ForeignKey('Memo', related_name='memo_forwarded_by', null=True, blank=True, default = None)
     
     # Has the memo been viewed by the recipient yet
@@ -41,8 +45,12 @@ class Memo(models.Model):
         
         inbox = Folder.objects.get(user=recipient, name='inbox')
         memo.folder = inbox
-        memo.receipt_to = Memo.objects.get(pk = m1)
+        other_memo = Memo.objects.get(pk = m1)
+        memo.corresponding = other_memo
         memo.save()
+        
+        other_memo.corresponding = memo
+        other_memo.save()
         
 @receiver(post_save, sender=User)
 def user_post_save_handler(sender, instance, created, **kwargs):

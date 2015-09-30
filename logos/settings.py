@@ -40,6 +40,9 @@ REGENERATE_TEST_DATABASE = False
 
 ACCOUNT_ACTIVATION_DAYS = 3
 
+# Expire browser sessions after 10 minutes of inactivity
+SESSION_COOKIE_AGE = 10*60
+
 ADMINS = (
     ('Splat', 'splat@myself.com'),
 )

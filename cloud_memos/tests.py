@@ -1,6 +1,8 @@
 from django.test import TestCase
 from django.contrib.auth.models import User
 from django.contrib.auth import authenticate
+from django.test import Client
+from django.core.urlresolvers import reverse
 
 # Create your tests here.
 from .models import Memo, Folder
@@ -35,6 +37,26 @@ class MemoTestCase(TestCase):
         with self.assertRaises(Memo.DoesNotExist):
             Memo.objects.get(folder__name='outbox',from_user__username="fred")
 
+    def test_views(self):
+        c = Client()
+        response = c.post('/accounts/login/', {'username': 'john', 'password':'pass456'}, 
+            follow=True )
+        self.assertEqual(response.status_code, 200)
+        
+        response = c.post('/memos/new/', {'recipient': 'fred', 
+            'subject':'Hi there!',
+            'message':'How art thou?'}, 
+            follow=True )
+        self.assertEqual(response.status_code, 200)
+        
+        response = c.get('/memos/outbox/')
+        # Test memo reachability
+        memo = response.context['memos'][0]
+        
+        response = c.get('/memos/preview/'+str(memo.id))
+        self.assertEqual(response.status_code, 200)
+        
+        
     def tearDown(self):
         self.u1.delete()
         self.u2.delete()

@@ -31,6 +31,16 @@ form {
 	
 }
 
+.unread { 
+	font-family: Arial Black,Arial Bold,Gadget,sans-serif; 
+	color: yellow;
+	background: cornflowerblue;
+	padding: 2px 5px 2px 5px;
+	border-radius: 5px;
+	position: relative;
+	top: -5px;
+}
+
 /* ------- login panels ------------- */
 #login-fieldset {
     border-radius: 5px;

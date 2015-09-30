@@ -22,13 +22,15 @@ def index(request):
     
 @login_required()
 def inbox(request):
-    memos = Memo.objects.filter(folder__name = 'inbox', to_user = request.user)
+    request.session['box'] = 'inbox'
+    memos = Memo.objects.filter(folder__name = 'inbox', to_user = request.user).order_by('-id')
     context = {'memos':memos,'cat_title':'Inbox'}
     return render(request, 'cloud_memos/list.html', context)
 
 @login_required()
 def outbox(request):
-    memos = Memo.objects.filter(folder__name = 'outbox', from_user = request.user)
+    request.session['box'] = 'outbox'
+    memos = Memo.objects.filter(folder__name = 'outbox', from_user = request.user).order_by('-id')
     context = {'memos':memos, 'cat_title':'Outbox'}
     return render(request, 'cloud_memos/list.html', context)
 
@@ -62,8 +64,10 @@ def new(request):
 def preview(request, memo_id):
     memo = get_object_or_404(Memo, pk=memo_id)
     context = {'memo':memo, 'cat_title':'Displaying Memo'}
-    memo.receipt_to.viewed_on = datetime.now(pytz.utc)
-    memo.receipt_to.save()
+    # mark this memo as read
+    memo.viewed_on = datetime.now(pytz.utc)
+    memo.save()
+    
     return render(request, 'cloud_memos/preview.html', context)
 
 @login_required()
@@ -77,7 +81,13 @@ def trash_memo(request, memo_id):
             subject = memo.subject
             memo.delete()
             messages.success(request, 'Your memo "%s" was permanently deleted.' % (subject,))
-        return redirect('cloud_memos.views.inbox')
+        if request.session.has_key('box'):
+            if request.session['box'] == 'inbox':
+                return redirect('cloud_memos.views.inbox')
+            elif request.session['box'] == 'outbox':
+                return redirect('cloud_memos.views.outbox')
+        else:
+            return redirect('cloud_memos.views.inbox')
         
 
 @login_required()

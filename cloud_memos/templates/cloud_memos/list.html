@@ -4,7 +4,8 @@
 <ul class="splat-memos">
     {% for memo in memos %}
     
-	<li><span class="memo-sender">Recipient: <span>{{ memo.to_user.username }}</span>
+	<li>{% if not memo.viewed_on %}<span class="unread">unread</span>{% endif %}
+	<span class="memo-sender">Recipient: <span>{{ memo.to_user.username }}</span>
 	<div class="memo-subject">Subject: <a class="memo-subject" href="{% url 'cloud_memos.views.preview' memo.id %}">{{memo.subject}}</a></div>
     <div class="memo-date">Sent: <span>{{ memo.created }}</span></div>
     <div class="memo-text">{{memo.text|truncatewords:20}}</div>

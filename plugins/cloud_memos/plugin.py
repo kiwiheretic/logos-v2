@@ -156,8 +156,6 @@ class MemosPlugin(Plugin):
             memo = memos[memo_id]
             text = re.sub(r'\n', ' ', memo.text)
             self.notice(nick, text)
-            memo.receipt_to.viewed_on = datetime.now(pytz.utc)
-            memo.receipt_to.save()
             memo.viewed_on = datetime.now(pytz.utc)
             memo.save()
         except IndexError:
