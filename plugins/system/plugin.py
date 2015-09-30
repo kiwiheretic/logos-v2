@@ -41,6 +41,8 @@ class SystemCoreCommands(Plugin):
         super(SystemCoreCommands, self).__init__(*args)
         self.commands = ( \
                          (r'login\s+(?P<password>\S+)$', self.login, 'Login into the bot'),
+                         (r'login\s+(?P<userid>\S+)\s+(?P<password>\S+)$', self.login, 'Login into the bot'),
+                         
                          (r'logout', self.logout, "Log out of bot"),
                          (r'version\s*$', self.version, "Show this bot's version info"),
                          (r'list\s+plugins', self.list_plugins, "list all plugins available"),
@@ -192,11 +194,18 @@ class SystemCoreCommands(Plugin):
 
     
     def login(self, regex, chan, nick, **kwargs):
+        try:
+            userid = regex.group('userid')
+        except IndexError:
+            userid = None
         password = regex.group('password')
         host = self.get_host(nick)
 
         try:
-            user = User.objects.get(username__iexact = nick.lower())
+            if userid:
+                user = User.objects.get(username__iexact = userid.lower())
+            else:
+                user = User.objects.get(username__iexact = nick.lower())
         except User.DoesNotExist:
             self.say(chan, "Invalid Nick")
             return
