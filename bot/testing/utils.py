@@ -1,5 +1,5 @@
 # logos testing base class
-
+from __future__ import print_function, absolute_import
 from bot import pluginDespatch
 from django.utils import unittest
 from twisted.internet import reactor
@@ -57,28 +57,46 @@ class FakePlugin(object):
         self.plugin_output.append("{} {}: {}".format('notice', user, message))
 
     def kick(self, channel, user, reason=None):    
+        """Not yet implemented"""
         pass
 
     def mode(self, chan, set, modes, limit = None, user = None, mask = None):
+        """Not yet implemented"""
         pass
                 
     def sendLine(self, line):
+        """Not yet implemented"""
         pass
 
+    def send_signal(self, signal_id, data):
+        self.plugin_output=[]
+        data['nick'] = self.nickname
+        data['chan'] = self.chan
+        fn = getattr(self, 'onSignal_'+signal_id)
+        fn('testing', data)
+        output = "\n".join(self.plugin_output)
+        return (output)
+        
+    def send_channel_msg(self, message):
+        self.plugin_output=[]
+        self.privmsg(self.nickname + "!logos@fakeuser", self.chan, message)
+        output = "\n".join(self.plugin_output)
+        print (output)
+        print ("--------------------------------------------")
+        return output
+        
     def send_command(self, msg):
         self.plugin_output=[]
-        print "testing: "+msg
         orig_msg = self.act + msg
         self.command(self.nickname, self.user, self.chan, 
                      orig_msg, msg, self.act)
         output = "\n".join(self.plugin_output)
-        print output
-        print "--------------------------------------------"
         return output
 
 # Monkey patch for testing only
 # based on http://stackoverflow.com/questions/9646187/how-to-copy-a-member-function-of-another-class-into-myclass-in-python
 FakePlugin.command = pluginDespatch.PluginDespatcher.__dict__['command']
+FakePlugin.privmsg = pluginDespatch.PluginDespatcher.__dict__['privmsg']
 
 # override this class
 class LogosTestCase(unittest.TestCase):
@@ -101,6 +119,9 @@ class LogosTestCase(unittest.TestCase):
     def room(self):
         return self.plugin.chan    
 
+    def set_channel(self, channel):
+        self.plugin.chan = channel
+    
     def set_nick(self, new_nick):
         self.plugin.nickname = new_nick 
 

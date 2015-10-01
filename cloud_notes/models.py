@@ -1,5 +1,7 @@
 from django.db import models
 from django.contrib.auth.models import User
+from django.dispatch import receiver
+from django.db.models.signals import post_save
 
 # Create your models here.
 class Folder(models.Model):
@@ -17,9 +19,11 @@ class Note(models.Model):
     modified_at = models.DateTimeField()
     note = models.TextField()
 
-# We may be able to have a merge tag system where tags 
-# can be consolidated with existing tags
-#class Tag(models.Model):
-#    name = models.CharField(max_length=30)
-#    note = models.ManyToManyField(Note)
-    
+@receiver(post_save, sender=User)
+def new_user_handler(sender, instance, created, **kwargs):
+    if created:
+        user = instance
+        print ("creating main notes folder for "+user.username)
+        main = Folder(name="Main", user=user)
+        main.save()
+        

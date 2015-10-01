@@ -25,7 +25,7 @@ class NotesPlugin(Plugin):
     plugin = ('notes', 'Cloud Notes')
     
     def __init__(self, *args, **kwargs):
-        Plugin.__init__(self, *args, **kwargs)
+        super(NotesPlugin, self).__init__( *args, **kwargs)
         self.commands = ((r'list$', self.list_notes, 'list all notes'),
                          (r'list (?P<range>\d*-\d*)', self.list_notes, 'list all notes'),
                          (r'read (?P<note_id>\d+)', self.read, 'read a note'),
@@ -51,8 +51,9 @@ class NotesPlugin(Plugin):
         if username not in self.user_notes:
             self.user_notes[username] = dict_values
         else:
-            for k, v in dict_values.iteritems():
-                self.user_notes[username][k] = v
+            self.user_notes[username].update(dict_values)
+            # for k, v in dict_values.iteritems():
+                # self.user_notes[username][k] = v
 
     def privmsg(self, user, channel, message):
         
@@ -63,7 +64,8 @@ class NotesPlugin(Plugin):
             if regex :
                 text = regex.group(1).strip()
                 logger.debug("note_users = " + str(self.user_notes))
-                if 'note' in self.user_notes[username]:
+                if 'note' in self.user_notes[username] and \
+                self.user_notes[username]['channel'] == channel:
                     note = self.user_notes[username]['note']
                     note.note += "\n" + text + "\n"
                     dt = datetime.utcnow()
@@ -76,7 +78,8 @@ class NotesPlugin(Plugin):
         nick = data['nick']
         chan = data['chan']
         username = self.get_auth().get_username(nick)
-        if username and username in self.user_notes:
+        if username and username in self.user_notes and \
+        self.user_notes[username]['channel'] == chan:
             note = self.user_notes[username]['note']
             note.note += "\n"
             for verse in data['verses']:
@@ -92,7 +95,8 @@ class NotesPlugin(Plugin):
         nick = data['nick']
         chan = data['chan']
         username = self.get_auth().get_username(nick)
-        if username and username in self.user_notes:
+        if username and username in self.user_notes and \
+        self.user_notes[username]['channel'] == chan:
             note = self.user_notes[username]['note']
             note.note += "\n"
             for verse_txt in data['verses']:
@@ -107,11 +111,9 @@ class NotesPlugin(Plugin):
         nick = data['nick']
         username = self.get_auth().get_username(nick)
         user = User.objects.get(username=username)
-        try:
-            main = Folder.objects.get(name="Main", user=user)
-        except Folder.DoesNotExist:
-            main = Folder(name="Main", user=user)
-            main.save()
+
+        main = Folder.objects.get(name="Main", user=user)
+
         self._update_usernotes_hash(username, {'folder':main})
         
         
@@ -155,14 +157,15 @@ class NotesPlugin(Plugin):
                         note_type = "bible note",
                         note = "Bible Note: \n")
             note.save()
-        self._update_usernotes_hash(username, {'note':note})
-        self.say(chan, "Note logging turned on for "+nick)
+        self._update_usernotes_hash(username, {'note':note, 'channel':chan})
+        self.say(chan, "Note logging turned on %s for %s " % (chan, nick))
 
     @login_required()
     def stop_logging(self, regex, chan, nick, **kwargs):
         username = self.get_auth().get_username(nick)
         if username in self.user_notes:
             del self.user_notes[username]['note']
+            del self.user_notes[username]['channel']
         self.say(chan, "Note logging turned off for "+nick)    
 
 
