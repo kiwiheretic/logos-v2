@@ -549,7 +549,7 @@ class PluginDespatcher(object):
             fn = signal.pop(0)
             source = signal.pop(0)
             data = signal.pop(0)
-            print fn, source, data
+            logger.debug ( str(( fn, source, data )))
             fn(source, data)
 
     # ---- delegate methods below --------

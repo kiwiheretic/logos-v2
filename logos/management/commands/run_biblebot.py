@@ -105,6 +105,7 @@ class Command(BaseCommand):
         extra_options['startup_script'] = options['startup_script']
         extra_options['monitor_idle_times'] = options['monitor_idle_times']
 
+        print ("Starting Logos Bot, Please Wait...")
         irc.instantiateIRCBot(server, port, engine_room, nickname, \
                               sys_password, nick_password, web_port, rpc_port, \
                               extra_options)
