@@ -11,9 +11,7 @@ from .models import Memo, Folder
 from .forms import MemoForm
 
 # Current limitations and ToDos:
-# - deleting a memo deletes from recipients inbox AND senders outbox
-#   (ie: no reference counting)
-# - Add in paginator for memo list 
+# - No paginator for memo list 
 
 
 @login_required()

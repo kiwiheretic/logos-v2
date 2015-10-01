@@ -20,7 +20,8 @@ class Memo(models.Model):
     to_user = models.ForeignKey(User, related_name='memo_to')
     
     # where to check for read receipts
-    corresponding  = models.ForeignKey('Memo', related_name='memo_receipt_to', null=True, blank=True, default = None)
+    corresponding  = models.ForeignKey('Memo', on_delete=models.SET_NULL,
+        related_name='corresponding_to', null=True, blank=True, default = None)
     forwarded_by  = models.ForeignKey('Memo', related_name='memo_forwarded_by', null=True, blank=True, default = None)
     
     # Has the memo been viewed by the recipient yet

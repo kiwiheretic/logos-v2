@@ -57,6 +57,50 @@ class MemoTestCase(TestCase):
         self.assertEqual(response.status_code, 200)
         
         
+        
+    def test_memo_to_self_deleted(self):
+        """Test what happens if a memo is sent to self and subsequently deleted
+        from outbox.  Does it also incorrectly delete from inbox?"""
+        c = Client()
+        response = c.post('/accounts/login/', {'username': 'john', 'password':'pass456'}, 
+            follow=True )
+        self.assertEqual(response.status_code, 200)
+        
+        response = c.get('/memos/outbox/')
+        self.assertFalse (response.context['memos'])
+        
+        response = c.get('/memos/inbox/')
+        self.assertFalse (response.context['memos'])
+        
+        response = c.post('/memos/new/', {'recipient': 'john', 
+            'subject':'Hi there!',
+            'message':'How art thou?'}, 
+            follow=True )
+        self.assertEqual(response.status_code, 200)
+    
+        response = c.get('/memos/inbox/')
+        self.assertTrue (response.context['memos'])
+        
+        response = c.get('/memos/outbox/')
+        self.assertTrue (response.context['memos'])
+        
+        memo_id = response.context['memos'][0].id
+        response = c.get('/memos/preview/'+str(memo_id))
+        self.assertEqual(response.status_code, 200)
+        
+        response = c.get('/memos/trash_memo/'+str(memo_id))
+        self.assertEqual(response.status_code, 200)
+        
+        response = c.post('/memos/trash_memo/'+str(memo_id), {'yes': 'Yes'},  
+            follow=True )
+        self.assertEqual(response.status_code, 200)
+        
+        response = c.get('/memos/outbox/')
+        self.assertFalse (response.context['memos'])
+
+        response = c.get('/memos/inbox/')
+        self.assertTrue (response.context['memos'])
+        
     def tearDown(self):
         self.u1.delete()
         self.u2.delete()
