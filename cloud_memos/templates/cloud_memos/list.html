@@ -5,7 +5,11 @@
     {% for memo in memos %}
     
 	<li>{% if not memo.viewed_on %}<span class="unread">unread</span>{% endif %}
-	<span class="memo-sender">Recipient: <span>{{ memo.to_user.username }}</span>
+	{% if memo.folder.name == 'inbox' %}
+	<span class="memo-sender">Sender: {{ memo.from_user.username }}</span>
+	{% elif memo.folder.name == 'outbox' %}
+	<span class="memo-recipient">Recipient: {{ memo.to_user.username }}</span>
+	{% endif %}
 	<div class="memo-subject">Subject: <a class="memo-subject" href="{% url 'cloud_memos.views.preview' memo.id %}">{{memo.subject}}</a></div>
     <div class="memo-date">Sent: <span>{{ memo.created }}</span></div>
     
