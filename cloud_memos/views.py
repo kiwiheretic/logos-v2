@@ -45,6 +45,10 @@ def new(request):
     if request.method == 'POST':
         frm = MemoForm(request.POST)
         context.update({'form':frm})
+        if 'cancel' in request.POST:
+            messages.success(request, 'You sucessfully cancelled your memo.')
+            return redirect('cloud_memos.views.inbox')
+            
         if frm.is_valid():
             to_user = User.objects.get(username__iexact=frm.cleaned_data['recipient'])
             Memo.send_memo(request.user, to_user,
