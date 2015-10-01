@@ -26,4 +26,6 @@ def new_user_handler(sender, instance, created, **kwargs):
         print ("creating main notes folder for "+user.username)
         main = Folder(name="Main", user=user)
         main.save()
+        trash = Folder(name="Trash", user=user)
+        trash.save()
         
