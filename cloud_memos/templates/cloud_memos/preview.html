@@ -2,6 +2,8 @@
 {% block content %}
 
 <h3>Subject: {{memo.subject}}</h3>
+<p>Sender: {{memo.from_user.username}}</p>
+<p>Recipient: {{memo.to_user.username}}</p>
 <div class="note-preview">
 {{memo.text|linebreaks}}
 </div>    
