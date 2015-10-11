@@ -21,6 +21,10 @@ from logos.settings import LOGGING
 logger = logging.getLogger(__name__)
 logging.config.dictConfig(LOGGING)
 
+def room_settings(request):
+    context = {}
+    return render(request, 'logos/room_settings.html', context)
+    
 def root_url(request):
     if request.user.is_authenticated():
         return redirect('/accounts/profile')

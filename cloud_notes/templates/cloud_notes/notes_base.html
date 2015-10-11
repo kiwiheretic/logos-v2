@@ -6,7 +6,8 @@
 
     <li><a href="{% url 'cloud_notes.views.list' %}" class="button-link">Note List</a></li>
     <li><a href="{% url 'cloud_notes.views.new_note' %}" class="button-link">New Note</a></li>
-    <li><a href="#" class="button-link">Labels</a></li>
+    <li><a href="{% url 'cloud_notes.views.upload_note' %}" class="button-link">Upload Note</a></li>
+	<li><a href="#" class="button-link">Labels</a></li>
     <li><a href="{% url 'cloud_notes.views.folders' %}" class="button-link">Folders</a></li>
     <li><a href="#" class="button-link">Preferences</a></li>
     <li><a href="{% url 'cloud_notes.views.import_file' %}" class="button-link">Import</a></li>

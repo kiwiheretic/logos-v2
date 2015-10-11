@@ -19,6 +19,13 @@ from plugins.models import *
 
 
 
+class OptionLabels(models.Model):
+    # group label - useful for extractimg only a specific group of fields
+    group = models.CharField(max_length=15)
+    display_order = models.PositiveSmallIntegerField()
+    # form field label
+    label = models.CharField(max_length=40)
+    option_name = models.CharField(max_length=15)
 
 class RoomOptions(models.Model):
     network = models.TextField()

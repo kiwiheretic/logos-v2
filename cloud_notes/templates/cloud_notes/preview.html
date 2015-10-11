@@ -32,4 +32,11 @@ Note ID: {{note.id}}
 {{note.note|linebreaks}}
 </div>    
       
+
+<div style="float:left; clear:left;" class="note-download">
+<a href="{% url 'cloud_notes.views.download' note.id %}">Download Note</a>
+<br/>
+<br/>
+</div>    
+     	  
 {% endblock %}

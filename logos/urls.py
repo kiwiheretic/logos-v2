@@ -21,6 +21,8 @@ urlpatterns = patterns('',
     url(r'^accounts/profile/', 'logos.views.profile'),
 #    url(r'^accounts/profile/', include('cloud_notes.urls')),
     
+    url(r'^room_settings/', 'logos.views.room_settings'),
+    
     url(r'^notes/', include('cloud_notes.urls')),
     url(r'^memos/', include('cloud_memos.urls')),
     url(r'^forum/', include('pybb.urls', namespace='pybb')),

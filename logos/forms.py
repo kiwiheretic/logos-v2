@@ -1,6 +1,17 @@
 # forms.py
 from django import forms
+from .models import OptionLabels
 
+# Dynamic form for the purpose of creating
+# custom option data capture
+class DynamicOptionsForm(forms.Form):
+    # form field defs here ...
+    def __init__(self, *args, **kwargs):
+        group = kwargs.pop('group')
+        qs = OptionLabels.objects.filter(group = group).order_by('display_order')
+        for i, row in enumerate(qs):
+            self.fields['custom_%d' % (i,)] = forms.CharField(label=row.label)
+    
 class SettingsForm(forms.Form):
     rpc_host = forms.CharField(label='RPC Host',max_length=20, 
                                widget=forms.TextInput(attrs={'size':20}))

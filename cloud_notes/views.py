@@ -1,4 +1,5 @@
 from django.shortcuts import render, redirect
+from django.shortcuts import get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from django.core import serializers
@@ -7,6 +8,8 @@ from itertools import chain
 from django.http import HttpResponse, HttpResponseRedirect
 import os
 import json
+import re
+
 
 from forms import NoteForm
 from models import Note, Folder
@@ -196,7 +199,7 @@ def import_all(request):
         form = UploadFileForm(request.POST, request.FILES)
         context = {'form':form}
         if form.is_valid():
-            handle_uploaded_file(request.FILES['file'], request.user)
+            handle_uploaded_json_file(request.FILES['file'], request.user)
             return redirect('cloud_notes.views.list')            
     else:
         form = UploadFileForm()
@@ -209,7 +212,7 @@ def import_file(request):
         form = UploadFileForm(request.POST, request.FILES)
         context = {'form':form}
         if form.is_valid():
-            handle_uploaded_file(request.FILES['file'], request.user)
+            handle_uploaded_json_file(request.FILES['file'], request.user)
             return redirect('cloud_notes.views.list')            
     else:
         form = UploadFileForm()
@@ -217,7 +220,7 @@ def import_file(request):
     return render(request, 'cloud_notes/import_file.html', context)
 
 @transaction.atomic
-def handle_uploaded_file(f, user):
+def handle_uploaded_json_file(f, user):
     
     def convert_date(str_date):
         new_str = str_date.replace('+00:00','')
@@ -271,9 +274,60 @@ def handle_uploaded_file(f, user):
             new_note.user = user
             new_note.save()
         
-        
+@login_required()
+def download(request, id):
+    context = {}
+    # TODO: I am failing to check I own the note here!!
+    note = get_object_or_404(Note, pk=id)
+    content = note.note
+    data = "##> ID : %d\n" % (note.id,)
+    data += "##> Title : %s\n" % (note.title,)
+    data += "##> Do NOT remove these lines if you plan to re-upload.  \n"
+    data += "##> They will be removed automatically upon re-upload\n"
+    data += content
 
-#@login_required()
-#def file_uploaded(request):
-#    context = {}
-#    return render(request, 'cloud_notes/file_uploaded.html', context)
+    response = HttpResponse(data, content_type='text/plain')
+    response['Content-Disposition'] = 'attachment; filename="notes_%d.txt"' % (note.id,)
+    return response
+
+def handle_uploaded_file(f, user):    
+    if f.content_type != 'text/plain':
+        raise Exception('Invalid File Type')
+    filename = 'notes_%s.txt' % (user.username,)
+    with open(filename, 'wb+') as destination:
+        for chunk in f.chunks():
+            destination.write(chunk)
+        f.close()
+    with open(filename, 'r') as fh:
+        id = None
+        s = ""
+        for line in fh.readlines():
+            print (line)
+            if line.startswith('##>'):
+                mch = re.search(r"ID :\s+(\d+)", line)
+                if mch:
+                    id = int(mch.group(1))
+            else:
+                s += line
+        if not id:
+            raise Exception('Improperly formatted uploaded file')
+        return (id, s)
+    
+        
+        
+@login_required()
+def upload_note(request):
+    if request.method == 'POST':
+        form = UploadFileForm(request.POST, request.FILES)
+        context = {'form':form}
+        if form.is_valid():
+            id, note_contents = handle_uploaded_file(request.FILES['file'], request.user)
+            note = get_object_or_404(Note, pk=id)
+            note.note = note_contents
+            note.save()
+            return redirect('cloud_notes.views.preview', id)            
+    else:
+        form = UploadFileForm()
+        context = {'form':form}
+    return render(request, 'cloud_notes/import_file.html', context)
+
