@@ -155,7 +155,7 @@ class NotesPlugin(Plugin):
                         created_at = utc_tz.localize(dt),
                         modified_at = utc_tz.localize(dt),
                         note_type = "bible note",
-                        note = "Bible Note: \n")
+                        note = "")
             note.save()
         self._update_usernotes_hash(username, {'note':note, 'channel':chan})
         self.say(chan, "Note logging turned on %s for %s " % (chan, nick))
@@ -210,14 +210,14 @@ class NotesPlugin(Plugin):
             if mch1:
                 lidx = int(mch1.group(1))
                 notes = Note.objects.\
-                    filter(folder=folder, user__username = nick.lower(), pk__lte = lidx).\
+                    filter(folder=folder, user__username = username.lower(), pk__lte = lidx).\
                     order_by('-id')[:num_to_list]
                 fidx = notes[len(notes)-1].id
                 self._update_usernotes_hash(username, {'list_index':fidx-1})
             elif mch2:
                 fidx = int(mch2.group(1))
                 notes = Note.objects.\
-                    filter(folder=folder, user__username = nick.lower(), pk__gte = fidx).\
+                    filter(folder=folder, user__username = username.lower(), pk__gte = fidx).\
                     order_by('id')[:num_to_list]
                 idx = notes[0].id
                 notes = reversed(notes)
@@ -226,7 +226,7 @@ class NotesPlugin(Plugin):
                 fidx = int(mch3.group(1))
                 lidx = int(mch3.group(2))
                 notes = Note.objects.\
-                    filter(folder=folder, user__username = nick.lower(), pk__gte = fidx, \
+                    filter(folder=folder, user__username = username.lower(), pk__gte = fidx, \
                            pk__lte = lidx).\
                     order_by('-id')[:num_to_list]                
                 self._update_usernotes_hash(username, {'list_index':fidx-1})
@@ -235,7 +235,7 @@ class NotesPlugin(Plugin):
                     idx = self.user_notes[username]['list_index']
                     logger.debug( "cloud_notes: idx = " + str(idx))
                     notes = Note.objects.\
-                        filter(folder=folder, user__username = nick.lower(), pk__lte = idx).\
+                        filter(folder=folder, user__username = username.lower(), pk__lte = idx).\
                         order_by('-id')[:num_to_list]
                     if notes: #if any found
                         idx = notes[len(notes)-1].id
@@ -243,7 +243,7 @@ class NotesPlugin(Plugin):
                     else:
                         self.say(chan, "**No more notes found***")
         else:
-            notes = Note.objects.filter(folder=folder, user__username = nick.lower()).\
+            notes = Note.objects.filter(folder=folder, user__username = username.lower()).\
                 order_by('-id')[:num_to_list]
             if notes:
                 lidx = notes[len(notes)-1].id
