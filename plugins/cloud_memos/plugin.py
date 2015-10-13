@@ -23,6 +23,7 @@ class MemosPlugin(Plugin):
 
         self.commands = ((r'list$', self.list_memos, 'list all memos'),
                          (r'list unread$', self.list_unread_memos, 'list new memos'),
+                         (r'list new$', self.list_unread_memos, 'list new memos'),
                          (r'send (?P<recipient>\S+) (?P<message>.*)$', self.send_memo, 'send new memos'),
                          (r'check$', self.check, 'check for unread memos'),
                          (r'read (?P<memo_id>\d+)', self.read, 'read a memo'),
@@ -62,7 +63,7 @@ class MemosPlugin(Plugin):
             to_user__username = username.lower()).order_by('-id')
         return memos
     
-    def _check(self, nick):
+    def _check(self, nick, always_respond = False):
         """  check for unread memos """
 
         username = self.get_auth().get_username(nick)
@@ -72,12 +73,13 @@ class MemosPlugin(Plugin):
         if unread_memos > 0:
             self.notice(nick,'You have %d unread memos!' % (unread_memos,))
         else:
-            self.notice(nick,'You have no unread memos!')
+            if always_respond:
+                self.notice(nick,'You have no unread memos!')
         
     @login_required()
     def check(self, regex, chan, nick, **kwargs):
         """  check for unread memos """
-        self._check(nick)
+        self._check(nick, always_respond = True)
         
             
     @login_required()
@@ -123,7 +125,12 @@ class MemosPlugin(Plugin):
                         
         if memos:
             for idx, memo in enumerate(memos):
-                self.notice(nick, str(idx) + " " + memo.from_user.username + " " + memo.subject)
+                if not memo.viewed_on:
+                    read_status = " **UNREAD** "
+                else:
+                    read_status = ""
+                notification = str(idx) + " " + memo.from_user.username + read_status + " " + memo.subject
+                self.notice(nick, notification )
                 if idx >= num_to_list: break
                 
         else:
