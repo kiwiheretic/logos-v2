@@ -65,7 +65,7 @@ class NotesPlugin(Plugin):
                 text = regex.group(1).strip()
                 logger.debug("note_users = " + str(self.user_notes))
                 if 'note' in self.user_notes[username] and \
-                self.user_notes[username]['channel'] == channel:
+                self.user_notes[username]['channel'].lower() == channel.lower():
                     note = self.user_notes[username]['note']
                     note.note += "\n" + text + "\n"
                     dt = datetime.utcnow()
