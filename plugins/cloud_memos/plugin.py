@@ -59,7 +59,7 @@ class MemosPlugin(Plugin):
         username = self.get_auth().get_username(nick)
         user = User.objects.get(username = username)
         memos = Memo.objects.filter(folder__name=folder_name, 
-            to_user__username = nick.lower()).order_by('-id')
+            to_user__username = username.lower()).order_by('-id')
         return memos
     
     def _check(self, nick):
