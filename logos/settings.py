@@ -345,7 +345,8 @@ LOGGING = {
             'level': 'DEBUG',
         },
         'plugins.cloud_notes.plugin': {
-            'handlers': ['console_debug', 'file'],
+            'handlers': ['file'],
+#            'handlers': ['console_debug', 'file'],
             'level': 'DEBUG',
             'propagate': False,
         },
