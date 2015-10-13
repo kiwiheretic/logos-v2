@@ -8,6 +8,8 @@ class Folder(models.Model):
     name = models.CharField(max_length=30)
     # Folders really need to be specific to User (TO DO)
     user = models.ForeignKey(User)
+    def __unicode__(self):
+        return u"Folder %d" % (self.id, )
 
 class Note(models.Model):
     user = models.ForeignKey(User)
@@ -19,6 +21,9 @@ class Note(models.Model):
     modified_at = models.DateTimeField()
     note = models.TextField()
 
+    def __unicode__(self):
+        return u"Note %d" % (self.id, )
+        
 @receiver(post_save, sender=User)
 def new_user_handler(sender, instance, created, **kwargs):
     if created:

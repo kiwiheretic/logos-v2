@@ -56,10 +56,10 @@ class NotesPlugin(Plugin):
                 # self.user_notes[username][k] = v
 
     def privmsg(self, user, channel, message):
-        
         nick,_ = user.split('!')
         username = self.get_auth().get_username(nick)
         if username and username in self.user_notes:
+            logger.debug("note privmsg = " + str((user, channel, message)))
             regex = re.match("#(.*)",message)
             if regex :
                 text = regex.group(1).strip()
@@ -158,7 +158,7 @@ class NotesPlugin(Plugin):
                         note = "")
             note.save()
         self._update_usernotes_hash(username, {'note':note, 'channel':chan})
-        self.say(chan, "Note logging turned on %s for %s " % (chan, nick))
+        self.say(chan, "Note logging turned on %s for %s to %d" % (chan, nick, note.id))
 
     @login_required()
     def stop_logging(self, regex, chan, nick, **kwargs):
