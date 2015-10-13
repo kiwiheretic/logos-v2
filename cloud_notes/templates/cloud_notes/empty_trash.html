@@ -1,0 +1,17 @@
+{% extends "cloud_notes/notes_base.html" %}
+{% block content %}
+
+<h2>Are you sure you wish to permanently empty the trash?</h2>
+<form action="" method="post">
+        {% csrf_token %}
+<div style="float:left;"><a style="font-size:18px;" href="{% url 'cloud_notes.views.list' %}" class="button button-link">No</a></div>	
+    <label style="width:auto;clear:none;">
+        <span>&nbsp;</span> 
+        <input type="submit" name="EmptyTrash" class="button" style="display:block; float:left;" 
+        value="Yes, delete all trash" /> 
+    </label>
+
+</form>
+
+     	  
+{% endblock %}

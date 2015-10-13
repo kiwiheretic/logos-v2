@@ -155,7 +155,17 @@ def delete_note(request, note_id):
     note = Note.objects.get(pk=note_id)
     note.delete()
     return redirect('cloud_notes.views.list')
-        
+
+@login_required()
+def empty_trash(request):
+    if request.method == "POST":
+        if request.POST.has_key('EmptyTrash'):
+            trash = Folder.objects.get(user=request.user, name="Trash")
+            trash.note_set.all().delete()
+            return redirect("cloud_notes.views.list")
+    else: # GET
+        return render(request, "cloud_notes/empty_trash.html")
+    
 @login_required()
 def export(request):
     context = {}
