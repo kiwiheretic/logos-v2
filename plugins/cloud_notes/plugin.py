@@ -228,15 +228,22 @@ class NotesPlugin(Plugin):
                 notes = Note.objects.\
                     filter(folder=folder, user__username = username.lower(), pk__gte = fidx, \
                            pk__lte = lidx).\
-                    order_by('-modified_at')[:num_to_list]                
+                    order_by('-id')[:num_to_list]                
                 self._update_usernotes_hash(username, {'list_index':fidx-1})
             elif mch4:
                 if self._in_usernotes(username, 'list_index'):
                     idx = self.user_notes[username]['list_index']
-                    logger.debug( "cloud_notes: idx = " + str(idx))
-                    notes = Note.objects.\
-                        filter(folder=folder, user__username = username.lower(), pk__lte = idx).\
-                        order_by('-modified_at')[:num_to_list]
+                    mod_date = self.user_notes[username].get('modified', None)
+                    
+                    logger.debug( "cloud_notes: idx = " + str(idx) + " Modified = "+str(mod_date))
+                    if mod_date:
+                        notes = Note.objects.\
+                            filter(folder=folder, user__username = username.lower(), modified_at__lt = mod_date).\
+                            order_by('-modified_at')[:num_to_list]                    
+                    else:
+                        notes = Note.objects.\
+                            filter(folder=folder, user__username = username.lower(), pk__lte = idx).\
+                            order_by('-id')[:num_to_list]
                     if notes: #if any found
                         idx = notes[len(notes)-1].id
                         self.user_notes[username]['list_index'] = idx-1
@@ -247,13 +254,15 @@ class NotesPlugin(Plugin):
                 order_by('-modified_at')[:num_to_list]
             if notes:
                 lidx = notes[len(notes)-1].id
-                self._update_usernotes_hash(username, {'list_index':lidx-1})
+                mod_date = notes[len(notes)-1].modified_at
+                self._update_usernotes_hash(username, {'list_index':lidx-1, 'modified':mod_date})
             else:
                 self.say(chan, '** No Notes found **')
                             
         if notes:
             for note in notes:
-                self.notice(nick, str(note.id) + " " + note.title)
+                mod_date = note.modified_at.strftime('%d-%m-%Y %H:%M')
+                self.notice(nick, str(note.id) + " (" + note.title + ") Last Modified : " + mod_date + " UTC")
 
     @login_required()
     def read_more(self, regex, chan, nick, **kwargs):
