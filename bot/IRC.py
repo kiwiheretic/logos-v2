@@ -367,14 +367,14 @@ class IRCBot(irc.IRCClient):
         for rm in rooms:
             if rm != self.factory.channel.lower():
                 self.join(str(rm))
-                logger.info("Joining room "+ rm)
+                logger.info("Joining room "+ rm + " on network " + self.factory.network)
 
         if self.factory.extra_options['room_key']:
             room_key = self.factory.extra_options['room_key']
             self.join(self.factory.channel, room_key)
         else:
             self.join(self.factory.channel)
-        logger.info("Joining room "+ self.factory.channel)
+        logger.info("Joining room %s on %s " % ( self.factory.channel, self.factory.network))
         
         if self.factory.extra_options['startup_script']:
             try:
@@ -403,7 +403,7 @@ class IRCBot(irc.IRCClient):
         """
         Called when I see another user joining a channel.
         """
-        logger.info(user + " has joined " + channel)
+        logger.info(user + " has joined " + channel + " on network " + self.actual_host)
         irc.IRCClient.userJoined(self, user, channel)
 
         if not self.nicks_db.nick_in_room(user, channel):
@@ -460,7 +460,7 @@ class IRCBot(irc.IRCClient):
         
     def joined(self, channel):
         """ callback for when this bot has joined a channel """
-        logger.info( "%s has joined %s " % ( self.factory.nickname, channel,))
+        logger.info( "%s has joined %s on %s " % ( self.factory.nickname, channel, self.factory.network))
 
         irc.IRCClient.joined(self, channel)
 
@@ -719,20 +719,29 @@ class IRCBotFactory(protocol.ClientFactory):
 
     def clientConnectionFailed(self, connector, reason):
         logging.info("Could not connect: %s, will reconnect in 10 seconds" % (reason,))
+        logging.info("** Could not connect to %s port %d" % (connector.host, connector.port))
         self.reactor.callLater(10, self.doReconnect, connector)
 
 
 ########################################################################
 
-def instantiateIRCBot(network, port, room, botName, sys_password, 
+def instantiateIRCBot(networks, room, botName, sys_password, 
                       nickserv, web_port = None, rpc_port=None, 
                       extra_options=None):
 
     
     socket.setdefaulttimeout(30)
     # Start the IRC Bot
-    reactor.connectTCP(network, port,
-                       IRCBotFactory(reactor, network, room, botName,\
+    for net_port in networks:
+        if ':' in net_port:
+            network, port = net_port.split(':')
+            port = int(port)
+        else:
+            network = net_port
+            port = 6667
+        print ("connecting on "+str((network, port)))   
+        reactor.connectTCP(network, port,
+                           IRCBotFactory(reactor, network, room, botName,\
                                      sys_password, nickserv, web_port,\
                                      rpc_port, extra_options))
 
