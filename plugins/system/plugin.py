@@ -393,9 +393,10 @@ class SystemCoreCommands(Plugin):
     @irc_room_permission_required('set_greeting')  
     def set_greet(self, regex, chan, nick, **kwargs):
         greet_msg = regex.group(2)
+        ch = regex.group('room')
         set_room_option(self.factory.network, ch, \
                 'greet_message', greet_msg)
-        self.msg(chan, "Greet message for %s set to \"%s\" " % (ch,greet_msg))  
+        self.msg(chan, "Greet message for %s set to \"%s\" " % (ch, greet_msg))  
                               
     @irc_room_permission_required('change_trigger')  
     def set_trigger(self, regex, chan, nick, **kwargs):

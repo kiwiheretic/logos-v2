@@ -188,7 +188,7 @@ def assignperm(network, room, username, permission):
                     perm_obj.save()                    
                 break
     if perm_obj == None:
-        self.stdout.write("Unknown permission type")
+        print("Unknown permission type")
         return
     try:
         user = User.objects.get(username__iexact = username)
