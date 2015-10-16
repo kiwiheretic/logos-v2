@@ -1,4 +1,5 @@
 {% extends "cloud_notes/notes_base.html" %}
+{% load markdown_filters %}
 {% block content %}
 
 <h1>{{note.title}}</h1>
@@ -29,7 +30,7 @@
 Note ID: {{note.id}}
 </div>
 <div class="note-preview">
-{{note.note|linebreaks}}
+{{note.note|markdown|safe}}
 </div>    
       
 
