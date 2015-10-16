@@ -11,6 +11,10 @@ h2 span {
     font-size: small;
 }
 
+.note-preview strong {
+	font-weight: 700;
+	color: steelblue;
+}
 form {
     margin-bottom: 10px;
     margin-right:20px;
