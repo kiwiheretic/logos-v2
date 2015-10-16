@@ -110,7 +110,7 @@ class MemosPlugin(Plugin):
         username = self.get_auth().get_username(nick)
         user = User.objects.get(username__iexact = username)
         try:
-            recip = User.objects.get(username = recipient)
+            recip = User.objects.get(username__iexact = recipient)
         except User.DoesNotExist:
             self.notice(nick, "I do not know this user")
             return
