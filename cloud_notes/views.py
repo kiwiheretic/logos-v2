@@ -10,13 +10,19 @@ import os
 import json
 import re
 
-
 from forms import NoteForm
-from models import Note, Folder
+from models import Note, Folder, HashTags
 from django.contrib.auth.models import User
 # Create your views here.
 from datetime import datetime
 from forms import NewFolderForm, UploadFileForm
+
+
+@login_required()
+def hash_tags(request):
+    hash_tags = HashTags.objects.exclude(notes__folder__name = 'Trash').order_by('hash_tag')
+    context = {'tags':hash_tags}
+    return render(request, 'cloud_notes/hash_tags.html', context)
 
 @login_required()
 def folders(request):
@@ -165,14 +171,34 @@ def empty_trash(request):
             return redirect("cloud_notes.views.list")
     else: # GET
         return render(request, "cloud_notes/empty_trash.html")
+
+def serialize_notes(notes):
+    note_list = []
+    for note in notes:
+        note_dict = {}
+        
+        note_dict['created_at'] = str(note.created_at )
+        note_dict['modified_at'] = str(note.modified_at)
+        note_dict['post_type'] = note.note_type 
+        note_dict['title'] = note.title
+        note_dict['note'] = note.note
+        note_dict['folder'] = note.folder.name
+        note_dict['user']  = note.user.username
+        note_list.append(note_dict)
+  
+    data_version = 0.11
+
+    data = [ data_version, note_list ] # data version 0.1
+    note_data = json.dumps(data)
+    return note_data
+    
+
     
 @login_required()
 def export(request):
     context = {}
-    folders = serializers.serialize('json', Folder.objects.filter(user=request.user))
-    notes = serializers.serialize('json',Note.objects.filter(user=request.user))
-    data = [ folders, notes ]
-    all_data = json.dumps(data)
+    notes = Note.objects.filter(user=request.user)
+    all_data = serialize_notes(notes)
     response = HttpResponse(all_data, content_type='application/json')
     response['Content-Disposition'] = 'attachment; filename="notes.json"'
     return response
@@ -182,22 +208,7 @@ def export_all(request):
     if request.user.is_superuser:
         note_list = []
         notes = Note.objects.all()
-        for note in notes:
-            note_dict = {}
-            
-            note_dict['created_at'] = str(note.created_at )
-            note_dict['modified_at'] = str(note.modified_at)
-            note_dict['post_type'] = note.note_type 
-            note_dict['title'] = note.title
-            note_dict['note'] = note.note
-            note_dict['folder'] = note.folder.name
-            note_dict['user']  = note.user.username
-            note_list.append(note_dict)
-      
-        data_version = 0.11
-
-        data = [ data_version, note_list ] # data version 0.1
-        all_data = json.dumps(data)
+        all_data = serialize_notes(notes)
         response = HttpResponse(all_data, content_type='application/json')
         response['Content-Disposition'] = \
             "attachment; filename=\"notes_{}.json\"".format(data_version)
@@ -250,13 +261,13 @@ def handle_uploaded_json_file(f, user):
     
     version, notes = json_data
     
-    for user in User.objects.all():
-        if not Folder.objects.filter(user = user, name = "Main").exists():
-            folder = Folder(name="Main", user = user)
-            folder.save()
-        if not Folder.objects.filter(user = user, name = "Trash").exists():
-            folder = Folder(name="Trash", user = user)
-            folder.save()  
+    # for user in User.objects.all():
+        # if not Folder.objects.filter(user = user, name = "Main").exists():
+            # folder = Folder(name="Main", user = user)
+            # folder.save()
+        # if not Folder.objects.filter(user = user, name = "Trash").exists():
+            # folder = Folder(name="Trash", user = user)
+            # folder.save()  
           
     for note in notes:
         created_at = convert_date(note['created_at'])

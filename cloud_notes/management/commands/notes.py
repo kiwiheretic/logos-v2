@@ -2,7 +2,7 @@ from django.core.management.base import BaseCommand, CommandError
 from django.contrib.auth.models import User
 from django.db import transaction
 
-from cloud_notes.models import Folder
+from cloud_notes.models import Folder, Note, HashTags
 from django.contrib.auth.models import User
 
 import re
@@ -39,3 +39,13 @@ class Command(BaseCommand):
                 self.stdout.write("creating Trash for %s" % (user.username,))
                 folder = Folder(name = 'Trash', user = user)
                 folder.save()
+
+    def cmd_makealltags(self):
+        """ Make all the hash tags from scratch """
+        
+        HashTags.objects.all().delete()
+        notes = Note.objects.all()
+        for note in notes:
+            note.add_tags()
+            
+####  End of file  ####            

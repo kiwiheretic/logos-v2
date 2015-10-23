@@ -15,5 +15,6 @@ urlpatterns = patterns('cloud_notes.views',
     url(r'^import/', 'import_file'),
     url(r'^import_all/', 'import_all'),
     url(r'^folders/', 'folders'),
+    url(r'^hash_tags/', 'hash_tags'),
     url(r'^download/(\d+)', 'download'),
 )
