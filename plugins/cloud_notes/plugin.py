@@ -29,6 +29,7 @@ class NotesPlugin(Plugin):
         self.commands = ((r'list$', self.list_notes, 'list all notes'),
                          (r'list (?P<range>\d*-\d*)', self.list_notes, 'list all notes'),
                          (r'read (?P<note_id>\d+)', self.read, 'read a note'),
+                         (r'title (?P<note_id>\d+)\s+(?P<title>.*)', self.title, 'give note a new title'),
                          (r'read more', self.read_more, 'more reading of note'),
                          (r'folders', self.list_folders, 'List note folders'),
                          (r'sel(ect)? folder (?P<folder_id>\d+)', self.sel_folder, 'Select folder'),
@@ -311,3 +312,17 @@ class NotesPlugin(Plugin):
             self.notice(nick, "Note does not exist")
         
 
+    @login_required()
+    def title(self, regex, chan, nick, **kwargs):
+        logger.debug("title: " + str(self.user_notes))
+        note_id = regex.group('note_id')
+        title = regex.group('title')
+        username = self.get_auth().get_username(nick)
+        try:
+            note = Note.objects.get(pk=note_id, user__username=username)
+            note.title = title
+            note.save()
+            self.notice(nick, "Note title successfully changed")
+        except Note.DoesNotExist:
+            self.notice(nick, "Note does not exist")
+        

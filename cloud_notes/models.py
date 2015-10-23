@@ -27,7 +27,6 @@ class Note(models.Model):
         words = re.split(r'\s+', self.note)
         for wrd in words:
             if re.match(r'^#[a-zA-Z0-9-]+$', wrd):
-                print (wrd)
                 obj, created = HashTags.objects.get_or_create(hash_tag = wrd.lower(),user = self.user )
                 obj.notes.add(self)
 
