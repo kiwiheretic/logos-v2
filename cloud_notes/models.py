@@ -26,8 +26,10 @@ class Note(models.Model):
     def add_tags(self):
         words = re.split(r'\s+', self.note)
         for wrd in words:
-            if re.match(r'^#[a-zA-Z0-9-]+$', wrd):
-                obj, created = HashTags.objects.get_or_create(hash_tag = wrd.lower(),user = self.user )
+            mch = re.match(r'^(#[a-zA-Z0-9-]+)[,.:;]?$', wrd)
+            if mch:
+                tag = mch.group(1)
+                obj, created = HashTags.objects.get_or_create(hash_tag__iexact = tag,user = self.user, defaults = {'hash_tag':tag} )
                 obj.notes.add(self)
 
     def __unicode__(self):

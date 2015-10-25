@@ -1,16 +1,23 @@
 # README #
 
+### Preamble ###
+
+Several years ago was looking for an IRC bot that I could run anywhere.  Some required mIRC, others required XChat, others would only run on Linux, and some would run only on Windows.  This bot is my solution to that problem.
+
+### History ###
+
 This is the Logos-V2 project, a Django/Twisted IRC bot  originally based (in concept) on the [CancelBot Project](http://cancelbot.sourceforge.net/home.html), but no longer shares any code (except for a few lines) with the original project.  No longer binds to XChat but is completely self contained. Is cross platform and supports Centos, Ubuntu & Windows.  (Basically anywhere Django, Twisted and Python 2.7 is supported).  Released under the Apache License.
 
 ### Features ###
 
 Features include:
+  * Cloud Memos - just like a web based MemoServ
+  * Cloud Notes system accessible from web and IRC.  Useful for storing bible notes.
+  * Fine grained permission system based on Django-guardian (new feature)
   * User and developer documentation on [wiki](https://github.com/kiwiheretic/logos-v2/wiki)
   * Written in Python using Twisted and Django frameworks
   * Compatible with CancelBot bible translations
   * Easy to customise for your own personalised bot
-  * Cloud Notes system accessible from web and IRC.  Useful for storing bible notes.
-  * Fine grained permission system based on Django-guardian (new feature)
 
 Plugins:
   * Everything (or mostly) is designed as a plugin
@@ -20,6 +27,9 @@ Bible Plugin:
   * Simple bible verse lookups
   * Fast concordance searches
   * Strongs number lookups
+
+Memos Plugin
+  * Works like MemoServ with a web interface.
   
 ### Summary of set up for Linux ###
 
