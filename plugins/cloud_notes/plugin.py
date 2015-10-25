@@ -27,10 +27,14 @@ class NotesPlugin(Plugin):
     def __init__(self, *args, **kwargs):
         super(NotesPlugin, self).__init__( *args, **kwargs)
         self.commands = ((r'list$', self.list_notes, 'list all notes'),
+                         (r'list!$', self.list_notes, 'list all notes'),
                          (r'list (?P<range>\d*-\d*)', self.list_notes, 'list all notes'),
+                         (r'list! (?P<range>\d*-\d*)', self.list_notes, 'list all notes'),
                          (r'read (?P<note_id>\d+)', self.read, 'read a note'),
+                         (r'read! (?P<note_id>\d+)', self.read, 'read a note'),
                          (r'title (?P<note_id>\d+)\s+(?P<title>.*)', self.title, 'give note a new title'),
                          (r'read more', self.read_more, 'more reading of note'),
+                         (r'read! more', self.read_more, 'more reading of note'),
                          (r'folders', self.list_folders, 'List note folders'),
                          (r'sel(ect)? folder (?P<folder_id>\d+)', self.sel_folder, 'Select folder'),
                          (r'on$', self.start_logging, 'start logging bible notes'),
@@ -117,7 +121,6 @@ class NotesPlugin(Plugin):
 
         self._update_usernotes_hash(username, {'folder':main})
         
-        
     def onSignal_logout(self, source, data):
         username = data['username']
         logger.debug("cloud notes: onSignal_logout " + repr(username))
@@ -190,9 +193,18 @@ class NotesPlugin(Plugin):
         except Folder.DoesNotExist:
             self.notice(nick, "--Folder does not exist--")
 
+    def get_notify_status(self, kwargs):
+        ln = kwargs['clean_line']
+        if re.match(r'[a-zA-Z]+!', ln):
+            notify = 'channel'
+        else:
+            notify = 'notice'
+        return notify
+        
     @login_required()
     def list_notes(self, regex, chan, nick, **kwargs):
         logger.debug("list_notes: " + str(self.user_notes))
+        notify = self.get_notify_status(kwargs)
         num_to_list = 4
         username = self.get_auth().get_username(nick)
         try:
@@ -263,11 +275,16 @@ class NotesPlugin(Plugin):
         if notes:
             for note in notes:
                 mod_date = note.modified_at.strftime('%d-%m-%Y %H:%M')
-                self.notice(nick, str(note.id) + " (" + note.title + ") Last Modified : " + mod_date + " UTC")
+                if notify == 'notice':
+                    self.notice(nick, str(note.id) + " (" + note.title + ") Last Modified : " + mod_date + " UTC")
+                elif notify == 'channel':
+                    self.say(chan, str(note.id) + " (" + note.title + ") Last Modified : " + mod_date + " UTC")
+                
 
     @login_required()
     def read_more(self, regex, chan, nick, **kwargs):
         logger.debug("read more: " + str(self.user_notes))
+        notify = self.get_notify_status(kwargs)
         username = self.get_auth().get_username(nick)
         if username not in self.user_notes:
             self.say(chan, "Nothing to read")
@@ -285,7 +302,11 @@ class NotesPlugin(Plugin):
                         del self.user_notes[username]['reading']
                         del self.user_notes[username]['ridx']
                     if notestr != "":
-                        self.say(chan, notestr)
+                        if notify == 'channel':
+                            self.say(chan, notestr)
+                        elif notify == 'notice':
+                            self.notice(nick, notestr)
+                        
                     else:
                         self.say(chan, "**Note End**")
 
@@ -297,17 +318,24 @@ class NotesPlugin(Plugin):
     @login_required()
     def read(self, regex, chan, nick, **kwargs):
         logger.debug("read: " + str(self.user_notes))
+        notify = self.get_notify_status(kwargs)
         note_id = regex.group('note_id')
         username = self.get_auth().get_username(nick)
         try:
             note = Note.objects.get(pk=note_id, user__username=username)
-            notestr = re.sub(r'\n', ' ', note.note)
-            if len(notestr) > READ_SIZE:
-                ridx = notestr.rindex(" ", 0, READ_SIZE)
+            note_s = re.sub(r'\n', ' ', note.note)
+            if len(note_s) > READ_SIZE:
+                ridx = note_s.rindex(" ", 0, READ_SIZE)
                 self._update_usernotes_hash(username, {'reading':note, 'ridx':ridx})
-                self.say(chan, notestr[0:ridx])
+                notestr = note_s[0:ridx]
             else:
+                notestr = note_s
+                
+            if notify == 'channel':
                 self.say(chan, notestr)
+            elif notify == 'notice':
+                self.notice(nick, notestr)
+                
         except Note.DoesNotExist:
             self.notice(nick, "Note does not exist")
         

@@ -17,8 +17,10 @@ h2 span {
 }
 
 .note-preview em {
-	color: brown;
+	color: green;
+	text-shadow: 1px 1px yellow;
 }
+
 form {
     margin-bottom: 10px;
     margin-right:20px;

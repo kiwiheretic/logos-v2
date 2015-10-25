@@ -613,7 +613,9 @@ class PluginDespatcher(object):
                 if self.is_plugin_enabled(chan, m): 
                     if hasattr(m, 'commands'):
                         for rgx_s, f, _ in m.commands:
+                        
                             regex = re.match(rgx_s, msg)
+                            logger.debug("Regex {} returns {}".format(rgx_s, regex))
                             plugin_id = m.plugin[0]
                             s = plugin_id + "\s+" + rgx_s
                             regex2 = re.match(s, msg)
