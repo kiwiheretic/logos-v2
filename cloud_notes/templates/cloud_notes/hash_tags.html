@@ -9,8 +9,16 @@
     <li>{{ tag.hash_tag }}</li>
 		<ul>
 		{% for note in tag.notes.all %}
-			<li><a href="{% url 'cloud_notes.views.preview' note.id %}">{{note.title}}</a> ({{ note.folder.name }})</li>
+			{% ifchanged note.folder.name %}
+				{% if not forloop.first %}
+					</ul>
+				{% endif %}
+				<li>{{note.folder.name}}</li>
+					<ul>
+			{% endifchanged %}
+			<li>({{note.id}}) <a href="{% url 'cloud_notes.views.preview' note.id %}">{{note.title}}</a></li>
 		{% endfor %}
+			</ul> <!-- folder group -->
 		</ul>
 	{% endfor %}
   </ul>
