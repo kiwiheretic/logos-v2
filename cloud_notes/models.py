@@ -50,6 +50,8 @@ class HashTags(models.Model):
 def note_post_save_handler(sender, instance, created, **kwargs):
     for tag in HashTags.objects.filter(user = instance.user):
         tag.notes.remove(instance)
+        if tag.notes.count() == 0:
+            tag.delete()
     instance.add_tags()
     
 @receiver(post_save, sender=User)

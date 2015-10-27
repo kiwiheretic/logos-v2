@@ -66,7 +66,7 @@ class NotesPlugin(Plugin):
         username = self.get_auth().get_username(nick)
         if username and username in self.user_notes:
             logger.debug("note privmsg = " + str((user, channel, message)))
-            regex = re.match("#(.*)",message)
+            regex = re.match("\s+(.*)",message)
             if regex :
                 text = regex.group(1).strip()
                 logger.debug("note_users = " + str(self.user_notes))
