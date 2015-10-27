@@ -89,7 +89,7 @@ class NotesPlugin(Plugin):
             note = self.user_notes[username]['note']
             # note.note += "\n"
             for verse in data['verses']:
-                verse_txt = " ".join(verse) + "  \n" # double space for markdown wrap
+                verse_txt = " ".join(verse).rstrip() + "  \n" # double space for markdown wrap
                 note.note += verse_txt
             dt = datetime.utcnow()
             utc_tz = pytz.timezone("UTC")                
@@ -106,7 +106,7 @@ class NotesPlugin(Plugin):
             note = self.user_notes[username]['note']
             # note.note += "\n"
             for verse_txt in data['verses']:
-                note.note += verse_txt + "  \n"  # Markdown double space hard nreak
+                note.note += verse_txt.rstrip() + "  \n"  # Markdown double space hard nreak
             dt = datetime.utcnow()
             utc_tz = pytz.timezone("UTC")                
             note.modified_at = utc_tz.localize(dt)
