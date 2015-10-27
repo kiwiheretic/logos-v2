@@ -25,7 +25,7 @@ class TestNotes(LogosTestCase):
         output = self.plugin.send_command("notes on")
         self.assertIn('Note logging turned on', output)        
 
-        output = self.plugin.send_channel_msg("# test note logging")
+        output = self.plugin.send_channel_msg("  test note logging")
         self.assertIn('logged to cloud notes', output)        
         
         output = self.plugin.send_command("notes off")
