@@ -3,6 +3,7 @@ from bot.pluginDespatch import Plugin
 import re
 from datetime import datetime
 import pytz
+import dateutil
 from django.contrib.auth.models import User
 
 import logging
@@ -86,9 +87,9 @@ class NotesPlugin(Plugin):
         if username and username in self.user_notes and \
         self.user_notes[username]['channel'] == chan:
             note = self.user_notes[username]['note']
-            note.note += "\n"
+            # note.note += "\n"
             for verse in data['verses']:
-                verse_txt = " ".join(verse) + "\n"
+                verse_txt = " ".join(verse) + "  \n" # double space for markdown wrap
                 note.note += verse_txt
             dt = datetime.utcnow()
             utc_tz = pytz.timezone("UTC")                
@@ -103,9 +104,9 @@ class NotesPlugin(Plugin):
         if username and username in self.user_notes and \
         self.user_notes[username]['channel'] == chan:
             note = self.user_notes[username]['note']
-            note.note += "\n"
+            # note.note += "\n"
             for verse_txt in data['verses']:
-                note.note += verse_txt + "\n"
+                note.note += verse_txt + "  \n"  # Markdown double space hard nreak
             dt = datetime.utcnow()
             utc_tz = pytz.timezone("UTC")                
             note.modified_at = utc_tz.localize(dt)
@@ -167,10 +168,19 @@ class NotesPlugin(Plugin):
     @login_required()
     def stop_logging(self, regex, chan, nick, **kwargs):
         username = self.get_auth().get_username(nick)
+        note_id = None
         if username in self.user_notes:
-            del self.user_notes[username]['note']
-            del self.user_notes[username]['channel']
-        self.say(chan, "Note logging turned off for "+nick)    
+            try:
+                note_id = self.user_notes[username]['note'].id
+                del self.user_notes[username]['note']
+            except KeyError:
+                pass
+            try:
+                del self.user_notes[username]['channel']
+            except KeyError:
+                pass
+
+        self.say(chan, "Note logging turned off for {} to note {} ".format(nick, note_id))   
 
 
     @login_required()
@@ -225,30 +235,13 @@ class NotesPlugin(Plugin):
                 notes = Note.objects.\
                     filter(folder=folder, user__username = username.lower(), pk__lte = lidx).\
                     order_by('-modified_at')[:num_to_list]
-                fidx = notes[len(notes)-1].id
-                self._update_usernotes_hash(username, {'list_index':fidx-1})
-            elif mch2:
-                fidx = int(mch2.group(1))
-                notes = Note.objects.\
-                    filter(folder=folder, user__username = username.lower(), pk__gte = fidx).\
-                    order_by('id')[:num_to_list]
-                idx = notes[0].id
-                notes = reversed(notes)
-                self._update_usernotes_hash(username, {'list_index':idx-1})
-            elif mch3:
-                fidx = int(mch3.group(1))
-                lidx = int(mch3.group(2))
-                notes = Note.objects.\
-                    filter(folder=folder, user__username = username.lower(), pk__gte = fidx, \
-                           pk__lte = lidx).\
-                    order_by('-id')[:num_to_list]                
-                self._update_usernotes_hash(username, {'list_index':fidx-1})
+                fidx = notes[len(notes)].modified_at.isoformat()
+                self._update_usernotes_hash(username, {'list_index':fidx})
             elif mch4:
-                if self._in_usernotes(username, 'list_index'):
-                    idx = self.user_notes[username]['list_index']
-                    mod_date = self.user_notes[username].get('modified', None)
+                if self._in_usernotes(username, 'modified'):
+                    mod_date = self.user_notes[username]['modified']
                     
-                    logger.debug( "cloud_notes: idx = " + str(idx) + " Modified = "+str(mod_date))
+                    logger.debug( "cloud_notes: Modified = "+str(mod_date))
                     if mod_date:
                         notes = Note.objects.\
                             filter(folder=folder, user__username = username.lower(), modified_at__lt = mod_date).\
@@ -258,10 +251,13 @@ class NotesPlugin(Plugin):
                             filter(folder=folder, user__username = username.lower(), pk__lte = idx).\
                             order_by('-id')[:num_to_list]
                     if notes: #if any found
-                        idx = notes[len(notes)-1].id
-                        self.user_notes[username]['list_index'] = idx-1
+                        mod_date = notes[len(notes)-1].modified_at
+                        self._update_usernotes_hash(username, {'modified':mod_date})
                     else:
                         self.say(chan, "**No more notes found***")
+                        self.user_notes[username]['list_index'] = None
+                else:
+                    self.say(chan, '** No Previous Notes found **')
         else:
             notes = Note.objects.filter(folder=folder, user__username = username.lower()).\
                 order_by('-modified_at')[:num_to_list]

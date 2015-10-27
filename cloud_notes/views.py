@@ -20,7 +20,7 @@ from forms import NewFolderForm, UploadFileForm
 
 @login_required()
 def hash_tags(request):
-    hash_tags = HashTags.objects.exclude(notes__folder__name = 'Trash').order_by('hash_tag', 'notes__folder__name')
+    hash_tags = HashTags.objects.filter(user=request.user).exclude(notes__folder__name = 'Trash').order_by('hash_tag', 'notes__folder__name').distinct()
     context = {'tags':hash_tags}
     return render(request, 'cloud_notes/hash_tags.html', context)
 
