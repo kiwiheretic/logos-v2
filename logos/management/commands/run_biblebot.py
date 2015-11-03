@@ -27,10 +27,10 @@ class Command(BaseCommand):
         "Defaults to APPDATA\\SplatsCreations\\bibleBot for windows " + \
         "and current directory for others."),
         
-        make_option('-s','--server', action='store',
+        make_option('-s','--server', action='append',
                     help="IRC server to connect to."),
-        make_option('--port', action='store',
-                    help="Server port to connect to.  Defaults to 6667."),
+        # make_option('--port', action='store',
+                    # help="Server port to connect to.  Defaults to 6667."),
         make_option('--web-port', action='store',
                     help="Web Port to listen on.  Defaults to None."),                    
         make_option('--rpc-port', action='store',
@@ -58,16 +58,10 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
 #        logger.debug( "options = "+ str(options))
 
-       
         if options['server']:
             server = options['server']
         else:
-            server = '127.0.0.1'
-
-        if options['port']:
-            port = int(options['port'])
-        else:
-            port = 6667
+            server = ['127.0.0.1']
 
         if options['nickname']:
             nickname = options['nickname']
@@ -106,7 +100,7 @@ class Command(BaseCommand):
         extra_options['monitor_idle_times'] = options['monitor_idle_times']
 
         print ("Starting Logos Bot, Please Wait...")
-        irc.instantiateIRCBot(server, port, engine_room, nickname, \
+        irc.instantiateIRCBot(server, engine_room, nickname, \
                               sys_password, nick_password, web_port, rpc_port, \
                               extra_options)
 
