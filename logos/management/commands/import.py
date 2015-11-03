@@ -8,7 +8,6 @@ import re
 import csv
 import json
 import codecs
-import pdb
 import logging
 from datetime import datetime, timedelta
 from decimal import Decimal
@@ -30,7 +29,9 @@ from _booktbl import book_table
 from logos.constants import PUNCTUATION, STOP_WORDS
 from logos.utils import *
 
+from django.conf import settings
 logger = logging.getLogger(__name__)
+logging.config.dictConfig(settings.LOGGING)
 
 class Command(BaseCommand):
     help = 'Import the translations'
@@ -51,6 +52,11 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         logger.debug ("args = "+str(args))
         logger.debug ("options = "+ str(options))
+        
+        if len(args) > 0:
+            if args[0] == "xrefs":
+                import_xrefs()
+                return
 
         if options['use_more_ram'] and DATABASES['bibles']['ENGINE'].endswith('sqlite3'):
             logger.info("Allocating the SQLITE3 journal in RAM")
@@ -83,7 +89,24 @@ class Command(BaseCommand):
                 pass
         import_trans(options)
         import_concordance(options)
-       
+
+def import_xrefs():
+    file_path = os.path.join(BIBLES_DIR, 'dict', 'cross_references.txt')
+    f = open(file_path, 'r')
+    lbook = None
+    bk_list = []
+    for ln in f.readlines():
+        mch = re.match(r"([a-zA-Z0-9\.]+)\s+([a-zA-Z0-9\.]+)\s+(\d+)", ln)
+        if mch:
+            entry1 = mch.group(1)
+            mch2 = re.match(r"[a-zA-Z0-9]+", entry1)
+            bk = mch2.group(0)
+            if bk != lbook:
+                lbook = bk
+                print bk
+                bk_list.append(bk)
+    print str(bk_list)
+    
 def import_strongs_tables():
 
     cache = []
@@ -188,12 +211,12 @@ def import_trans(options):
                 csvreader = csv.reader(csvfile)
                 for row in csvreader:
                     long_name = row[0]
-                    short_name = row[1]
+                    short_name = row[1].strip()
                     book_path = biblepath + os.sep + short_name + ".txt"
                     if os.path.exists(book_path):
                         add_book_to_db(translation, book_path, long_name=long_name)
                     else:
-                        logger.error( "Error in adding apocraphyl book %s %s" %(version, short_name))
+                        logger.error( "Error: Apocraphyl book path {} does not exist".format(book_path))
           
     if options['replace_version']:
         version = options['replace_version']
@@ -269,7 +292,7 @@ def populate_concordance(options):
                 continue
             words = re.split('\s+', text.lower().strip())
             for word_id, wd in enumerate(words):
-#                wd = re.sub(PUNCTUATION, "", wd)
+#                wd = re.sub(PUNCTUATION, "",) wd)
                 try:
                     assert wd != ""
                 except AssertionError:
