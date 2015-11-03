@@ -36,9 +36,9 @@ LINE_RATE = 0.5
 QUEUE_TIMER = 0.50
 IDLE_CHECK_SECONDS = 60*10
 
-from logos.settings import LOGGING
+from django.conf import settings
 logger = logging.getLogger(__name__)
-logging.config.dictConfig(LOGGING)
+logging.config.dictConfig(settings.LOGGING)
 
 class NicksDB:
     def __init__(self):

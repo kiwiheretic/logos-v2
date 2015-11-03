@@ -287,6 +287,9 @@ INSTALLED_APPS = (
 # the site admins on every HTTP 500 error when DEBUG=False.
 # See http://docs.djangoproject.com/en/dev/topics/logging for
 # more details on how to customize your logging configuration.
+
+## Warning:  Logging levels are also on handlers.  They override the settings
+# on the individual modules.
 LOGGING = {
     'version': 1,
     'disable_existing_loggers': False,
@@ -317,15 +320,15 @@ LOGGING = {
             'class': 'django.utils.log.AdminEmailHandler'
         },
         'console':{
-            'level': 'INFO',
-            'class': 'logging.StreamHandler',
-            'formatter': 'simple'
-        },
-        'console_debug':{
             'level': 'DEBUG',
             'class': 'logging.StreamHandler',
             'formatter': 'simple'
-        },        
+        },
+        # 'console_debug':{
+            # 'level': 'DEBUG',
+            # 'class': 'logging.StreamHandler',
+            # 'formatter': 'simple'
+        # },        
         'file': {
             'level': 'DEBUG',
             'class': 'logging.FileHandler',
@@ -346,7 +349,6 @@ LOGGING = {
         },
         'plugins.cloud_notes.plugin': {
             'handlers': ['file'],
-#            'handlers': ['console_debug', 'file'],
             'level': 'DEBUG',
             'propagate': False,
         },
@@ -366,15 +368,15 @@ LOGGING = {
             'propagate': False,
         },        
         'plugins.twitter.plugin': {
-            'handlers': ['console_debug', 'file'],
-            'level': 'DEBUG',
+            'handlers': ['console', 'file'],
+            'level': 'INFO',
             'propagate': False,
         }, 
     },
     # the 'root' logger seems to cause things to
     # be logged twice.  Especially "manage.py import"
-    'root': {
-           'handlers': ['console', 'file'],
-           'level': 'DEBUG',
-    },
+    # 'root': {
+           # 'handlers': ['console', 'file'],
+           # 'level': 'DEBUG',
+    # },
 }
