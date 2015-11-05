@@ -629,6 +629,9 @@ class BibleBot(Plugin):
             dict_obj = BibleDict.objects.get(strongs=lookup)
             description = dict_obj.description
             self.say(chan, description)
+            signal_data = {'chan': chan, 'nick': nick, 'strongs':lookup, 'dict':description }
+            self.signal("dict_lookup", signal_data)
+
         except BibleDict.DoesNotExist:
             self.say(chan, "Sorry %s not found" % lookup)
     

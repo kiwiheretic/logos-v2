@@ -89,7 +89,7 @@ class NotesPlugin(Plugin):
             note = self.user_notes[username]['note']
             # note.note += "\n"
             for verse in data['verses']:
-                verse_txt = " ".join(verse).rstrip() + "  \n" # double space for markdown wrap
+                verse_txt = "> " + " ".join(verse).rstrip() + "  \n" # double space and blockquote for markdown 
                 note.note += verse_txt
             dt = datetime.utcnow()
             utc_tz = pytz.timezone("UTC")                
@@ -97,6 +97,25 @@ class NotesPlugin(Plugin):
             note.save()
             self.notice(nick, "-- verse(s) logged to cloud notes --")
 
+    def onSignal_dict_lookup(self, source, data):
+        logger.debug (str(data))
+        nick = data['nick']
+        chan = data['chan']
+        username = self.get_auth().get_username(nick)
+        if username and username in self.user_notes and \
+        'channel' in self.user_notes[username] and \
+        self.user_notes[username]['channel'] == chan:
+            note = self.user_notes[username]['note']
+            # note.note += "\n"
+            note_txt = data['strongs'] + " " + data['dict']
+            note.note += "> "+note_txt.rstrip() + "  \n"  # Markdown double space hard nreak
+            dt = datetime.utcnow()
+            utc_tz = pytz.timezone("UTC")                
+            note.modified_at = utc_tz.localize(dt)
+            note.save()
+            self.notice(nick, "-- strongs text logged to cloud notes --")
+
+            
     def onSignal_verse_search(self, source, data):
         nick = data['nick']
         chan = data['chan']
@@ -106,7 +125,7 @@ class NotesPlugin(Plugin):
             note = self.user_notes[username]['note']
             # note.note += "\n"
             for verse_txt in data['verses']:
-                note.note += verse_txt.rstrip() + "  \n"  # Markdown double space hard nreak
+                note.note += "> "+verse_txt.rstrip() + "  \n"  # Markdown double space hard nreak
             dt = datetime.utcnow()
             utc_tz = pytz.timezone("UTC")                
             note.modified_at = utc_tz.localize(dt)

@@ -739,7 +739,7 @@ def instantiateIRCBot(networks, room, botName, sys_password,
         else:
             network = net_port
             port = 6667
-        print ("connecting on "+str((network, port)))   
+        logger.info ("connecting on "+str((network, port)))   
         reactor.connectTCP(network, port,
                            IRCBotFactory(reactor, network, room, botName,\
                                      sys_password, nickserv, web_port,\
