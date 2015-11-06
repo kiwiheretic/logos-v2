@@ -73,7 +73,7 @@ class NotesPlugin(Plugin):
                 if 'note' in self.user_notes[username] and \
                 self.user_notes[username]['channel'].lower() == channel.lower():
                     note = self.user_notes[username]['note']
-                    note.note += "\n" + text + "\n"
+                    note.note += "\n" + text + "  \n"
                     dt = datetime.utcnow()
                     utc_tz = pytz.timezone("UTC")                
                     note.modified_at = utc_tz.localize(dt)
