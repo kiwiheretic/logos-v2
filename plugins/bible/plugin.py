@@ -765,7 +765,7 @@ class BibleBot(Plugin):
         if result:
             for resp in result:
                 reply = ' '.join(resp)
-                self.say(chan, str(reply))            
+                self.say(chan, reply)            
         else:
             self.say(chan, "No more verses to read")   
     
