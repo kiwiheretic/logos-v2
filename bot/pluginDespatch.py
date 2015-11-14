@@ -298,7 +298,7 @@ class PluginDespatcher(object):
 
     def __init__(self, irc_conn):
         """ This imports all the .py files in
-        the plugins folder """
+        the plugi)ns folder """
         
         self._obj_list = []  # the plugin object list of all loaded plugins
         self._signal_data = [] # signals waiting to be processed
@@ -307,6 +307,7 @@ class PluginDespatcher(object):
         NetworkPlugins.objects.filter(network=self.irc_conn.factory.network).update(loaded=False)
         plugin_path = os.path.join(settings.BASE_DIR, 'plugins')
         dirs = os.listdir(plugin_path)
+        ### DeprecationWarning - this section
         for m in dirs:
             try:
                 pth = os.path.join(plugin_path, m)
@@ -375,6 +376,72 @@ class PluginDespatcher(object):
             except ImportError, e:
                 logger.error("ImportError: "+str(e))
 
+        ### --- EndSection
+        
+        
+        for app in settings.INSTALLED_APPS:
+            pth = os.path.join(settings.BASE_DIR, app)
+            
+            plugin_file_path = os.path.join(pth, "bot_plugin.py")
+            if not os.path.exists(plugin_file_path): continue
+            m1 = __import__(app+".bot_plugin")
+            mod = getattr(m1, 'bot_plugin')
+
+            for attr in dir(mod):
+                a1 = getattr(mod, attr)
+                # Check if the class is a class derived from 
+                # bot.PluginDespatch.Plugin
+                # but is not the base class only
+
+                if inspect.isclass(a1) and \
+                a1 != bot.pluginDespatch.Plugin and \
+                issubclass(a1, Plugin) and \
+                hasattr(a1, 'plugin'):  
+                    logger.info('loading module '+app+".bot_plugin")
+                    plugin_object = a1(self, irc_conn)
+                    if hasattr(plugin_object, 'system') and plugin_object.system:
+                        system = True
+                    else:
+                        system = False
+                    self._obj_list.append(plugin_object)
+                    
+                    with transaction.atomic():
+                        plugin_name, descr = plugin_object.plugin
+                        plugin, created = Plugins.objects.\
+                            get_or_create(name=plugin_name,
+                                          description=descr)
+                        plugin.system = system
+                        plugin.save()
+                        net_plugin, created = NetworkPlugins.objects.\
+                            get_or_create(plugin=plugin,
+                                network=self.irc_conn.factory.network,
+                                defaults={'loaded': True})
+                        
+                    
+                        if hasattr(plugin_object,'system') and \
+                            plugin_object.system:
+                            net_plugin.enabled = True
+                        else:
+                            if created:
+                                net_plugin.enabled = False
+
+                        net_plugin.loaded = True
+                        net_plugin.save()    
+                    
+                    if net_plugin.enabled:
+                        if hasattr(plugin_object, "on_activate"):
+                            response = plugin_object.on_activate()
+                            if type(response) == types.TupleType:
+                                enabled, msg = response
+                            else:
+                                enabled = response
+                                msg = None
+
+                            net_plugin.enabled = enabled
+                            net_plugin.save()                                        
+                    break
+            
+            
         logger.debug(str(self._obj_list))
 
     def enable_plugin(self, channel, plugin_name):
