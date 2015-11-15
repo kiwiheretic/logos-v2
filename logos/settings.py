@@ -269,6 +269,7 @@ INSTALLED_APPS = (
     'logos',
     'cloud_notes',
     'cloud_memos',
+    'room_manage',
     'pybb',
     'widget_tweaks',
 #    'simple_forums',

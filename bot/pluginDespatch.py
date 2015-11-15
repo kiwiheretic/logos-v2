@@ -195,6 +195,9 @@ class Plugin(object):
         in the UTC timezone. """
         return self.irc_conn.get_nick_idle_times(nick)
         
+    def get_op_status(self, nick, room):
+        return self.irc_conn.nicks_db.get_op_status(nick, room)
+        
     def is_nick_in_rooms(self, nick):
         """ Is nick in any room that the bot knows
         about """
@@ -298,7 +301,7 @@ class PluginDespatcher(object):
 
     def __init__(self, irc_conn):
         """ This imports all the .py files in
-        the plugi)ns folder """
+        the plugins folder (or INSTALLED_APPS folders) """
         
         self._obj_list = []  # the plugin object list of all loaded plugins
         self._signal_data = [] # signals waiting to be processed

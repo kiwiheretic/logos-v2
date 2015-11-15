@@ -10,6 +10,7 @@ import time
 import signal
 import socket
 from datetime import datetime
+from itertools import islice
 
 from simple_webserver import SimpleWeb
 from simple_rpcserver import SimpleRPC
@@ -40,12 +41,72 @@ from django.conf import settings
 logger = logging.getLogger(__name__)
 logging.config.dictConfig(settings.LOGGING)
 
+
 class NicksDB:
     def __init__(self):
         self.nicks_in_room = {}
         self.nicks_info = {}
+        
+        # userhosts to be interrogated
+        self.enqueued_userhosts = set()
+        
+        # user host interrogations on wire
+        self.pending_userhosts = set()
 
  
+    def enqueue_userhosts(self, nicks):
+        for nick in nicks:
+            if nick[0] in "~%&@+":
+                nick = nick[1:]
+            self.enqueued_userhosts.add(nick)
+        if not self.pending_userhosts:
+            userhost_nicks = frozenset(islice(self.enqueued_userhosts,0,5))
+            self.pending_userhosts.update(userhost_nicks)
+            nicks_to_get_hosts = " ".join(userhost_nicks)
+            if nicks_to_get_hosts.strip() != "":
+                line = "userhost " + nicks_to_get_hosts
+                return line
+        return None
+        
+
+        
+    def handle_names_reply(self, room, nicks):
+        for nick in nicks:
+            if nick[0] in "~%&@":
+                opstatus = nick[0]
+                nick = nick[1:]
+            else:
+                opstatus = None        
+                
+            if not self.nick_in_room(nick, room):
+                self.add_nick_to_room(nick, room, opstatus)
+            elif opstatus:
+                self.set_op_status(nick, opstatus, room)
+        logger.debug(str(self.nicks_in_room))
+
+        
+    def handle_userhosts_response(self, response):
+        # Apparently an empty string response is possible
+        if response.strip() == "": return None
+        
+        nick_strings = response.strip().split(" ")
+        for nick_str in nick_strings:
+            nick, host = nick_str.split("=")
+            nick = re.sub("\*","", nick)
+
+                
+            
+            logger.debug("irc_RPL_USERHOST {} = {}".format(nick, host))
+            host = re.sub("^[~%&@\-\+]+","", host)
+            # If the nick is in multiple rooms but it may appear in this list
+            # only once so we should be careful
+            
+            if nick in self.pending_userhosts:
+                self.pending_userhosts.remove(nick)
+            logger.debug("userhosts in progress = " + str( self.pending_userhosts))
+            self.set_host(nick, host)
+      
+        
     def get_rooms(self):
         return self.nicks_in_room.keys()
         
@@ -166,6 +227,15 @@ class NicksDB:
                 return nick_data['opdata']
         return None
     
+    def set_op_status(self, user, opstatus, room):
+        found = False
+        for nick_data in self.nicks_in_room[room.lower()]:
+            if user.lower() == nick_data['nick'].lower():
+                nick_data['opdata'] = opstatus
+                return True
+        return False
+        
+        
     def set_bot_status(self, user):
         self.nicks_info[user.lower()]['bot-status'] = True
 
@@ -530,7 +600,40 @@ class IRCBot(irc.IRCClient):
 
             
 
+    def modeChanged(self, user, channel, set, modes, args):
+        """
+        Called when users or channel's modes are changed.
 
+        @type user: C{str}
+        @param user: The user and hostmask which instigated this change.
+
+        @type channel: C{str}
+        @param channel: The channel where the modes are changed. If args is
+        empty the channel for which the modes are changing. If the changes are
+        at server level it could be equal to C{user}.
+
+        @type set: C{bool} or C{int}
+        @param set: True if the mode(s) is being added, False if it is being
+        removed. If some modes are added and others removed at the same time
+        this function will be called twice, the first time with all the added
+        modes, the second with the removed ones. (To change this behaviour
+        override the irc_MODE method)
+
+        @type modes: C{str}
+        @param modes: The mode or modes which are being changed.
+
+        @type args: C{tuple}
+        @param args: Any additional information required for the mode
+        change.
+        """
+        logger.debug( "modeChanged " + str((user, channel, set, modes, args)))
+        irc.IRCClient.modeChanged(self, user, channel, set, modes, args)
+        # If ops given then redo userhost command for those nicks
+        if "o" in modes or "a" in modes:
+            line = "NAMES "+channel
+            logger.debug(line)
+            self.sendLine(line)
+                
     def privmsg(self, user, channel, orig_msg):
         """ This is the ideal place to process commands from the user. """
         logger.debug( "PRIVMSG %s on %s says %s " % ( user, channel, orig_msg))
@@ -587,65 +690,18 @@ class IRCBot(irc.IRCClient):
         # to populate the NicksDB.
         logger.debug("irc_RPL_NAMREPLY "+str(params))
         room = params[2].lower()
-
-        nicks_to_fill_in = []
         names = params[3].strip().split(' ')
-#        print names
-        for name in names:
-
-            if name == '': continue
-            this_name = name
-
-
-            # strip off nickname prefixes for ops and voice
-            opstatus = None
-            if this_name[0] in "~%&@+":
-                opstatus = this_name[0]
-                this_name = this_name[1:]
-
-
-
-            if not self.nicks_db.nick_in_room(this_name, room):
-                self.nicks_db.add_nick_to_room(this_name, room, opstatus=opstatus)
-                host = self.nicks_db.get_host(this_name)
-                if host == None:
-                    # need to strip opstatus off first
-                    nicks_to_fill_in.append(this_name)
-                           
-        for ii in range(0, len(nicks_to_fill_in)/5+1):
-            nicks_batch = nicks_to_fill_in[ii*5:5*(ii+1)]
-            nicks_to_get_hosts = " ".join(nicks_batch)
-            self.userhost_in_progress.extend(nicks_batch)
-            if nicks_to_get_hosts.strip() != "":
-                line = "userhost " + nicks_to_get_hosts
-                logger.debug(line)
-#            print line
-                self.sendLine(line)        
-    
+        
+        self.nicks_db.handle_names_reply(room, names)
+        line = self.nicks_db.enqueue_userhosts(names)
+        if line:
+            logger.debug(line)
+            self.sendLine(line)        
+ 
     def irc_RPL_USERHOST(self, prefix, params):
+        logger.debug("irc_RPL_USERHOST "+str((prefix, params)))
         response = params[1]
-        nick_strings = response.strip().split(" ")
-        for nick_str in nick_strings:
-            nick, host = nick_str.split("=")
-            nick = re.sub("\*","", nick)
-            host = re.sub("^[~%&@\-\+]+","", host)
-            logger.debug("irc_RPL_USERHOST {} = {}".format(nick, host))
-            # If the nick is in multiple rooms but it may appear in this list
-            # only once so we should be careful
-            if nick in self.userhost_in_progress:
-                self.userhost_in_progress.remove(nick)
-            logger.debug("userhosts in progress = " + str( self.userhost_in_progress))
-            self.nicks_db.set_host(nick, host)
-            if self.factory.extra_options['no_services']:
-                pass
-            else:
-                line = 'privmsg nickserv info ' + nick
-                self.sendLine(line)            
-#        if len(self.userhost_in_progress) == 0:
-#            self.say(self.factory.channel, "Nicks DB Initialised")
-            
-#        print self.nicks_db.nicks_in_room
-#        print self.nicks_db.nicks_info
+        self.nicks_db.handle_userhosts_response(response)
         
     def irc_unknown(self, prefix, command, params):
         """ Used to handle RPL_NAMREPLY and REL_WHOISUSER events
