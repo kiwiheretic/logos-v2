@@ -21,7 +21,8 @@ urlpatterns = patterns('',
     url(r'^accounts/profile/', 'logos.views.profile'),
 #    url(r'^accounts/profile/', include('cloud_notes.urls')),
     
-    url(r'^room_settings/', 'logos.views.room_settings'),
+    url(r'^logos-admin/$', 'logos.views.admin'),
+    url(r'^logos-admin/bot-view/(\d+)', 'logos.views.bot_view'),
     
     url(r'^notes/', include('cloud_notes.urls')),
     url(r'^memos/', include('cloud_memos.urls')),

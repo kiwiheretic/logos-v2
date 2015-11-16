@@ -26,6 +26,7 @@ from twisted.words.protocols import irc
 from twisted.internet import task
 
 from django.conf import settings
+from logos.models import BotsRunning
 
 # LINE_RATE - The number of lines per second in IRC
 LINE_RATE = 0.5
@@ -300,6 +301,8 @@ class IRCBot(irc.IRCClient):
               
     def handle_ctrl_c(self, signum, frame):
         print "closing file"
+        pid = os.getpid()
+        BotsRunning.objects.filter(pid = pid).delete()
         if self.irc_line_log:
             self.irc_line_log.close()
         self.factory.reactor.stop()
@@ -736,13 +739,11 @@ class IRCBotFactory(protocol.ClientFactory):
     protocol = IRCBot
 
     def __init__(self, reactor, server, channel, nickname,  \
-                 sys_password, nickserv_pw, web_port, rpc_port, extra_options):
+                 sys_password, nickserv_pw, extra_options):
         
         self.shutting_down = False
         self.reactor = reactor
         self.channel = channel
-        self.web_port = web_port
-        self.rpc_port = rpc_port
         self.nickname = nickname
         self.conn = None  # No IRC connection yet
         self.network = server
@@ -750,17 +751,7 @@ class IRCBotFactory(protocol.ClientFactory):
         self.sys_password = sys_password
         self.extra_options = extra_options
         
-        if web_port:
-            self.web = SimpleWeb(reactor, self, web_port)
-        else:
-            self.web = None
-            
-        if rpc_port:
-            self.rpc = SimpleRPC(reactor, self, rpc_port)
-        else:
-            self.rpc = None
-
-   
+ 
     def doReconnect(self, connector):
         logging.info("Attempting to reconect to server...")
         connector.connect()
@@ -768,6 +759,7 @@ class IRCBotFactory(protocol.ClientFactory):
     def clientConnectionLost(self, connector, reason):
         logging.info("Lost connection (%s)", (reason,))
         # Taken from https://twistedmatrix.com/documents/13.1.0/core/howto/time.html
+        self.conn = None
         if not self.shutting_down:
             logging.info("Will reconnect shortly...")
             self.reactor.callLater(3, self.doReconnect, connector)
@@ -782,12 +774,16 @@ class IRCBotFactory(protocol.ClientFactory):
 ########################################################################
 
 def instantiateIRCBot(networks, room, botName, sys_password, 
-                      nickserv, web_port = None, rpc_port=None, 
+                      nickserv, rpc_port=None, 
                       extra_options=None):
 
     
     socket.setdefaulttimeout(30)
+    
+
     # Start the IRC Bot
+    factories = []
+    
     for net_port in networks:
         if ':' in net_port:
             network, port = net_port.split(':')
@@ -796,12 +792,20 @@ def instantiateIRCBot(networks, room, botName, sys_password,
             network = net_port
             port = 6667
         logger.info ("connecting on "+str((network, port)))   
-        reactor.connectTCP(network, port,
-                           IRCBotFactory(reactor, network, room, botName,\
-                                     sys_password, nickserv, web_port,\
-                                     rpc_port, extra_options))
+        factory = IRCBotFactory(reactor, network, room, botName,\
+                                     sys_password, nickserv, \
+                                     extra_options)
+        reactor.connectTCP(network, port, factory )
+        factories.append(factory)
 
-    
+    if rpc_port:
+        logger.info('Starting RPC Server - port {}'.format(rpc_port))
+        SimpleRPC(reactor, factories, rpc_port)
+        pid = os.getpid()
+        BotsRunning.objects.filter(rpc = rpc_port).delete()
+        b = BotsRunning(pid = pid, rpc = rpc_port)
+        b.save()
+        
     reactor.run()
 
 def main():

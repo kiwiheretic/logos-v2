@@ -17,7 +17,10 @@ import datetime
 # import all the bot's plugins models
 from plugins.models import *
 
-
+class BotsRunning(models.Model):
+    pid = models.IntegerField()
+    started = models.DateTimeField(auto_now_add=True)
+    rpc = models.IntegerField()
 
 class OptionLabels(models.Model):
     # group label - useful for extractimg only a specific group of fields

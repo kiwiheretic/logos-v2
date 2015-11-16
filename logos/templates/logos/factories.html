@@ -1,0 +1,35 @@
+{% extends 'logos/admin_base.html' %}
+
+{% block style %}
+{{block.super}}
+
+
+{% endblock %}
+
+{% block content %}
+<h2>Dashboard</h2>
+
+<h3>Factories for bot pid {{bot.pid}}</h3>
+
+{% for factory in factories %}
+<h4>Factory: {{factory.network}}</h4>
+	{% for room, settings in factory.conn.nicks_db.nicks_in_room.iteritems %}
+	<h5>Room {{room}} settings</h5>
+	<ul>
+	  {% for setting in settings %}
+	  <li>{{setting.opdata}} {{setting.nick}}</li>
+	  {% endfor %}
+	 </ul>
+	{% endfor %}
+
+<h5>Nick settings</h5>
+	{% for nick, settings in factory.conn.nicks_db.nicks_info.iteritems %}
+
+	<ul>
+	  <li>{{nick}} {{settings.host}}</li>
+	 </ul>
+	{% endfor %}
+
+
+{% endfor %}
+{% endblock %}

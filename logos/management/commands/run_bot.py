@@ -31,8 +31,6 @@ class Command(BaseCommand):
                     help="IRC server to connect to."),
         # make_option('--port', action='store',
                     # help="Server port to connect to.  Defaults to 6667."),
-        make_option('--web-port', action='store',
-                    help="Web Port to listen on.  Defaults to None."),                    
         make_option('--rpc-port', action='store',
                     help="RPC Port to listen on.  Defaults to None."),                    
         make_option('--engine-room', action='store',
@@ -78,11 +76,6 @@ class Command(BaseCommand):
         else:
             sys_password = 'zxcvbnm'
         
-        if options['web_port']:
-            web_port = int(options['web_port'])
-        else:
-            web_port = None          
-
         if options['rpc_port']:
             rpc_port = int(options['rpc_port'])
         else:
@@ -101,6 +94,6 @@ class Command(BaseCommand):
 
         print ("Starting Logos Bot, Please Wait...")
         irc.instantiateIRCBot(server, engine_room, nickname, \
-                              sys_password, nick_password, web_port, rpc_port, \
+                              sys_password, nick_password, rpc_port, \
                               extra_options)
 

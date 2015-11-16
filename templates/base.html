@@ -30,7 +30,7 @@
     <div id="button-menu-div">
     {% block button_menu %}
     <ul id="top-button-menu-container" class="btn-menu-container">
-		<li><a href="{% url 'logos.views.room_settings' %}" class="button-link">Room Settings</a></li>
+		<li><a href="{% url 'logos.views.admin' %}" class="button-link">Administration</a></li>
         <li><a href="{% url 'cloud_notes.views.list' %}" class="button-link">Notes</a></li>
         <li><a href="{% url 'cloud_memos.views.inbox' %}" class="button-link">Memos</a></li>
         <li><a href="{% url 'pybb:home_page' %}" class="button-link">Forums</a></li>
@@ -61,7 +61,7 @@
     </div>
     {% endif %}
 
-    <div id="notes-container">
+    <div id="container">
         {% block content %}
         {% endblock %}
     </div>       

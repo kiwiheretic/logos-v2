@@ -9,7 +9,7 @@ from django.core.urlresolvers import reverse
 from django.core import serializers
 
 from forms import SettingsForm
-from models import BibleColours, Settings
+from models import BibleColours, Settings, BotsRunning
 import copy
 import pickle
 import socket
@@ -21,9 +21,9 @@ from logos.settings import LOGGING
 logger = logging.getLogger(__name__)
 logging.config.dictConfig(LOGGING)
 
-def room_settings(request):
-    context = {}
-    return render(request, 'logos/room_settings.html', context)
+# def room_settings(request):
+    # context = {}
+    # return render(request, 'logos/room_settings.html', context)
     
 def root_url(request):
     if request.user.is_authenticated():
@@ -45,6 +45,40 @@ def _get_rpc_url():
     url = 'http://%s:%s/' % (host,port)
     return url
 
+
+@login_required()
+def admin(request):
+    bots_running = BotsRunning.objects.all()
+    bots = []
+    for bot in bots_running:
+        url = "http://localhost:{}/".format(bot.rpc)
+        srv = xmlrpclib.Server(url)
+        dead = False
+        try:
+            networks = srv.get_networks()
+        except Exception as e:
+            print e.errno
+            if e.errno == 10061:
+                dead = True
+            else:
+                raise
+            networks = []
+        print networks
+        bots.append({'id': bot.id, 'pid':bot.pid, 'alive':not dead, 'rpc':bot.rpc, 'networks':networks})
+    context = {'bots':bots}
+    return render(request, 'logos/dashboard.html', context)
+
+@login_required()
+def bot_view(request, id):
+    bot = BotsRunning.objects.get(pk=id)
+    url = "http://localhost:{}/".format(bot.rpc)
+    srv = xmlrpclib.Server(url)
+    factories = srv.get_factories()
+    context = {'factories':factories, 'bot':bot}
+    return render(request, 'logos/factories.html', context)
+    
+    
+    
 @login_required()
 def profile(request):
     context = {}

@@ -1,0 +1,24 @@
+{% extends 'logos/admin_base.html' %}
+
+{% block style %}
+{{block.super}}
+
+.dead-bot {
+  font-weight: 600;
+  color: red;
+}
+
+{% endblock %}
+
+{% block content %}
+<h2>Dashboard</h2>
+
+<h3>Running Bots</h3>
+<p>There can only be one bot running on a given RPC port.
+When a bot claims an RPC port it purges old records with that RPC number. </p>
+<ul>
+{% for bot in bots %}
+  <li>{% if not bot.alive %}<span class="dead-bot">DEAD</span> {% endif %}PID: <a href="{% url 'logos.views.bot_view' bot.id %}">{{bot.pid}}</a> - RPC: {{bot.rpc}} {{bot.networks|join:" | "}}</li>
+{% endfor %}
+</ul>
+{% endblock %}

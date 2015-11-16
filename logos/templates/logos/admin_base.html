@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+
+{% block title %}Logos Administration{% endblock %}
+
+{% block style %}
+
+#category-title {
+	float:left;
+	clear:left;
+	margin-left: 20px;
+}
+
+{% endblock %}
+
+{% block menu_title %}Admin Menu{% endblock %}
+
+{% block button_menu %}
+{% comment %}
+Look at using menu highlights ....
+http://stackoverflow.com/questions/7665514/django-highlight-navigation-based-on-current-page
+{% endcomment %}
+<ul id="app-button-menu-container" class="btn-menu-container">
+    <li><a href="#" class="button-link">Dashboard</a></li>
+    <li><a href="#" class="button-link">Logs</a></li>
+	{% if request.user.is_superuser %}
+	{% endif %}
+	
+    <li><a href="{% url 'logos.views.profile' %}" class="button-link">Main Menu</a></li>
+</ul>
+
+{% endblock %}
+
+{% block pre_content %}
+<h2 id="category-title">{% block category_title %}{{cat_title}}{% endblock %}</h2>
+{% endblock %}
