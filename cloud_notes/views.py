@@ -1,14 +1,16 @@
-from django.shortcuts import render, redirect
-from django.shortcuts import get_object_or_404
+from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from django.core import serializers
 from django.db import transaction
-from itertools import chain
 from django.http import HttpResponse, HttpResponseRedirect
+from django.utils import timezone
+
 import os
 import json
 import re
+
+from itertools import chain
 
 from forms import NoteForm
 from models import Note, Folder, HashTags
@@ -137,7 +139,7 @@ def edit_note(request, note_id):
             note = Note.objects.get(pk=note_id)
             note.title = request.POST['title']
             note.note = request.POST['note']
-            note.modified_at = datetime.utcnow()
+            note.modified_at = timezone.now()
             note.save()
         else:
             print "note not saved"
