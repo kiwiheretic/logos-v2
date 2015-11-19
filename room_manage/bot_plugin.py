@@ -1,10 +1,21 @@
-# test plugin
+from __future__ import absolute_import
 from bot.pluginDespatch import Plugin
 import re
 import logging
+import pytz
+from datetime import datetime, timedelta
+from django.conf import settings
+from .models import DownVotes, Penalty
+
 from logos.settings import LOGGING
 logger = logging.getLogger(__name__)
 logging.config.dictConfig(LOGGING)
+
+tzinfo = pytz.timezone(settings.TIME_ZONE)
+
+DOWN_VOTE_MINUTES = 5
+DOWN_VOTES_REQUIRED = 1
+PENALTY_TIME = 120
 
 from bot.logos_decorators import irc_room_permission_required, \
     irc_network_permission_required
@@ -62,22 +73,65 @@ class RoomManagementPlugin(Plugin):
         self.commands = ((r'nicks', self.nicks, 'show nicks in room'),
                          (r'kick (?P<room>#\S+) (?P<nick>\S+)', self.kick_nick, 'kick nick from room'),
                          (r'ban (?P<room>#\S+) (?P<nick>\S+)', self.ban_nick, 'ban (mute) nick in room'),
+                         (r'down vote (?P<nick>\S+)', self.down_vote, 'Down vote a nick'),
+                         
+                         (r'dv (?P<nick>\S+)', self.down_vote, 'Down vote a nick'),
+
+                         
                          (r'demo', self.demo, 'demonstrate say, describe and notice'),
-                         (r'convo', self.convo, 'echo last lines of conversation'),
                          (r'timer', self.timer, 'demonstrates the timer in a plugin'),
                          (r'op me', self.op_me, 'gives ops'),
                          (r'deop me', self.deop_me, 'removes ops'),
                          (r'kick me', self.kick_me, 'kicks you off channel')
                          )
-        self.conversation = []
+        self.antiflood = {}
     
     def privmsg(self, user, channel, message):
         # Append the last 10 messages into the conversation and delete
         # the other older ones
-        self.conversation.append((user, channel, message))
-        # keep only the last 10 items in the list
-        self.conversation = self.conversation[-10:]
+        pass
 
+    def down_vote(self, regex, chan, nick, **kwargs):
+        nick_dv = regex.group('nick')
+        hostmask = self.get_host(nick).split('@')[1]
+        if hostmask:
+            banmask = '*!*@'+hostmask
+        else:
+            banmask = nick+'!*@*'
+            
+        dvs = DownVotes.objects.filter(network=self.network.lower(),
+            room = chan.lower(),
+            nick_mask = banmask,
+            downvoting_nick = nick.lower(),
+            downvote_datetime__gte = datetime.now(tzinfo) - timedelta(seconds = 60*DOWN_VOTE_MINUTES))
+        if dvs.exists():
+            self.notice(chan, "You down voted this nick within {} minutes ago".format(DOWN_VOTE_MINUTES))
+        else:
+            dv = DownVotes(network = self.network.lower(),
+                            room = chan.lower(),
+                            nick_mask = banmask,
+                            downvoting_nick = nick.lower())
+            dv.save()
+            self.say(chan, "Nick {} down voted".format(nick_dv))
+        
+        dvs_count = DownVotes.objects.filter(network=self.network.lower(),
+            room = chan.lower(),
+            nick_mask = banmask,
+            downvote_datetime__gte = datetime.now(tzinfo) - timedelta(seconds = 60*DOWN_VOTE_MINUTES)).count()
+        if dvs_count >= DOWN_VOTES_REQUIRED:
+            begin_date = datetime.now(tzinfo)
+            end_date = begin_date + timedelta(seconds = PENALTY_TIME)
+            penalty = Penalty(network = self.network.lower(),
+                room = chan.lower(),
+                nick_mask = banmask,
+                begin_time = begin_date,
+                end_time = end_date,
+                kick = True)
+            penalty.save()
+            self.kick(chan, nick_dv, reason = "down voted")
+                
+            
+        
     def nicks(self, regex, chan, nick, **kwargs):
 
         nicks = self.get_room_nicks(chan)
@@ -89,11 +143,6 @@ class RoomManagementPlugin(Plugin):
         self.describe(chan, "shakes its chains")
         self.notice(nick, "Now is the time for all good men...")
 
-    
-    def convo(self, regex, chan, nick, **kwargs):
-
-        for u, c, m in self.conversation:
-            self.say(chan, "%s said %s on %s" % (u,m,c))
     
     def timer(self, regex, chan, nick, **kwargs):
          
@@ -156,6 +205,23 @@ class RoomManagementPlugin(Plugin):
         else:
             self.notice(nick, 'host mask for user {} unknown'.format(nick_to_ban))
         
+    def border_patrol(self, args):
+        action, nick, room = args
+        userhostmask = self.get_host(nick)
+        if userhostmask:
+            hostmask = '*!*@'+userhostmask.split('@')[1]
+            print hostmask
+        penalty = Penalty.objects.filter(network = self.network.lower(),
+                room = room.lower(),
+                nick_mask = hostmask,
+                end_time__gt = datetime.now(tzinfo)).order_by('end_time').last()
+        print penalty
+        if penalty:
+            if action == "kick":
+                self.kick(room, nick, reason = "Your penalty has not expired")
+
+        
+    
     def joined(self, channel):
         self.say(channel, "I, Logos, have arrived")
 
@@ -164,6 +230,9 @@ class RoomManagementPlugin(Plugin):
 
     def userJoined(self, user, channel):
         self.say(channel, "%s has just joined %s" % (user,channel))
+        # self.reactor.callLater(2, self.border_patrol, ("kick", user, channel))
+        # hostmask = self.get_host(user).split('@')[1]
+        # print hostmask
 
     def userLeft(self, user, channel):
         self.say(channel, "%s has just left %s" % (user,channel))
@@ -172,3 +241,11 @@ class RoomManagementPlugin(Plugin):
         # The control room or engine room is often the room designated for notices
         # and or messages if no other room is specified
         self.say(self.control_room, "%s has just quit with message  %s" % (user,quitMessage))
+        
+    def userHosts(self, nicklist):
+        """ Called when userhost info is available """
+        for nick, userhost in nicklist:
+            host = userhost.split('@')[1]
+            rooms = self.get_rooms_for_nick(nick)
+            for room in rooms:
+                self.border_patrol(('kick', nick, room))

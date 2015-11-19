@@ -91,6 +91,7 @@ class NicksDB:
         if response.strip() == "": return None
         
         nick_strings = response.strip().split(" ")
+        userhosts = []
         for nick_str in nick_strings:
             nick, host = nick_str.split("=")
             nick = re.sub("\*","", nick)
@@ -99,6 +100,9 @@ class NicksDB:
             
             logger.debug("irc_RPL_USERHOST {} = {}".format(nick, host))
             host = re.sub("^[~%&@\-\+]+","", host)
+            
+            userhosts.append((nick, host))
+            
             # If the nick is in multiple rooms but it may appear in this list
             # only once so we should be careful
             
@@ -106,7 +110,8 @@ class NicksDB:
                 self.pending_userhosts.remove(nick)
             logger.debug("userhosts in progress = " + str( self.pending_userhosts))
             self.set_host(nick, host)
-      
+        return userhosts
+        
         
     def get_rooms(self):
         return self.nicks_in_room.keys()
@@ -136,6 +141,14 @@ class NicksDB:
         # Keep a list of who is in room.  We will find out later
         # when we get a RPL_NAMREPLY response as to who is actually in room.
         self.nicks_in_room[channel.lower()] = []
+
+        
+    def get_rooms_for_nick(self, nick):
+        rooms = []
+        for room in self.nicks_in_room.keys():
+            if self.nick_in_room(nick, room):
+                rooms.append(room)
+        return rooms
         
     def nick_in_any_room(self, nick):
         """ Is nick in any room that the bot knows about, not
@@ -704,7 +717,8 @@ class IRCBot(irc.IRCClient):
     def irc_RPL_USERHOST(self, prefix, params):
         logger.debug("irc_RPL_USERHOST "+str((prefix, params)))
         response = params[1]
-        self.nicks_db.handle_userhosts_response(response)
+        nicklist = self.nicks_db.handle_userhosts_response(response)
+        self.plugins.userHosts(nicklist)
         
     def irc_unknown(self, prefix, command, params):
         """ Used to handle RPL_NAMREPLY and REL_WHOISUSER events

@@ -12,7 +12,7 @@ This is the Logos-V2 project, a Django/Twisted IRC bot  originally based (in con
 
 Features include:
   * Cloud Memos - just like a web based MemoServ
-  * Cloud Notes system accessible from web and IRC.  Useful for storing bible notes.
+  * [Cloud Notes](https://biblebot.wordpress.com/cloud-notes/) system accessible from web and IRC.  Useful for storing bible notes.
   * Fine grained permission system based on Django-guardian (new feature)
   * User and developer documentation on [wiki](https://github.com/kiwiheretic/logos-v2/wiki)
   * Written in Python using Twisted and Django frameworks
@@ -30,7 +30,12 @@ Bible Plugin:
 
 Memos Plugin
   * Works like MemoServ with a web interface.
-  
+
+Notes Plugin
+  * A note system with hash tags accessible via web or IRC.
+  * Web interface is extremely lightweight and mobile friendly.
+  * Mobile note upload integrates well with [OI File Manager](https://play.google.com/store/apps/details?id=org.openintents.filemanager&hl=en)
+
 ### Summary of set up for Linux ###
 
 #### Centos ####

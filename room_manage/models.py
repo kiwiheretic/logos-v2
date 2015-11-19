@@ -1,4 +1,7 @@
 from django.db import models
+# DateTimeField.auto_now_add *always* overrides entry data so we
+# need "default = timezone.now()" instead
+from django.utils import timezone
 
 # Create your models here.
 
@@ -7,9 +10,9 @@ class Penalty(models.Model):
     room = models.TextField()
     nick_mask = models.CharField(max_length=80)
     # When penalty starts
-    begin = models.DateTimeField(auto_now_add=True)
+    begin_time = models.DateTimeField(default = timezone.now())
     # when penalty ends
-    end = models.DateTimeField(auto_now_add=True)   
+    end_time = models.DateTimeField(default = timezone.now())   
     # whether to kick from room whilst penalty applies
     kick = models.BooleanField(default = False)
     # whether to mute in room whilst penalty applies

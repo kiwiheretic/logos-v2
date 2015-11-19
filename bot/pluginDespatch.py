@@ -184,10 +184,15 @@ class Plugin(object):
         eg. ['#thebot','#Testing','#TheClub']"""
         return self.irc_conn.nicks_db.get_rooms()
         
+    ## TODO: Check this method still works
     def get_room_nicks(self, room):
         """Get all nicks in a particular room"""
         return self.irc_conn.get_room_nicks(room)
 
+    def get_rooms_for_nick(self, nick):
+        return self.irc_conn.nicks_db.get_rooms_for_nick(nick)
+        
+        
     def get_nick_idle_times(self, nick):
         """ Get idle time and last time checked for a given nick.
         Returns (idle_time, time_last_checked).  idle_time is an
@@ -634,6 +639,12 @@ class PluginDespatcher(object):
                 m.signedOn()
 
 
+    def userHosts(self, nicklist):
+        for m in self._obj_list:
+            ## TODO: Check if plugin activated for network
+            if hasattr(m, 'userHosts'):
+                m.userHosts(nicklist)
+        
     def userJoined(self, user, channel):
         for m in self._obj_list:
             if self.is_plugin_enabled(channel, m):
