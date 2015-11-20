@@ -16,9 +16,12 @@ class XRefs(models.Model):
     primary_book = models.CharField(max_length = 15)
     primary_chapter = models.IntegerField()
     primary_verse = models.IntegerField()
-    xref_book = models.CharField(max_length = 15)
-    xref_chapter = models.IntegerField()
-    xref_verse = models.IntegerField()
+    xref_book1 = models.CharField(max_length = 15)
+    xref_chapter1 = models.IntegerField()
+    xref_verse1 = models.IntegerField()
+    xref_book2 = models.CharField(max_length = 15, null = True, blank = True)
+    xref_chapter2 = models.IntegerField(null = True, blank = True)
+    xref_verse2 = models.IntegerField(null = True, blank = True)
     votes = models.IntegerField()
     class Meta:
         app_label = 'logos'
