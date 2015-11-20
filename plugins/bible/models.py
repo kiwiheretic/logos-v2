@@ -12,6 +12,19 @@ class BibleColours(models.Model):
         db_table = 'bible_colours'
         app_label = 'logos'
 
+class XRefs(models.Model):
+    primary_book = models.CharField(max_length = 15)
+    primary_chapter = models.IntegerField()
+    primary_verse = models.IntegerField()
+    xref_book = models.CharField(max_length = 15)
+    xref_chapter = models.IntegerField()
+    xref_verse = models.IntegerField()
+    votes = models.IntegerField()
+    class Meta:
+        app_label = 'logos'
+        db_table = 'xrefs'
+
+
 class BibleTranslations(models.Model):
     name = models.CharField(unique=True, max_length=10)
     class Meta:

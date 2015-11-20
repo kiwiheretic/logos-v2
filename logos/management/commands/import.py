@@ -23,9 +23,9 @@ from django.db.models import Max
 from logos.settings import BIBLES_DIR, DATABASES
 
 from logos.models import BibleTranslations, BibleBooks, BibleVerses, \
-    BibleConcordance, BibleDict
+    BibleConcordance, BibleDict, XRefs
 
-from _booktbl import book_table
+from _booktbl import book_table, xref_books
 from logos.constants import PUNCTUATION, STOP_WORDS
 from logos.utils import *
 
@@ -95,10 +95,38 @@ def import_xrefs():
     f = open(file_path, 'r')
     lbook = None
     bk_list = []
+    XRefs.objects.all().delete()
+    cache = []
+    idx = 0
     for ln in f.readlines():
         mch = re.match(r"([a-zA-Z0-9\.]+)\s+([a-zA-Z0-9\.]+)\s+(\d+)", ln)
         if mch:
             entry1 = mch.group(1)
+            entry2 = mch.group(2)
+            votes = mch.group(3)
+            mch2 = re.match(r"([a-zA-Z0-9]+)\.(\d+)\.(\d+)", entry1)
+            prim_book = book_table[xref_books.index(mch2.group(1))][0]
+            prim_ch = mch2.group(2)
+            prim_vs = mch2.group(3)
+            mch2 = re.match(r"([a-zA-Z0-9]+)\.(\d+)\.(\d+)", entry2)
+            xref_book = book_table[xref_books.index(mch2.group(1))][0]
+            xref_ch = mch2.group(2)
+            xref_vs = mch2.group(3)            
+            
+            xrefs = XRefs(primary_book = prim_book,
+                    primary_chapter = prim_ch,
+                    primary_verse = prim_vs,
+                    xref_book = xref_book,
+                    xref_chapter = xref_ch,
+                    xref_verse = xref_vs,
+                    votes = votes)
+            cache.append(xrefs)
+            idx += 1
+            if idx % 500 == 0:
+                XRefs.objects.bulk_create(cache)
+                cache = []
+                # xrefs.save()
+                print ".",
             mch2 = re.match(r"[a-zA-Z0-9]+", entry1)
             bk = mch2.group(0)
             if bk != lbook:
@@ -106,6 +134,7 @@ def import_xrefs():
                 print bk
                 bk_list.append(bk)
     print str(bk_list)
+    XRefs.objects.bulk_create(cache)
     
 def import_strongs_tables():
 
