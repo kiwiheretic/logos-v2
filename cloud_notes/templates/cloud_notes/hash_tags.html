@@ -10,18 +10,9 @@
 		<ul>
 		{% for note in tag.notes.all %}
 			{% if note.folder.name != 'Trash' %}
-				{% ifchanged note.folder.name %}
-				
-					{% if not forloop.first %}
-						</ul>
-					{% endif %}
-					<li>{{note.folder.name}}</li>
-						<ul>
-				{% endifchanged %}
-				<li>({{note.id}}) <a href="{% url 'cloud_notes.views.preview' note.id %}">{{note.title}}</a></li>
+				<li>({{note.id}}) <a href="{% url 'cloud_notes.views.preview' note.id %}">{{note.title}}</a> [ {{note.folder.name}} ]</li>
 			{% endif %}
 		{% endfor %}
-			</ul> <!-- folder group -->
 		</ul>
 	{% endfor %}
   </ul>
