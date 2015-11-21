@@ -19,11 +19,26 @@ from django.contrib.auth.models import User
 from datetime import datetime
 from forms import NewFolderForm, UploadFileForm
 
+import logging
+
+from django.conf import settings
+logger = logging.getLogger(__name__)
+logging.config.dictConfig(settings.LOGGING)
+
 
 @login_required()
 def hash_tags(request):
-    hash_tags = HashTags.objects.filter(user=request.user).exclude(notes__folder__name = 'Trash').order_by('hash_tag', 'notes__folder__name').distinct()
-    context = {'tags':hash_tags}
+    
+    # putting an .exclude(notes__folder__name = 'Trash') will exclude
+    # a tag that has *any* tagged note in Trash.  We want to
+    # check for *all* !!  Hence the for loop.
+    
+    my_hash_tags = HashTags.objects.filter(user=request.user).order_by('hash_tag', 'notes__folder__name').distinct()
+    tag_list = []
+    for tag in my_hash_tags:
+        if tag.notes.exclude(folder__name = 'Trash').count() > 0:
+            if tag not in tag_list: tag_list.append(tag)
+    context = {'tags':tag_list}
     return render(request, 'cloud_notes/hash_tags.html', context)
 
 @login_required()
@@ -135,7 +150,6 @@ def new_note(request):
 def edit_note(request, note_id):
     if request.method == 'POST':
         if "save" in request.POST:
-            print request.POST
             note = Note.objects.get(pk=note_id)
             note.title = request.POST['title']
             note.note = request.POST['note']

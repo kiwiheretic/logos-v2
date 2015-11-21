@@ -5,6 +5,12 @@ from django.db.models.signals import post_save
 
 import re
 
+import logging
+
+from django.conf import settings
+logger = logging.getLogger(__name__)
+logging.config.dictConfig(settings.LOGGING)
+
 # Create your models here.
 class Folder(models.Model):
     name = models.CharField(max_length=30)
@@ -24,10 +30,11 @@ class Note(models.Model):
     note = models.TextField()
 
     def add_tags(self):
-        words = re.split(r'\s+', self.note)
+        words = re.split(r'\s+', self.note.strip())
         for wrd in words:
             mch = re.match(r'^(#[a-zA-Z0-9-]+)[,.:;]?$', wrd)
             if mch:
+                logger.debug( 'tag = ' + wrd )
                 tag = mch.group(1)
                 obj, created = HashTags.objects.get_or_create(hash_tag__iexact = tag,user = self.user, defaults = {'hash_tag':tag} )
                 obj.notes.add(self)
