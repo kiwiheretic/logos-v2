@@ -78,8 +78,6 @@ def list(request):
         
     notes_list = Note.objects.filter(folder = folder, user=request.user).\
         order_by('-modified_at')
-    for note in notes_list:
-        note.linecount = len(note.note.split('\n'))
     paginator = Paginator(notes_list, 10) # Show 10 contacts per page
 
     page = request.GET.get('page')

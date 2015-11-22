@@ -29,6 +29,10 @@ class Note(models.Model):
     modified_at = models.DateTimeField()
     note = models.TextField()
 
+    @property
+    def linecount(self):
+        return len(self.note.split('\n'))
+        
     def add_tags(self):
         words = re.split(r'\s+', self.note.strip())
         for wrd in words:
