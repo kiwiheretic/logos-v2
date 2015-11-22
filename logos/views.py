@@ -1,4 +1,6 @@
 # logos.views
+from __future__ import absolute_import
+
 import pdb
 
 from django.contrib.auth.decorators import login_required
@@ -8,8 +10,8 @@ from django.contrib import messages
 from django.core.urlresolvers import reverse
 from django.core import serializers
 
-from forms import SettingsForm
-from models import BibleColours, Settings, BotsRunning
+from .forms import SettingsForm
+from .models import BibleColours, Settings, BotsRunning, Plugins, NetworkPlugins
 import copy
 import pickle
 import socket
@@ -45,9 +47,20 @@ def _get_rpc_url():
     url = 'http://%s:%s/' % (host,port)
     return url
 
+    
+@login_required()
+def plugins(request):
+    plugins = NetworkPlugins.objects.order_by('plugin__name')
+    context = {'plugins':plugins}
+    return render(request, 'logos/plugins.html', context)
 
+    
 @login_required()
 def admin(request):
+    return HttpResponseRedirect(reverse('logos.views.bots'))
+
+@login_required()
+def bots(request):
     bots_running = BotsRunning.objects.all()
     bots = []
     for bot in bots_running:
@@ -66,7 +79,7 @@ def admin(request):
         print networks
         bots.append({'id': bot.id, 'pid':bot.pid, 'alive':not dead, 'rpc':bot.rpc, 'networks':networks})
     context = {'bots':bots}
-    return render(request, 'logos/dashboard.html', context)
+    return render(request, 'logos/bots.html', context)
 
 @login_required()
 def bot_view(request, id):

@@ -1,0 +1,30 @@
+{% extends 'logos/admin_base.html' %}
+
+{% block style %}
+{{block.super}}
+
+.plugin-activated {
+  background-color: steelblue;
+  font-weight: 600;
+  color: yellow;
+  border-radius: 5px;
+}
+
+{% endblock %}
+
+{% block content %}
+<h2>Plugins</h2>
+
+<ul>
+{% for plugin in plugins %}
+  {% ifchanged plugin.plugin.name %}
+  {% if not forloop.first %}</li>{% endif %}<li>{{plugin.plugin.description}} ({{plugin.plugin.name}})
+  {% endifchanged %}
+  <ul>
+    <li>{{plugin.network}} {% if plugin.enabled %}<span class="plugin-activated">&nbsp;active&nbsp;</span>{% endif %}</li>
+  </ul>
+
+{% endfor %}
+</li>
+</ul>
+{% endblock %}

@@ -20,7 +20,8 @@ Look at using menu highlights ....
 http://stackoverflow.com/questions/7665514/django-highlight-navigation-based-on-current-page
 {% endcomment %}
 <ul id="app-button-menu-container" class="btn-menu-container">
-    <li><a href="#" class="button-link">Dashboard</a></li>
+    <li><a href="{% url 'logos.views.bots' %}" class="button-link">Bots</a></li>
+	<li><a href="{% url 'logos.views.plugins' %}" class="button-link">Plugins</a></li>
     <li><a href="#" class="button-link">Logs</a></li>
 	{% if request.user.is_superuser %}
 	{% endif %}
