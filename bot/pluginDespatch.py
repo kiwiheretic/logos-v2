@@ -576,7 +576,6 @@ class PluginDespatcher(object):
     def is_plugin_enabled(self, channel, plugin_module):
         if channel[0]=='#':
             plugin_name, _ = plugin_module.plugin
-           
             try:
                 # Make sure the plugin is not disabled at the network plugin
                 # level
@@ -661,7 +660,8 @@ class PluginDespatcher(object):
 
     def userQuit(self, user, quitMessage):
         for m in self._obj_list:
-            if hasattr(m, 'userQuit'):
+            plugin_name, _ = m.plugin
+            if hasattr(m, 'userQuit') and self.is_plugin_activated(plugin_name):
                 m.userQuit(user, quitMessage)
 
 
