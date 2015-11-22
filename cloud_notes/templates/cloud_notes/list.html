@@ -13,7 +13,11 @@
 
 .splat-notes .note-linecount {
     font-size: small;
-}  
+}
+
+.splat-notes .note-hashtags {
+    font-size: small;
+}    
 {% endblock %}
 
 {% block content %}
@@ -34,8 +38,16 @@
     <div class="note-date">Created <span>{{ note.created_at }}</span></div>
     <div class="note-date">Modified <span>{{ note.modified_at }}</span></div>
     <div class="note-linecount"># lines <span>{{ note.linecount }}</span></div>
+	{% if note.hashtags_set.all %}
+	<div class="note-hashtags">Tags: 
+	<span>
+		{% for tag in note.hashtags_set.all %}
+			{{tag.hash_tag}}
+		{% endfor %}
+	</span></div>
+	{% endif %}
     
-	<div class="note-excerpt">{{note.note|truncatewords:20}}</div></li>
+	<div class="note-excerpt">{{note.excerpt|truncatewords:20}}</div></li>
     {% empty %}
     <li><span id="no-notes">Sorry, no notes found in this folder</span></li>
     {% endfor %}

@@ -33,6 +33,14 @@ class Note(models.Model):
     def linecount(self):
         return len(self.note.split('\n'))
         
+    @property
+    def excerpt(self):
+        s = ""
+        for ln in self.note.split('\n'):
+            if re.match(r'tags', ln, re.I): continue
+            s += ln
+        return s
+        
     def add_tags(self):
         words = re.split(r'\s+', self.note.strip())
         for wrd in words:
