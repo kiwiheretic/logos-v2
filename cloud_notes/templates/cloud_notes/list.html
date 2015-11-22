@@ -1,5 +1,21 @@
 {% extends "cloud_notes/notes_base.html" %}
 
+{% block style %}
+{{ block.super }}
+
+.splat-notes .note-id {
+    font-size: small;
+}
+
+.splat-notes .note-date {
+    font-size: small;
+}
+
+.splat-notes .note-linecount {
+    font-size: small;
+}  
+{% endblock %}
+
 {% block content %}
 <h2>Folder: {{folder.name}}</h2>
 
@@ -17,7 +33,9 @@
     <div class="note-id">Note ID: {{note.id}}</div>
     <div class="note-date">Created <span>{{ note.created_at }}</span></div>
     <div class="note-date">Modified <span>{{ note.modified_at }}</span></div>
-    <div class="note-excerpt">{{note.note|truncatewords:20}}</div></li>
+    <div class="note-linecount"># lines <span>{{ note.linecount }}</span></div>
+    
+	<div class="note-excerpt">{{note.note|truncatewords:20}}</div></li>
     {% empty %}
     <li><span id="no-notes">Sorry, no notes found in this folder</span></li>
     {% endfor %}

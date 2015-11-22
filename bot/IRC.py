@@ -607,8 +607,6 @@ class IRCBot(irc.IRCClient):
                     self.nicks_db.set_nickserv_response(self.expecting_nickserv, 
                                                         approved=True) 
                     self.expecting_nickserv = None
-#                    print self.nicks_db.nicks_in_room
-#                    print self.nicks_db.nicks_info                                
         if self.plugins:
             self.plugins.noticed(user, channel, message)
 #        elif self.factory:

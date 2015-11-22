@@ -211,16 +211,6 @@ select {
 }  
 
 
-.splat-notes .note-date {
-
-    font-size: small;
-}  
-
-/*.splat-notes .note-date span {*/
-/*    display:block;*/
-
-/*    margin-left: 10px;*/
-/*}*/
   
 .splat-notes .note-excerpt {
     margin-left: 1em;
@@ -228,9 +218,6 @@ select {
     margin-bottom: 1.5em;
     margin-right: 1.5em;
     font-size: 16px;
-}
-.note-id {
-    font-size: small;
 }
 .note-preview {
     font-size: large; 

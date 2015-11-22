@@ -210,12 +210,10 @@ class RoomManagementPlugin(Plugin):
         userhostmask = self.get_host(nick)
         if userhostmask:
             hostmask = '*!*@'+userhostmask.split('@')[1]
-            print hostmask
         penalty = Penalty.objects.filter(network = self.network.lower(),
                 room = room.lower(),
                 nick_mask = hostmask,
                 end_time__gt = datetime.now(tzinfo)).order_by('end_time').last()
-        print penalty
         if penalty:
             if action == "kick":
                 self.kick(room, nick, reason = "Your penalty has not expired")

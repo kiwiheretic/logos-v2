@@ -157,7 +157,7 @@ class NotesPlugin(Plugin):
         try:
             note = Note.objects.get(pk=note_id, user__username=username)
             self._update_usernotes_hash(username, {'note':note, 'channel':chan})
-            self.say(chan, "Note logging to {} on for {}".format(note.title, nick))
+            self.say(chan, "Note logging to \"{}\" for {}".format(note.title, nick))
         except Note.DoesNotExist:
             self.say(nick, "Note does not exist")
 
