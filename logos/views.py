@@ -87,6 +87,12 @@ def plugins(request):
 @login_required()    
 def networkplugins(request, net_plugin_id):
     plugin = get_object_or_404(NetworkPlugins, pk=net_plugin_id)
+    if request.method == 'POST':
+        if 'activate' in request.POST:
+            if 'Activate' in request.POST['activate']:
+                plugin.enabled = True
+            if 'Deactivate' in request.POST['activate']:
+                plugin.enabled = False
     context = {'plugin':plugin}
     return render(request, 'logos/network_plugins.html', context)
     
