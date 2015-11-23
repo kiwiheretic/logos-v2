@@ -325,11 +325,11 @@ LOGGING = {
             'class': 'logging.StreamHandler',
             'formatter': 'simple'
         },
-        # 'console_debug':{
-            # 'level': 'DEBUG',
-            # 'class': 'logging.StreamHandler',
-            # 'formatter': 'simple'
-        # },        
+        'console_info':{
+            'level': 'INFO',
+            'class': 'logging.StreamHandler',
+            'formatter': 'simple'
+        },        
         'file': {
             'level': 'DEBUG',
             'class': 'logging.FileHandler',
@@ -364,8 +364,8 @@ LOGGING = {
             'propagate': False,
         },
         'bot': {
-            'handlers': ['console', 'file'],
-            'level': 'INFO',
+            'handlers': ['console_info', 'file'],
+            'level': 'DEBUG',
             'propagate': False,
         },        
         'plugins': {

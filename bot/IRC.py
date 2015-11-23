@@ -1,5 +1,4 @@
 # SkeletonIRC
-import pdb
 import sys
 import logging
 import string
@@ -55,6 +54,17 @@ class NicksDB:
         self.pending_userhosts = set()
 
  
+    def get_next_nicks_for_userhosts(self):
+        """Get the next batch of nicks queued to request user host info"""
+        userhost_nicks = frozenset(islice(self.enqueued_userhosts,0,5))
+        self.pending_userhosts.update(userhost_nicks)
+        nicks_to_get_hosts = " ".join(userhost_nicks)
+        if nicks_to_get_hosts.strip() != "":
+            line = "userhost " + nicks_to_get_hosts
+            return line
+        return None
+
+        
     def enqueue_userhosts(self, nicks):
         for nick in nicks:
             if nick[0] in "~%&@+":
@@ -108,7 +118,12 @@ class NicksDB:
             
             if nick in self.pending_userhosts:
                 self.pending_userhosts.remove(nick)
+            if nick in self.enqueued_userhosts:
+                self.enqueued_userhosts.remove(nick)
+                
             logger.debug("userhosts in progress = " + str( self.pending_userhosts))
+            logger.debug("remaining enqueued hosts  = " + str( self.enqueued_userhosts))
+            
             self.set_host(nick, host)
         return userhosts
         
@@ -717,7 +732,11 @@ class IRCBot(irc.IRCClient):
         response = params[1]
         nicklist = self.nicks_db.handle_userhosts_response(response)
         self.plugins.userHosts(nicklist)
-        
+        line = self.nicks_db.get_next_nicks_for_userhosts()
+        if line:
+            logger.debug(line)
+            self.sendLine(line) 
+            
     def irc_unknown(self, prefix, command, params):
         """ Used to handle RPL_NAMREPLY and REL_WHOISUSER events
             so that we can keep a track of who is and who isn't
