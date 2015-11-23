@@ -4,7 +4,7 @@ from __future__ import absolute_import
 import pdb
 
 from django.contrib.auth.decorators import login_required
-from django.shortcuts import render, redirect
+from django.shortcuts import render, redirect, get_object_or_404
 from django.http import HttpResponse, HttpResponseRedirect
 from django.contrib import messages
 from django.core.urlresolvers import reverse
@@ -49,13 +49,6 @@ def _get_rpc_url():
 
     
 @login_required()
-def plugins(request):
-    plugins = NetworkPlugins.objects.order_by('plugin__name')
-    context = {'plugins':plugins}
-    return render(request, 'logos/plugins.html', context)
-
-    
-@login_required()
 def admin(request):
     return HttpResponseRedirect(reverse('logos.views.bots'))
 
@@ -81,6 +74,20 @@ def bots(request):
     context = {'bots':bots}
     return render(request, 'logos/bots.html', context)
 
+@login_required()    
+def plugins(request):
+    plugins = NetworkPlugins.objects.order_by('plugin__name')
+    context = {'plugins':plugins}
+    return render(request, 'logos/plugins.html', context)
+
+@login_required()    
+def networkplugins(request, net_plugin_id):
+    plugin = get_object_or_404(NetworkPlugins, pk=net_plugin_id)
+    context = {'plugin':plugin}
+    return render(request, 'logos/network_plugins.html', context)
+    
+    
+    
 @login_required()
 def bot_view(request, id):
     bot = BotsRunning.objects.get(pk=id)

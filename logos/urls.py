@@ -23,7 +23,9 @@ urlpatterns = patterns('',
     
     url(r'^logos-admin/$', 'logos.views.admin'),
     url(r'^logos-admin/bots/', 'logos.views.bots'),
-    url(r'^logos-admin/plugins/', 'logos.views.plugins'),
+    
+    url(r'^logos-admin/plugins/$', 'logos.views.plugins'),
+    url(r'^logos-admin/plugins/network/(\d+)', 'logos.views.networkplugins'),
     url(r'^logos-admin/bot-view/(\d+)', 'logos.views.bot_view'),
     
     url(r'^notes/', include('cloud_notes.urls')),

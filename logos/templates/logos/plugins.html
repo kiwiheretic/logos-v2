@@ -21,7 +21,7 @@
   {% if not forloop.first %}</li>{% endif %}<li>{{plugin.plugin.description}} ({{plugin.plugin.name}})
   {% endifchanged %}
   <ul>
-    <li>{{plugin.network}} {% if plugin.enabled %}<span class="plugin-activated">&nbsp;active&nbsp;</span>{% endif %}</li>
+    <li><a href="{% url 'logos.views.networkplugins' plugin.id %}">{{plugin.network}}</a> {% if plugin.enabled %}<span class="plugin-activated">&nbsp;active&nbsp;</span>{% endif %}</li>
   </ul>
 
 {% endfor %}

@@ -1,0 +1,50 @@
+{% extends 'logos/admin_base.html' %}
+
+{% block style %}
+{{block.super}}
+
+.plugin-activated {
+  background-color: steelblue;
+  font-weight: 600;
+  color: yellow;
+  border-radius: 5px;
+}
+
+form {
+  margin-top:5px;
+}
+
+form input[type="submit"]{
+  font-size: small;
+  padding: 5px;
+  height: auto;
+}
+
+{% endblock %}
+
+{% block content %}
+<h2>Plugin {{plugin.plugin.description}} ({{plugin.plugin.name}}) for network &quot;{{plugin.network}}&quot;</h2>
+
+<div>Plugin Status: <span {% if plugin.enabled %}class="plugin-activated"{% endif %}>&nbsp;{{plugin.enabled|yesno:"active,deactivated,error"}}&nbsp;</span> </div>
+
+<form action="" method="post">
+        {% csrf_token %}
+
+        <input type="submit" name="activate" class="button" style="display:block;" 
+        value="{% if plugin.enabled %}Deactivate{% else %}Activate{% endif %} Plugin" /> 
+		<input type="submit" name="move_folder" class="button" style="display:block;" 
+        value="Another button" /> 
+</form>
+<div style="clear: both;"></div> <!-- The float clear fix -->
+
+<h5>Rooms</h5>
+
+<ul>
+{% for room_plugin in plugin.roomplugins_set.all %}
+<li>{{room_plugin.room}} {% if room_plugin.enabled %}<span class="plugin-activated">&nbsp;active&nbsp;</span> {% endif %}</li>
+{% endfor %}
+
+</ul>
+
+
+{% endblock %}
