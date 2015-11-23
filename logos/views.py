@@ -11,7 +11,7 @@ from django.core.urlresolvers import reverse
 from django.core import serializers
 
 from .forms import SettingsForm
-from .models import BibleColours, Settings, BotsRunning, Plugins, NetworkPlugins
+from .models import BibleColours, Settings, BotsRunning, Plugins, NetworkPlugins, RoomPlugins
 import copy
 import pickle
 import socket
@@ -91,10 +91,25 @@ def networkplugins(request, net_plugin_id):
         if 'activate' in request.POST:
             if 'Activate' in request.POST['activate']:
                 plugin.enabled = True
+                plugin.save()
             if 'Deactivate' in request.POST['activate']:
                 plugin.enabled = False
+                plugin.save()
     context = {'plugin':plugin}
     return render(request, 'logos/network_plugins.html', context)
+    
+
+@login_required()    
+def plugin_room_activate(request, plugin_id):
+    plugin = get_object_or_404(RoomPlugins, pk=plugin_id)
+    if plugin.enabled:
+        plugin.enabled = False
+    else:
+        plugin.enabled = True
+    plugin.save()
+    return HttpResponseRedirect(reverse('logos.views.networkplugins', args=(plugin.net.id,)))
+
+
     
 @login_required()    
 def deletenetworkplugins(request, network):
