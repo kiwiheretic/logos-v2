@@ -77,7 +77,11 @@ def bots(request):
 @login_required()    
 def plugins(request):
     plugins = NetworkPlugins.objects.order_by('plugin__name')
-    context = {'plugins':plugins}
+    networks = []
+    for plugin in plugins:
+        if plugin.network not in networks:
+            networks.append(plugin.network)
+    context = {'plugins':plugins, 'networks':networks}
     return render(request, 'logos/plugins.html', context)
 
 @login_required()    
@@ -86,7 +90,17 @@ def networkplugins(request, net_plugin_id):
     context = {'plugin':plugin}
     return render(request, 'logos/network_plugins.html', context)
     
-    
+@login_required()    
+def deletenetworkplugins(request, network):
+    if request.method == 'POST':
+        if request.POST['confirm'] == 'Yes':
+            NetworkPlugins.objects.filter(network = network).delete()
+        return HttpResponseRedirect(reverse('logos.views.plugins'))
+            
+    message = 'Are you sure you wish to delete all plugin entries for "{}"'.format(network)
+    context = {'network':network, 'heading':'Network Delete Confirmation',
+        'detail':message}
+    return render(request, 'logos/confirm.html', context)
     
 @login_required()
 def bot_view(request, id):

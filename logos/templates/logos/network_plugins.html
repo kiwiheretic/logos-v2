@@ -23,7 +23,7 @@ form input[type="submit"]{
 {% endblock %}
 
 {% block content %}
-<h2>Plugin {{plugin.plugin.description}} ({{plugin.plugin.name}}) for network &quot;{{plugin.network}}&quot;</h2>
+<h2>Plugin: {{plugin.plugin.description}} ({{plugin.plugin.name}}) for network &quot;{{plugin.network}}&quot;</h2>
 
 <div>Plugin Status: <span {% if plugin.enabled %}class="plugin-activated"{% endif %}>&nbsp;{{plugin.enabled|yesno:"active,deactivated,error"}}&nbsp;</span> </div>
 

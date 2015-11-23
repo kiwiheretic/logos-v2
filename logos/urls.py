@@ -26,6 +26,7 @@ urlpatterns = patterns('',
     
     url(r'^logos-admin/plugins/$', 'logos.views.plugins'),
     url(r'^logos-admin/plugins/network/(\d+)', 'logos.views.networkplugins'),
+    url(r'^logos-admin/plugins/network/delete/(\S+)/', 'logos.views.deletenetworkplugins'),
     url(r'^logos-admin/bot-view/(\d+)', 'logos.views.bot_view'),
     
     url(r'^notes/', include('cloud_notes.urls')),

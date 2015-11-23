@@ -1,0 +1,23 @@
+{% extends 'logos/admin_base.html' %}
+
+{% block style %}
+{{block.super}}
+{% endblock %}
+
+{% block content %}
+<h2>{{heading}}</h2>
+
+<p>{{detail}}</p>
+
+
+<form action="" method="post">
+        {% csrf_token %}
+
+        <input type="submit" name="confirm" class="button" style="display:block;" 
+        value="Yes" /> 
+		<input type="submit" name="confirm" class="button" style="display:block;" 
+        value="No" /> 
+</form>
+<div style="clear: both;"></div> <!-- The float clear fix -->
+
+{% endblock %}
