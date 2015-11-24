@@ -5,7 +5,7 @@ from django.core import serializers
 from django.db import transaction
 from django.http import HttpResponse, HttpResponseRedirect
 from django.utils import timezone
-
+from django.contrib import auth  # .models.DoesNotExist
 import os
 import json
 import re
@@ -199,7 +199,16 @@ def serialize_notes(notes):
         note_dict['title'] = note.title
         note_dict['note'] = note.note
         note_dict['folder'] = note.folder.name
-        note_dict['user']  = note.user.username
+        try:
+            note_dict['user']  = note.user.username
+        except Exception as e:
+            # Convoluted catch of models.DoesNotExist exception because its an
+            # instance exception only but is not present in its
+            # proper normal class when note.user == None (which is a data violation anyway)
+            if 'DoesNotExist' == e.__class__.__name__:
+                note_dict['user']  = None
+            else:
+                raise e
         note_list.append(note_dict)
   
     data_version = 0.11
@@ -227,7 +236,7 @@ def export_all(request):
         all_data = serialize_notes(notes)
         response = HttpResponse(all_data, content_type='application/json')
         response['Content-Disposition'] = \
-            "attachment; filename=\"notes_{}.json\"".format(data_version)
+            "attachment; filename=\"all_notes.json\""
         return response
 
 @login_required()
@@ -278,19 +287,24 @@ def handle_uploaded_json_file(f, user):
     version, notes = json_data
     
     # for user in User.objects.all():
-        # if not Folder.objects.filter(user = user, name = "Main").exists():
+        # if not Folder.)objects.filter(user = user, name = "Main").exists():
             # folder = Folder(name="Main", user = user)
             # folder.save()
-        # if not Folder.objects.filter(user = user, name = "Trash").exists():
-            # folder = Folder(name="Trash", user = user)
+        # if not Folder.objects.filter(user = user, name = ")Trash").exists():
+            # folder = Folder(name="Trash", user = u)ser)
             # folder.save()  
           
     for note in notes:
         created_at = convert_date(note['created_at'])
         title = note['title']
         username = note['user']
+
+        # TODO: If user is blank we need to assign to a default user.  For now just skip.
+        # Its technically a database integrity violation anyway.
+        if username is None: continue
+
         user = User.objects.get(username = username)        
-        
+
         if not Note.objects.filter(title = title, 
                                created_at = created_at).exists():
             new_note = Note()
