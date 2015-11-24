@@ -689,12 +689,26 @@ class PluginDespatcher(object):
                       }
             
             matched_fn = []
+            
+            # Last resort matches are regexes that are too general
+            # and should match only if nothing else does
+            last_resorts = []
+            
             for m in self._obj_list:
                 logger.debug("Examining {} plugin".format(m.plugin[1]))
                 if self.is_plugin_enabled(chan, m): 
                     if hasattr(m, 'commands'):
-                        for rgx_s, f, _ in m.commands:
-                        
+                        for cmd in m.commands:
+                            if len(cmd) == 3:
+                                rgx_s, f, _ = cmd
+                            elif len(cmd) == 4:
+                                rgx_s, f, _, flags = cmd
+                                if flags == "LastResortMatch":
+                                    last_resorts.append((rgx_s, f, m.plugin))
+                                    continue
+                            else: # No idea, Bail!!
+                                continue
+                            
                             regex = re.match(rgx_s, msg)
                             logger.debug("Regex {} returns {}".format(rgx_s, regex))
                             plugin_id = m.plugin[0]
@@ -734,6 +748,18 @@ class PluginDespatcher(object):
                 fn(regex, adj_chan, nick, **kwargs)
             # regex not found 
             elif len(matched_fn) == 0:
+                if last_resorts:
+                    # TODO: Check for ambiguous regexes in last resorters
+                    for rgx_s, fn, plugin in last_resorts:
+                        regex = re.match(rgx_s, msg)
+                        logger.debug("Regex {} returns {}".format(rgx_s, regex))
+                        if regex:
+                            # clean_line is line without the plugin id
+                            kwargs['clean_line'] = re.sub(plugin_id + "\s+", "", msg)
+                            fn(regex, adj_chan, nick, **kwargs)
+                            break
+                            
+                    
                 logger.debug("plugin command not found")
                 raise CommandException(nick, chan, "Command not found")
             # otherwise more than one regex was found

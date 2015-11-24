@@ -15,6 +15,7 @@ import datetime
 import re
 import time
 import copy
+from itertools import islice
 
 from logos.constants import PUNCTUATION, STOP_WORDS
 from logos.utils import replace_spc_error_handler
@@ -29,7 +30,7 @@ from logos.roomlib import get_room_option, set_room_option, set_global_option, \
     get_global_option
 from logos.pluginlib import CommandDecodeException
 from models import BibleTranslations, BibleBooks, BibleVerses, \
-    BibleConcordance, BibleDict
+    BibleConcordance, BibleDict, XRefs
 from logos.models import BibleColours
 
 from logos.management.commands._booktbl import book_table
@@ -87,10 +88,11 @@ class BibleBot(Plugin):
                           "display available versions or translations"),
                          (r'dict\s+(\S+)', self.dict, "lookup strongs numbers"),
                          (r'(\w+\+?\s+)?\d?\s*[a-zA-Z]+\s+\d+\s*(:?\s*\d+\s*(-?\s*\d+)?)?$',
-                          self.verse_lookup, "lookup bible verse"), \
+                          self.verse_lookup, "lookup bible verse", "LastResortMatch"), \
                          (r'books\s+(.*)',
                           self.book_names, "show book names for translation"),
-                         
+                         (r'xref\s+(.*)',
+                          self.xref, "display xref verses"),
                          )
         
         # pending_searches used to remember
@@ -731,6 +733,57 @@ class BibleBot(Plugin):
         except BibleColours.DoesNotExist:
             return None
 
+    def xref(self, regex, chan, nick, **kwargs):
+        passage_ref = regex.group(1).lower().strip()
+        # mch1 = re.match(r"([a-z\+]+)\s+([1-3]?\s*[a-z]+)\s+(.*)", passage_ref)
+        mch = re.match(r"([1-3]?\s*[a-z]+)\s+(.*)", passage_ref)
+        if not mch:
+            raise CommandException(nick, chan, \
+                        "Could not decipher scripture xref " +\
+                        "reference.  Format is " +\
+                        "<book> <chapter>:<verse>")
+
+        assert mch.lastindex == 2
+
+        bookwork = mch.group(1)
+        versework = mch.group(2)
+
+        # remove possible spaces between books like "1 John" etc
+        book = self._get_book(None, bookwork)
+        if not book:
+            raise CommandException(user, chan, "Could not find book %s" % (bookwork,))
+
+
+        # remove embedded spaces
+        passage = re.sub(r"(\d+)\s*:\s*(\d+)",r"\1:\2",versework)
+
+        splitwork = re.split('(?::|-|\s+)',passage)
+        chapter = int(splitwork.pop(0))
+        if splitwork:
+            verse = int(splitwork.pop(0))
+        else:
+            raise CommandException(nick, chan, \
+                        "Too many arguments on line")
+
+        xrefs = XRefs.objects.filter(primary_book = book,
+                primary_chapter = chapter,
+                primary_verse = verse ).order_by('-votes')
+        xref_list = []
+        for xref in islice(xrefs, 6):
+            if xref.xref_book2:
+                s = "{} {}:{}-{}:{}".format(xref.xref_book1, xref.xref_chapter1, xref.xref_verse1, 
+                    xref.xref_chapter2, xref.xref_verse2)
+            else:
+                s = "{} {}:{}".format(xref.xref_book1, xref.xref_chapter1, xref.xref_verse1)
+            xref_list.append(s)
+        xref_resp = ", ".join(xref_list)
+        self.say(chan, xref_resp)
+        
+                
+             
+
+
+    
     def verse_lookup(self, regex, chan, nick, **kwargs):
 
         user = kwargs['user']
