@@ -805,7 +805,9 @@ class PluginDespatcher(object):
     def userRenamed(self, oldname, newname):
         for m in self._obj_list:
             # nick changes are not channel specific
-            if hasattr(m, 'userRenamed'):
+            
+            plugin_name, _ = m.plugin
+            if hasattr(m, 'userRenamed') and self.is_plugin_activated(plugin_name):
                 m.userRenamed(oldname, newname)
 
     def onIdleCheckCompleted(self):
