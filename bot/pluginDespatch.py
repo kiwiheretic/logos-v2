@@ -760,8 +760,6 @@ class PluginDespatcher(object):
                             break
                             
                     
-                logger.debug("plugin command not found")
-                raise CommandException(nick, chan, "Command not found")
             # otherwise more than one regex was found
             else:
                 # Display error message about ambiguous command here
