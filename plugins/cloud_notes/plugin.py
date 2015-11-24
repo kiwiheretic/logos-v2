@@ -85,6 +85,7 @@ class NotesPlugin(Plugin):
         chan = data['chan']
         username = self.get_auth().get_username(nick)
         if username and username in self.user_notes and \
+        'channel' in self.user_notes[username] and \
         self.user_notes[username]['channel'] == chan:
             note = self.user_notes[username]['note']
             # note.note += "\n"
@@ -121,6 +122,7 @@ class NotesPlugin(Plugin):
         chan = data['chan']
         username = self.get_auth().get_username(nick)
         if username and username in self.user_notes and \
+        'channel' in self.user_notes[username] and \
         self.user_notes[username]['channel'] == chan:
             note = self.user_notes[username]['note']
             # note.note += "\n"
