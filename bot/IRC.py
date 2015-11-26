@@ -83,7 +83,7 @@ class NicksDB:
         
     def handle_names_reply(self, room, nicks):
         for nick in nicks:
-            if nick[0] in "~%&@":
+            if nick[0] in "~+%&@":
                 opstatus = nick[0]
                 nick = nick[1:]
             else:
