@@ -758,6 +758,13 @@ class PluginDespatcher(object):
                             kwargs['clean_line'] = re.sub(plugin_id + "\s+", "", msg)
                             fn(regex, adj_chan, nick, **kwargs)
                             break
+                        # This line not executed if matching regex found, thus refex == None 
+                        # if no matches found.
+                        regex = None
+                    if not regex:
+                        logger.debug("plugin command not found")
+                        raise CommandException(nick, chan, "Command not found")
+                        
                             
                     
             # otherwise more than one regex was found
