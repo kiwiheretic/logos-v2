@@ -1,4 +1,5 @@
 #  BibleBot
+from __future__ import absolute_import
 
 # Whether to use threads for concordance searches or not.
 # (This is an experimental feature.)
@@ -29,9 +30,9 @@ from bot.pluginDespatch import Plugin, CommandException
 from logos.roomlib import get_room_option, set_room_option, set_global_option, \
     get_global_option
 from logos.pluginlib import CommandDecodeException
-from models import BibleTranslations, BibleBooks, BibleVerses, \
+from .models import BibleTranslations, BibleBooks, BibleVerses, \
     BibleConcordance, BibleDict, XRefs
-from logos.models import BibleColours
+from .models import BibleColours
 
 from logos.management.commands._booktbl import book_table
 

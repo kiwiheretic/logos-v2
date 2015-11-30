@@ -11,7 +11,7 @@ from django.core.urlresolvers import reverse
 from django.core import serializers
 
 from .forms import SettingsForm
-from .models import BibleColours, Settings, BotsRunning, Plugins, NetworkPlugins, RoomPlugins
+from .models import Settings, BotsRunning, Plugins, NetworkPlugins, RoomPlugins
 import copy
 import pickle
 import socket

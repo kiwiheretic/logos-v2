@@ -1,7 +1,7 @@
 from django.db import models
 
-DB_ROUTER="bibles"
-DB_ROUTE_EXCEPTIONS = {'BibleColours':'settings', 'BibleStats':'statistics'}
+# DB_ROUTER="bibles"
+# DB_ROUTE_EXCEPTIONS = {'BibleColours':'default', 'BibleStats':'default'}
 
 class BibleColours(models.Model):
     network = models.TextField()
