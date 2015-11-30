@@ -1,7 +1,33 @@
 {% extends 'logos/admin_base.html' %}
+{% load guardian_tags %}
 
 {% block style %}
 {{block.super}}
+
+.custom-button-link {
+    font-size: small;
+  
+    text-decoration: none;
+    padding: 5px 5px;
+    background: #4479BA;
+    color: #FFF;
+    display:inline;
+    width: 60px;
+    margin-left: 5px !important;
+    margin-right: 10px;
+    margin-bottom: 20px;
+            
+    -webkit-border-radius: 4px;
+    -moz-border-radius: 4px;
+    border-radius: 4px;
+    border: solid 1px #20538D;
+    text-shadow: 0 -1px 0 rgba(0, 0, 0, 0.4);
+    -webkit-box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.4), 0 1px 1px rgba(0, 0, 0, 0.2);
+    -moz-box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.4), 0 1px 1px rgba(0, 0, 0, 0.2);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.4), 0 1px 1px rgba(0, 0, 0, 0.2);            
+  
+}
+
 
 
 .plugin-activated {
@@ -18,14 +44,19 @@
 {% endblock %}
 
 {% block content %}
+{% get_obj_perms request.user for networkpermissions as "net_perms" %}
 <h2>Networks</h2>
-
+{% if 'bot_admin' in net_perms %}
 <p>Warning:  Before deleting a network ensure no running bots are connected to this network first!!  
 It may destablise the running bot.</p>
-
+{% endif %}
 <ul>
 {% for network in networks %}
-<li class="large-vertical-spacing">{{network}} <a href="{% url 'logos.views.deletenetworkplugins' network %}" class="custom-button-link" style="margin-left:4em;">Delete Network</a></li>
+<li class="large-vertical-spacing">{{network}} 
+{% if 'bot_admin' in net_perms %}
+<a href="{% url 'logos.views.deletenetworkplugins' network %}" class="custom-button-link" style="margin-left:4em;">Delete Network</a>
+{% endif %}
+</li>
 {% endfor %}
 </ul>
 

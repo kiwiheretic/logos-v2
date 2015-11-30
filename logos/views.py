@@ -11,7 +11,7 @@ from django.core.urlresolvers import reverse
 from django.core import serializers
 
 from .forms import SettingsForm
-from .models import Settings, BotsRunning, Plugins, NetworkPlugins, RoomPlugins
+from .models import Settings, BotsRunning, Plugins, NetworkPlugins, RoomPlugins, NetworkPermissions, RoomPermissions
 import copy
 import pickle
 import socket
@@ -81,7 +81,7 @@ def plugins(request):
     for plugin in plugins:
         if plugin.network not in networks:
             networks.append(plugin.network)
-    context = {'plugins':plugins, 'networks':networks}
+    context = {'plugins':plugins, 'networks':networks, 'networkpermissions':NetworkPermissions}
     return render(request, 'logos/plugins.html', context)
 
 @login_required()    
@@ -95,7 +95,8 @@ def networkplugins(request, net_plugin_id):
             if 'Deactivate' in request.POST['activate']:
                 plugin.enabled = False
                 plugin.save()
-    context = {'plugin':plugin}
+    context = {'plugin':plugin, 'networkpermissions':NetworkPermissions,
+                'roompermissions':RoomPermissions}
     return render(request, 'logos/network_plugins.html', context)
     
 

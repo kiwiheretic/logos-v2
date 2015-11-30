@@ -1,5 +1,7 @@
 {% extends 'logos/admin_base.html' %}
 
+{% load guardian_tags %}
+
 {% block style %}
 {{block.super}}
 
@@ -56,6 +58,10 @@ form input[type="submit"]{
 
 <div>Plugin Status: <span {% if plugin.enabled %}class="plugin-activated"{% endif %}>&nbsp;{{plugin.enabled|yesno:"active,deactivated,error"}}&nbsp;</span> </div>
 
+{% get_obj_perms request.user for networkpermissions as "net_perms" %}
+{% get_obj_perms request.user for roompermissions as "room_perms" %}
+
+{% if 'bot_admin' in net_perms or 'activate_plugins' in net_perms %}
 <form action="" method="post">
         {% csrf_token %}
 
@@ -66,11 +72,17 @@ form input[type="submit"]{
 </form>
 <div style="clear: both;"></div> <!-- The float clear fix -->
 
+{% endif%}
 <h5>Rooms</h5>
 
 <ul>
 {% for room_plugin in plugin.roomplugins_set.all %}
-<li class="large-vertical-spacing">{{room_plugin.room}} {% if plugin.enabled %}{% if room_plugin.enabled %}<span class="plugin-activated">&nbsp;active&nbsp;</span> {% endif %}<a href="{% url 'logos.views.plugin_room_activate'  room_plugin.id %}" class="custom-button-link" style="margin-left:4em;">{% if room_plugin.enabled %}Disable{% else %}Enable{% endif %} Plugin for Room</a>{% endif %}</li>
+<li class="large-vertical-spacing">{{room_plugin.room}} {% if plugin.enabled %}{% if room_plugin.enabled %}<span class="plugin-activated">&nbsp;active&nbsp;</span> {% endif %}
+
+{% if 'room_admin' in room_perms or 'enable_plugins' in room_perms %}
+<a href="{% url 'logos.views.plugin_room_activate'  room_plugin.id %}" class="custom-button-link" style="margin-left:4em;">{% if room_plugin.enabled %}Disable{% else %}Enable{% endif %} Plugin for Room</a>
+{% endif %}
+{% endif %}</li>
 {% endfor %}
 
 </ul>
