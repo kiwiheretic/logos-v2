@@ -17,7 +17,7 @@ from django.db.models import Max
 
 from django.conf import settings # BIBLES_DIR, DATABASES
 
-from logos.models import BibleTranslations, BibleBooks, BibleVerses, \
+from bibleapp.models import BibleTranslations, BibleBooks, BibleVerses, \
     BibleConcordance, BibleDict
 
 from _booktbl import book_table
