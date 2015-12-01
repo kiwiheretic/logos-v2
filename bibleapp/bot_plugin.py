@@ -34,7 +34,7 @@ from .models import BibleTranslations, BibleBooks, BibleVerses, \
     BibleConcordance, BibleDict, XRefs
 from .models import BibleColours
 
-from logos.management.commands._booktbl import book_table
+from bibleapp.management.commands._booktbl import book_table
 
 import logging
 from logos.settings import LOGGING

@@ -1,6 +1,8 @@
 from django.db import models
 
-# DB_ROUTER="bibles"
+DB_ROUTER={"bibles":('BibleTranslations', 'BibleBooks', 
+                  'BibleVerses', 'BibleConcordance', 
+                  'BibleDict', 'XRefs')}
 # DB_ROUTE_EXCEPTIONS = {'BibleColours':'default', 'BibleStats':'default'}
 
 class BibleColours(models.Model):

@@ -1,92 +1,50 @@
 # LogosRouter.py
 
 import logging
-from logos.settings import LOGGING
+from django.conf import settings
 from django.db.models import Count
 
 logger = logging.getLogger(__name__)
-logging.config.dictConfig(LOGGING)
+logging.config.dictConfig(settings.LOGGING)
 
-from logos.itermodels import plugin_models_finder
-# Follows is a list of DB identifier and associated model names
-
-# The routing_data data structure is deprecated.  Use DB_ROUTER or 
-# DB_ROUTE_EXCEPTIONS in plugins instead
-
-routing_data = (('bibles', 
-                 ('BibleTranslations', 'BibleBooks', 
-                  'BibleVerses', 'BibleConcordance', 
-                  'BibleDict', 'XRefs')),
-                ('statistics',
-                 ('BibleStats',)),
-                # ('settings',
-                 # ('Settings',
-                  # 'BibleColours', 'RoomOptions', 'OptionLabels',
-                  # 'Plugins', 'NetworkPlugins',  'RoomPlugins')),
-                ('game-data',
-                 ('GameGames', 'GameUsers', 'GameSolveAttempts',
-                  'Scriptures'),),
-                  )
-                 
             
 class LogosRouter(object):
     def db_for_read(self, model, **hints):
         """
         Select DB to read from
         """
+        for app in settings.INSTALLED_APPS:
+            mod = __import__(app)
+            try:
+                if hasattr(mod.models, 'DB_ROUTER'):
+                    for k, models in mod.models.DB_ROUTER.iteritems():
+                        for model_name in models:
+                            if model.__name__ == model_name:
+                                return k
+            except AttributeError:
+                pass  # pass on missing models attribute
+        return 'default'
         
-        for model_module, model_class in plugin_models_finder():
-            if hasattr(model_module, 'DB_ROUTER'):
-                router = model_module.DB_ROUTER
-                if hasattr(model_module, 'DB_ROUTE_EXCEPTIONS'):
-                    route_exceptions = model_module.DB_ROUTE_EXCEPTIONS
-                else:
-                    route_exceptions = None
-                iter_klass_name = model_class.__name__
-                klass_name = model.__name__
-                if klass_name == iter_klass_name:
-                    if route_exceptions and klass_name in route_exceptions:
-                        router = route_exceptions[klass_name]
-#                        logger.debug( "Exception DB READ: selecting {} for model {}".format(router,klass_name))
-                    else:
-#                        logger.debug( "DB READ: selecting {} for model {}".format(router,klass_name))
-                        pass
-                    return router
-
-
-        
-        for db_id, models in routing_data:
-            if model._meta.object_name in models:
-                return db_id
-        return None
     
        
     def db_for_write(self, model, **hints):
         """
         Select DB to write to
         """
-        for model_module, model_class in plugin_models_finder():
-            if hasattr(model_module, 'DB_ROUTER'):
-                router = model_module.DB_ROUTER
-                if hasattr(model_module, 'DB_ROUTE_EXCEPTIONS'):
-                    route_exceptions = model_module.DB_ROUTE_EXCEPTIONS
-                else:
-                    route_exceptions = None
-                iter_klass_name = model_class.__name__
-                klass_name = model.__name__
-                if klass_name == iter_klass_name:
-                    if route_exceptions and klass_name in route_exceptions:
-                        router = route_exceptions[klass_name]
-#                        logger.debug( "Exception DB WRITE: selecting {} for model {}".format(router,klass_name))
-                    else:
-#                        logger.debug( "DB WRITE: selecting {} for model {}".format(router,klass_name))
-                        pass
-                    return router
+
+        for app in settings.INSTALLED_APPS:
+            mod = __import__(app)
+            try:
+                if hasattr(mod.models, 'DB_ROUTER'):
+                    for k, models in mod.models.DB_ROUTER.iteritems():
+                        for model_name in models:
+                            if model.__name__ == model_name:
+                                return k
+            except AttributeError:
+                pass  # pass on missing models attribute
+        return 'default'
         
-        for db_id, models in routing_data:
-            if model._meta.object_name in models:
-                return db_id
-        return None        
+        
 
     def allow_relation(self, obj1, obj2, **hints):
         """
@@ -99,40 +57,23 @@ class LogosRouter(object):
         Whether to allow data migrations on this model
         manage.py loaddata seems to not work without this
         """
+        for app in settings.INSTALLED_APPS:
+            mod = __import__(app)
+            try:
+                if hasattr(mod.models, 'DB_ROUTER'):
+                    for k, models in mod.models.DB_ROUTER.iteritems():
+                        for model_name in models:
+                            if model.__name__ == model_name:
+                                if db == k:
+                                    return True
+                                else:
+                                    return False
+                                    
+            except AttributeError:
+                pass  # pass on missing models attribute
 
-        for db_id, models in routing_data:
-            if model._meta.object_name in models:
-                if db == db_id:
-                    return True
-                else:
-                    return False
         
-        for model_module, model_class in plugin_models_finder():
-            if hasattr(model_module, 'DB_ROUTER'):
-                router = model_module.DB_ROUTER
-                if hasattr(model_module, 'DB_ROUTE_EXCEPTIONS'):
-                    route_exceptions = model_module.DB_ROUTE_EXCEPTIONS
-                else:
-                    route_exceptions = None                
-                iter_klass_name = model_class.__name__
-                klass_name = model.__name__
-                if klass_name == iter_klass_name:
-                    # If we have found the model class in the
-                    # plugins folder then we don't want to 
-                    # allow it to be sync'd to the 'default' database
-                    # so return False here if there is no match
-                    if route_exceptions and klass_name in route_exceptions:
-                        router = route_exceptions[klass_name]
-                    if db == router:
-                        return True
-                    else:
-                        return False
-
         if db == 'default':
             return True
         else:
-            return False        
-        
-   
-
-        
+            return False 

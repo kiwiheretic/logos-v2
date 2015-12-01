@@ -73,30 +73,6 @@ DATABASES = {
         'HOST': '',                      # Empty for localhost through domain sockets or '127.0.0.1' for localhost through TCP.
         'PORT': '',                      # Set to empty string for default.
     },
-    'statistics': {
-        'NAME': os.path.join(DB_ROOT, 'statistics.sqlite3.db'), 
-        'ENGINE': 'django.db.backends.sqlite3',
-        'USER': '',
-        'PASSWORD': '',
-        'HOST': '',                      # Empty for localhost through domain sockets or '127.0.0.1' for localhost through TCP.
-        'PORT': '',          
-    },
-     # 'settings': {
-        # 'NAME': os.path.join(DB_ROOT, 'settings.sqlite3.db'), 
-        # 'ENGINE': 'django.db.backends.sqlite3',
-        # 'USER': '',
-        # 'PASSWORD': '',
-        # 'HOST': '',                      # Empty for localhost through domain sockets or '127.0.0.1' for localhost through TCP.
-        # 'PORT': '',          
-    # },
-     'game-data': {
-        'NAME': os.path.join(DB_ROOT, 'game-data.sqlite3.db'), 
-        'ENGINE': 'django.db.backends.sqlite3',
-        'USER': '',
-        'PASSWORD': '',
-        'HOST': '',                      # Empty for localhost through domain sockets or '127.0.0.1' for localhost through TCP.
-        'PORT': '',          
-    }
 }
 
 
