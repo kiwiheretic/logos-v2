@@ -11,7 +11,6 @@ import socket
 from datetime import datetime
 from itertools import islice
 
-from simple_webserver import SimpleWeb
 from simple_rpcserver import SimpleRPC
 import logos.utils
 

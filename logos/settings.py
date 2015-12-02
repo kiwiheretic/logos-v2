@@ -247,6 +247,7 @@ INSTALLED_APPS = (
     'cloud_notes',
     'cloud_memos',
     'room_manage',
+    'scripture_game',
     'pybb',
     'widget_tweaks',
 #    'simple_forums',
@@ -344,7 +345,12 @@ LOGGING = {
             'handlers': ['console_info', 'file'],
             'level': 'DEBUG',
             'propagate': False,
-        },        
+        },
+        'scripture_game': {
+            'handlers': ['console', 'file'],
+            'level': 'DEBUG',
+            'propagate': False,
+        },          
         'plugins': {
             'handlers': ['console', 'file'],
             'level': 'DEBUG',

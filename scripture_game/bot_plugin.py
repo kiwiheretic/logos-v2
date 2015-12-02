@@ -14,7 +14,8 @@
 # - if doesn't work and you have a twisted version less than that then
 #   you will need a version upgrade
 #
-VERSION = 0.9
+from __future__ import absolute_import
+VERSION = 0.95
 SCRIPTURE_COLOUR = ''
 from string import split
 import string
@@ -28,7 +29,9 @@ from bot.pluginDespatch import Plugin
 from random import randint
 
 from django.db import transaction
-from logos.models import GameGames, GameUsers, GameSolveAttempts, Scriptures
+from django.db.models import Min, Max
+from .models import GameGames, GameUsers, GameSolveAttempts
+from bibleapp.models import BibleTranslations, BibleBooks, BibleVerses
 
 import os
 import re
@@ -36,7 +39,6 @@ import sys
 import datetime
 from optparse import OptionParser
 
-import pdb
 #    Process commands from the user.  All messages directed to the bot
 #    end up here.
 
@@ -56,7 +58,9 @@ import pdb
         
 import shutil
 import logging
-import logos.settings as settings
+from django.conf import settings
+
+from bibleapp.bot_plugin import get_book
 
 logger = logging.getLogger(__name__)
 logging.config.dictConfig(settings.LOGGING)
@@ -93,7 +97,7 @@ def blank_out_letters(letters, text):
 class ScriptureChallenge(Plugin):
     """ The class created by the factory class for handling non game specific
         commands """
-    plugin = ('scripture_game', 'Scripture Challenge Game')
+    plugin = ('sg', 'Scripture Challenge Game')
     
     def __init__(self, *args):
         super(ScriptureChallenge, self).__init__(*args)
@@ -103,7 +107,8 @@ class ScriptureChallenge(Plugin):
             ('challenge', self.challenge, "Change this description"),
             ('examine\s+(\d+)', self.examine, "Change this description"),
             ('join', self.join, "Change this description"),
-            ('start', self.start1, "Change this description"),
+            ('start with (?P<translation>\w+)$', self.start1, "Change this description"),
+            ('start with (?P<translation>\w+) (?P<book>\w+)', self.start1, "Change this description"),
             ('stop|end|endgame', self.stop, "Change this description"),
             ('restart', self.restart, "Change this description"),
             ('hash', self.hash, "Change this description"),
@@ -273,6 +278,29 @@ class ScriptureChallenge(Plugin):
 
     def start1(self, regex, chan, nick, **kwargs):
         
+        translation = regex.group('translation')
+
+
+        try:
+            trans = BibleTranslations.objects.get(name = translation)
+        except BibleTranslations.DoesNotExist:
+            self.say(chan, "Translation {} not known".format(translation))
+            return
+            
+        try:
+            book_name = regex.group('book')
+            book_name = get_book(translation, book_name)
+        except IndexError:
+            book_name = None
+                 
+        if book_name:
+            book = BibleBooks.objects.get(trans = trans, canonical = book_name)
+            verse_range_data = BibleVerses.objects.filter(trans = trans, book=book).aggregate(Min('id'), Max('id'))
+        else:
+            verse_range_data = BibleVerses.objects.filter(trans = trans).aggregate(Min('id'), Max('id'))
+        v1 = verse_range_data['id__min']
+        v2 = verse_range_data['id__max']
+        
         rooms_hash = self.rooms_hash[chan.lower()]
         if 'NicksInGame' not in rooms_hash or \
             len(rooms_hash['NicksInGame']) == 0:
@@ -303,7 +331,7 @@ class ScriptureChallenge(Plugin):
 
             rooms_hash['GameStarted'] = True
             rooms_hash['NickCurrentTurn'] = NickCurrentTurn
-            self.start(chan)
+            self.start(chan, v1, v2)
 
         else:
             self.chan(chan, 'Game already started')
@@ -452,7 +480,7 @@ class ScriptureChallenge(Plugin):
 
     def _display_scripture(self, channel):
         rooms_hash = self.rooms_hash[channel.lower()]
-        verse = rooms_hash['currScrip'].verse.encode("utf8", "replace")
+        verse = rooms_hash['currScrip'].verse_text.encode("utf8", "replace")
         
         script_disp = blank_out_letters(rooms_hash['letters_given'],
                                          verse)
@@ -460,22 +488,24 @@ class ScriptureChallenge(Plugin):
         self.say(channel, SCRIPTURE_COLOUR + script_disp)
         self.say(channel, rooms_hash['current_user'] + ', choose a letter by typing !<letter> where letter is a to z')
     
-    def start(self, channel):
+    def start(self, channel, begin_id, end_id):
         """ Called when the multi user game is ready to begin
             and all users have signed up """
         rooms_hash = self.rooms_hash[channel.lower()]
         rooms_hash['explain'] = None
         
-        random_scripture = Scriptures.objects.order_by("?").first()
+        random_scripture = BibleVerses.objects.filter(id__gte = begin_id, id__lt = end_id).order_by("?").first()
 
-        
-        ref = random_scripture.ref
-        text = random_scripture.verse
-
+        ref = "{} {}:{}".format(random_scripture.book.long_book_name,
+                                random_scripture.chapter,
+                                random_scripture.verse)
+                                
+                                
+        text = random_scripture.verse_text
         logger.info('Scipture chosen : ' + ref + "," + text)
         
         rooms_hash['currScrip'] = random_scripture
- 
+        rooms_hash['currScrip'].ref = ref # slightly hacky
         tr_table = string.maketrans('abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ', '-' * (26*2))
         rooms_hash['letters_given'] = []
 
@@ -505,7 +535,7 @@ class ScriptureChallenge(Plugin):
             else:
                 rooms_hash['letters_given'].append(letter)
                 logger.debug('letters given = ' + str(rooms_hash['letters_given']))
-                verse = rooms_hash['currScrip'].verse.encode("utf8", "replace")
+                verse = rooms_hash['currScrip'].verse_text.encode("utf8", "replace")
                 script_disp = blank_out_letters(rooms_hash['letters_given'], verse)
                 self.say(channel, "The scripture as it currently stands:")
                 self.say(channel, SCRIPTURE_COLOUR+script_disp)
@@ -528,7 +558,6 @@ class ScriptureChallenge(Plugin):
                     rooms_hash['solve_state'] = "solve_response"
         elif rooms_hash['solve_state'] == "solve_response":
             rooms_hash['solve_state'] = None
-            
             # find the current nick by matching on nick in game_users
             # in database.  In future maybe use host name mask
             nick = rooms_hash['current_user']
@@ -543,8 +572,8 @@ class ScriptureChallenge(Plugin):
                 gsa = GameSolveAttempts(game = game, user=user, 
                                         attempt = command.strip())
                 user_words = re.split('\s+', command.strip())
-                scrip_words = re.split('\s+',rooms_hash['currScrip'].verse.strip())
-                #rooms_hash['explain'].append( (str (user_words), str( scrip_words )))
+                scrip_words = re.split('\s+',rooms_hash['currScrip'].verse_text.strip())
+                
                 uwl = len(user_words)
                 swl = len(scrip_words)
                 if uwl == swl:  # If we have the right number of words for the verse
@@ -573,10 +602,10 @@ class ScriptureChallenge(Plugin):
                     if scripMatch:
                         reason_str = "Correctly solved"
                         self.say(channel, "Well done you have correctly solved the scripture")
-                        self.say(channel, rooms_hash['currScrip'].verse)
+                        self.say(channel, rooms_hash['currScrip'].verse_text)
                         self.say(channel, rooms_hash['currScrip'].ref)
                         self.end_game(channel, win=True)
-                    else:                    
+                    else:                                    
                         self.say(channel, "Sorry, your attempt at solving did not succeed")
                         # try this
                         if len(rooms_hash['NicksInGame']) > 1:
@@ -586,7 +615,7 @@ class ScriptureChallenge(Plugin):
                             rooms_hash['solve_state'] = None                        
                         else:
                             # end of try
-                            self.say(channel, rooms_hash['currScrip'].verse)
+                            self.say(channel, rooms_hash['currScrip'].verse_text)
                             self.say(channel, rooms_hash['currScrip'].ref)
                             self.end_game(channel) 
                         
@@ -606,7 +635,7 @@ class ScriptureChallenge(Plugin):
                         # end of try
 
                         self.say(channel, "Sorry, you did not have the correct number of words")
-                        self.say(channel, rooms_hash['currScrip'].verse)
+                        self.say(channel, rooms_hash['currScrip'].verse_text)
                         self.say(channel, rooms_hash['currScrip'].ref)
                         self.say(channel, "Number of your words = %d " % uwl)
                         self.say(channel, "Number of words in scripture = %d " % swl)
@@ -627,7 +656,7 @@ class ScriptureChallenge(Plugin):
                 self.say(channel, "There is no current scipture to display.")
             else:    
                 script_disp = blank_out_letters(self.letters_given, 
-                                                str(rooms_hash['currScrip'].verse.encode("utf8", "replace")))
+                                                str(rooms_hash['currScrip'].verse_text.encode("utf8", "replace")))
                 self.say(channel, "The scripture as it currently stands:")
                 self.say(channel, SCRIPTURE_COLOUR+script_disp)
                 self.say(channel, "Letters currently used are : " + str(self.letters_given))

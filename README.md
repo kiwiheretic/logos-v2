@@ -63,9 +63,6 @@ $ cp logos/email_settings-dist.py logos/email_settings.py
 $ cp allowed_hosts-dist.txt allowed_hosts.txt
 $ python manage.py syncdb
 $ python manage.py syncdb --database=bibles
-$ python manage.py syncdb --database=game-data
-$ python manage.py syncdb --database=settings
-$ python manage.py loaddata --database=game-data scriptures.json
 $ python manage.py import
 ```
 
@@ -89,9 +86,6 @@ $ cp logos/email_settings-dist.py logos/email_settings.py
 $ cp allowed_hosts-dist.txt allowed_hosts.txt
 $ python manage.py syncdb
 $ python manage.py syncdb --database=bibles
-$ python manage.py syncdb --database=settings
-$ python manage.py syncdb --database=game-data
-$ python manage.py loaddata --database=game-data scriptures.json
 $ python manage.py import
 ```
 
@@ -116,9 +110,6 @@ put in valid settings for your email server.  If not, then just copy the file em
 copy logos/email_settings-dist.py logos/email_settings.py
 manage.py syncdb
 manage.py syncdb --database=bibles
-manage.py syncdb --database=settings
-manage.py syncdb --database=game-data
-manage.py loaddata --database=game-data scriptures.json
 manage.py import
 ```
 

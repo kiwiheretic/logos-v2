@@ -59,6 +59,34 @@ def strip_fluff_to_list(text):
             words.append(w1)
     return words
 
+    
+def get_book(version, bookwork):
+    
+    # remove possible spaces between books like "1 John" etc
+    book = re.sub("\s+", "", bookwork)
+    
+    bl = len(book)
+    
+    book_found = None
+    for smallbk, bigbk1 in book_table:
+        bigbk = re.sub("\s+", "", bigbk1).lower()
+        if smallbk == book:
+            book_found = smallbk
+            break
+        if bigbk[0:bl] == book:
+            book_found = smallbk
+            break
+    
+    if not book_found:
+        trans = BibleTranslations.objects.get(name=version)
+        if BibleBooks.objects.filter(trans=trans, canonical = book).exists():
+            return book
+        else:
+            return None
+    
+    return book_found
+
+        
 class BibleBot(Plugin):
 
     # stop words are words that are so common that they
@@ -180,7 +208,7 @@ class BibleBot(Plugin):
             raise CommandException(nick, user, "Unknown translation %s" % (version,))
 
         # remove possible spaces between books like "1 John" etc
-        book = self._get_book(version, bookwork)
+        book = get_book(version, bookwork)
         if not book:
             raise CommandException(user, chan, "Could not find book %s" % (bookwork,))
 
@@ -285,13 +313,13 @@ class BibleBot(Plugin):
         sri = 1  # This is the search result index
         
         if book_range[0]:
-            bk = self._get_book(trans.name, book_range[0])
+            bk = get_book(trans.name, book_range[0])
             br0 = BibleBooks.objects.filter(trans = trans, canonical=bk)\
                 .first()
         else:
             br0 = None
         if book_range[1]:
-            bk = self._get_book(trans.name, book_range[1])
+            bk = get_book(trans.name, book_range[1])
             br1 = BibleBooks.objects.filter(trans = trans, canonical=bk)\
                 .first()
         else:
@@ -750,7 +778,7 @@ class BibleBot(Plugin):
         versework = mch.group(2)
 
         # remove possible spaces between books like "1 John" etc
-        book = self._get_book(None, bookwork)
+        book = get_book(None, bookwork)
         if not book:
             raise CommandException(user, chan, "Could not find book %s" % (bookwork,))
 
@@ -845,14 +873,14 @@ class BibleBot(Plugin):
         if mch2:
             bk_s = mch2.group(1)
             bk_e = mch2.group(2)
-            if self._get_book(results['translation'], bk_s) and \
-            self._get_book(results['translation'], bk_e):
+            if get_book(results['translation'], bk_s) and \
+            get_book(results['translation'], bk_e):
                 results['book_start'] = bk_s
                 results['book_end'] = bk_e
                 words.pop(0)
         elif mch:
             bk = mch.group(0).lower()
-            if self._get_book(results['translation'], bk):
+            if get_book(results['translation'], bk):
                 results['book_start'] = words.pop(0)
                 results['book_end'] = results['book_start']
             elif bk == 'nt':
@@ -974,41 +1002,17 @@ class BibleBot(Plugin):
             
 
         
-    def _get_book(self, version, bookwork):
-        
-        # remove possible spaces between books like "1 John" etc
-        book = re.sub("\s+", "", bookwork)
-        
-        bl = len(book)
-        
-        book_found = None
-        for smallbk, bigbk1 in book_table:
-            bigbk = re.sub("\s+", "", bigbk1).lower()
-            if smallbk == book:
-                book_found = smallbk
-                break
-            if bigbk[0:bl] == book:
-                book_found = smallbk
-                break
-        
-        if not book_found:
-            trans = BibleTranslations.objects.get(name=version)
-            if BibleBooks.objects.filter(trans=trans, canonical = book).exists():
-                return book
-            else:
-                return None
-        
-        return book_found
+
 
     def _stringify_book_range(self, version, book_range):
         if book_range[0] == None:
             return "Gen-Rev"
         elif book_range[1] == None:
-            bk = self._get_book(version, book_range[0])
+            bk = get_book(version, book_range[0])
             return bk
         else:
-            bk1 = self._get_book(version, book_range[0])
-            bk2 = self._get_book(version, book_range[1])
+            bk1 = get_book(version, book_range[0])
+            bk2 = get_book(version, book_range[1])
             if bk1 == bk2:
                 return bk1
             else:
