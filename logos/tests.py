@@ -1,7 +1,7 @@
 # tests
 
 # Import the plugin you wish to test
-from plugin import SystemCoreCommands
+from logos.bot_plugin import SystemCoreCommands
 
 # Subclass your test class from LogosTestCase
 from bot.testing.utils import LogosTestCase
