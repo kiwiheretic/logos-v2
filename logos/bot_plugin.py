@@ -2,7 +2,6 @@
 import re
 import os
 import json
-import pdb
 import types
 
 import django
@@ -44,7 +43,8 @@ class SystemCoreCommands(Plugin):
                          (r'logout', self.logout, "Log out of bot"),
                          (r'version\s*$', self.version, "Show this bot's version info"),
                          (r'help\s*$', self.help, "Show this bot's help info"),
-                         (r'list\s+plugins', self.list_plugins, "list all plugins available"),
+                         (r'list\s+plugins$', self.list_plugins, "list all plugins available"),
+                         (r'list\s+plugins for (?P<room>#\S+)$', self.list_plugins_for_room, "list all plugins available"),
                          (r'enable\s+plugin\s+(?P<room>#\S+)\s+(?P<plugin>[a-z0-9_-]+)',
                           self.enable_plugin, "Enable specified plugin for room"),
                          (r'disable\s+plugin\s+(?P<room>#\S+)\s+(?P<plugin>[a-z0-9_-]+)',
@@ -105,28 +105,31 @@ class SystemCoreCommands(Plugin):
         for net_plugin in NetworkPlugins.objects.filter(network=self.network,\
                                                         loaded=True):
             plugin_name = net_plugin.plugin.name
+            descr = net_plugin.plugin.description
             enabled = net_plugin.enabled
-            self.notice(nick, "    {0:.<15} {1}".format(plugin_name, enabled))
+            self.notice(nick, "    {0:.<15} {1:.<30} Enabled: {2}".format(plugin_name, descr, enabled))
         
         
-        last_room = None            
+    def list_plugins_for_room(self, regex, chan, nick, **kwargs):
+        
+        room = chan.lower()
+        self.notice(nick, "  === Plugins for room {} ===".format(room))
+
         for plugin in RoomPlugins.objects.filter(net__loaded = True,
                                                  net__enabled = True, 
-                                                 net__network=self.network).\
-                                                     order_by('room'):
+                                                 room = chan.lower(),
+                                                 net__network=self.network):
             name = plugin.net.plugin.name
-            room = plugin.room
+
             if self.get_auth().is_authorised(nick, room, 'enable_plugins'):
-                if room != last_room:
-                    if last_room == None:
-                        self.notice(nick, "  === Room Level ===")
-                    self.notice(nick, "    Room: {}".format(room))
                 descr = plugin.net.plugin.description
                 enabled = plugin.enabled
                 self.notice(nick, "      {0:.<15} {1}".format(name, enabled))
                 last_room = room
+            else:
+                self.notice(nick, "You are not authorised for this room.")  
         self.notice(nick, "*** End of List ***")  
-        
+    
         
     @irc_room_permission_required('enable_plugins')
     def enable_plugin(self, regex, chan, nick, **kwargs):
