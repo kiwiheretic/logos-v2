@@ -26,13 +26,11 @@ from logos.roomlib import get_room_option, set_room_option, set_room_defaults,\
 
 
 import logging
-from logos.settings import LOGGING
+from django.conf import settings
 from logos.models import Settings, NetworkPermissions, RoomPermissions
 
 logger = logging.getLogger(__name__)
-logging.config.dictConfig(LOGGING)
-
-
+logging.config.dictConfig(settings.LOGGING)
                 
 class SystemCoreCommands(Plugin):
     plugin = ("system", "System Module")
@@ -45,6 +43,7 @@ class SystemCoreCommands(Plugin):
                          
                          (r'logout', self.logout, "Log out of bot"),
                          (r'version\s*$', self.version, "Show this bot's version info"),
+                         (r'help\s*$', self.help, "Show this bot's help info"),
                          (r'list\s+plugins', self.list_plugins, "list all plugins available"),
                          (r'enable\s+plugin\s+(?P<room>#\S+)\s+(?P<plugin>[a-z0-9_-]+)',
                           self.enable_plugin, "Enable specified plugin for room"),
@@ -434,6 +433,12 @@ class SystemCoreCommands(Plugin):
         logger.debug("%s issued command '%s' to bot" % (nick, line))
         self.sendLine(line)
             
+    
+    def help(self, regex, chan, nick, **kwargs):
+        self.notice(nick, "Wiki: \x1f\x0312https://github.com/kiwiheretic/logos-v2/wiki")        
+        self.notice(nick, "Help: \x1f\x0312https://biblebot.wordpress.com")        
+
+                         
     def version(self, regex, chan, nick, **kwargs):
 
         dj_ver = ".".join(map(lambda x: str(x), django.VERSION[0:3]))
@@ -444,12 +449,12 @@ class SystemCoreCommands(Plugin):
         self.msg(chan, "\x033Logos Super Bot -- Version %s \x03" % (VERSION,))
         self.msg(chan, "\x0310--- Courtesy of\x03\x0312 SplatsCreations\x03")        
         self.msg(chan, "\x0310--- Built with Django %s\\Python %s\\Twisted %s  \x03" % (dj_ver, py_ver, twst_ver))        
-        ver_path = os.path.dirname(os.path.realpath(os.path.join(__file__,"..","..")))
+        ver_path = settings.BASE_DIR
         f = open(os.path.join(ver_path, "version.json"),"r")
         ver_obj = json.load(f)
         f.close()
         self.msg(chan, "\x0310Parent SHA = {}\x03".format(ver_obj['sha'][:8]))
-        self.msg(chan, "\x1f\x0312https://github.com/kiwiheretic/logos-v2/")        
+        self.msg(chan, "Repo: \x1f\x0312https://github.com/kiwiheretic/logos-v2/")        
         
     def set_password(self, regex, chan, nick, **kwargs):
 

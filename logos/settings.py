@@ -347,7 +347,7 @@ LOGGING = {
             'propagate': False,
         },
         'scripture_game': {
-            'handlers': ['console', 'file'],
+            'handlers': ['console_info', 'file'],
             'level': 'DEBUG',
             'propagate': False,
         },          
