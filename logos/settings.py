@@ -15,8 +15,8 @@ FILE_DIR = os.path.dirname(os.path.realpath(__file__))
 # However CSS information doesn't show when running off the development server
 # if DEBUG == True.
 
-DEBUG_HOSTS_PATH = os.path.join(FILE_DIR, "debug_hosts.txt")
-DEBUG = True
+DEBUG_HOSTS_PATH = os.path.join(BASE_DIR, "debug_hosts.txt")
+DEBUG = False
 if os.path.isfile(DEBUG_HOSTS_PATH):
     f = open(DEBUG_HOSTS_PATH, "r")
     for line in f.readlines():

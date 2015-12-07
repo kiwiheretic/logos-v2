@@ -30,6 +30,7 @@ urlpatterns = patterns('',
     url(r'^logos-admin/plugins/network/room/activate/(\d+)/', 'logos.views.plugin_room_activate'),
     url(r'^logos-admin/bot-view/(\d+)', 'logos.views.bot_view'),
     
+    url(r'^scripture_game/', include('scripture_game.urls')),
     url(r'^notes/', include('cloud_notes.urls')),
     url(r'^memos/', include('cloud_memos.urls')),
     url(r'^forum/', include('pybb.urls', namespace='pybb')),

@@ -1,0 +1,27 @@
+{% extends "scripture_game/sg_base.html" %}
+
+{% block style %}
+{{ block.super }}
+
+{% endblock %}
+
+{% block content %}
+<h2>Scripture Games</h2>
+
+<div>
+
+{% for game in games %}
+{% if game.winner %}
+<ul>
+<li>{{game.timestamp}}</li>
+<li>Winner: {{game.winner.nick}}</li>
+<li>Players: {{game.gameuserlist|join:", "}}</li>
+<li>Scripture: {{game.ref}}</li>
+<li>Rounds: {{game.num_rounds}}</li>
+</ul>
+{% endif %}
+{% endfor %}
+
+</div>
+
+{% endblock %}
