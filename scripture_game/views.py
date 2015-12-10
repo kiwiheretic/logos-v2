@@ -1,6 +1,8 @@
 from __future__ import absolute_import
 from django.shortcuts import render, redirect
 from django.db.models import Count
+from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
+
 from .models import GameGames, GameUsers
 
 # Create your views here.
@@ -32,11 +34,24 @@ def summary(request):
 
 
 def games_played(request):
-    games = GameGames.objects.all().order_by('-timestamp')
-    for game in games:
+    games = GameGames.objects.exclude(winner = None).order_by('-timestamp')
+    paginator = Paginator(games, 10) # Show 10 contacts per page
+
+    page = request.GET.get('page')
+
+    try:
+        games_list = paginator.page(page)
+    except PageNotAnInteger:
+        # If page is not an integer, deliver first page.
+        games_list = paginator.page(1)
+    except EmptyPage:
+        # If page is out of range (e.g. 9999), deliver last page of results.
+        games_list = paginator.page(paginator.num_pages)
+
+    for game in games_list:
         userlist = []
         for user in game.gameusers_set.all():
             userlist.append(user.nick)
         game.gameuserlist = userlist
-    context = {'games':games, 'show_menu_regardless':True}
+    context = {'games':games_list, 'show_menu_regardless':True}
     return render(request, 'scripture_game/games_played.html', context)

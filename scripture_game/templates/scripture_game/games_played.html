@@ -13,6 +13,7 @@
 {% for game in games %}
 {% if game.winner %}
 <ul>
+<li>{{forloop.counter}}</li>
 <li>{{game.timestamp}}</li>
 <li>Winner: {{game.winner.nick}}</li>
 <li>Players: {{game.gameuserlist|join:", "}}</li>
@@ -22,6 +23,19 @@
 {% endif %}
 {% endfor %}
 
+{% if games.has_other_pages %}
+<div class="pagination">
+                <a href="?page=1" class="page gradient">first</a>
+                {% if games.has_previous %}
+                <a href="?page={{games.previous_page_number}}" class="page gradient">prev</a>
+                {% endif %}
+                <span class="page active">{{games.number}}</span>
+                {% if games.has_next %}
+                <a href="?page={{games.next_page_number}}" class="page gradient">next</a>
+                {% endif %}
+                <a href="?page={{games.paginator.num_pages}}" class="page gradient">last</a>
+</div> <!-- pagination -->        
+{% endif %}
 </div>
 
 {% endblock %}
