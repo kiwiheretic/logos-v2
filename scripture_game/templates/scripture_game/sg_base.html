@@ -1,8 +1,9 @@
 {% extends "base.html" %}
 
-{% block menu_title %}Scripture Game{% endblock %}
+{% block menu_title %}Scripture Game {% endblock %}
 {% block button_menu %}
 <ul id="app-button-menu-container" class="btn-menu-container">
-
+<li><a href="{% url 'scripture_game.views.summary' %}" class="button-link">Summary</a></li>
+<li><a href="{% url 'scripture_game.views.games_played' %}" class="button-link">Games Played</a></li>
 </ul>
 {% endblock %}

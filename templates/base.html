@@ -23,7 +23,7 @@
         <span>without all the nonsence javascripts</span>
     </h1>
 </div> <!-- smart-green -->
-    {% if not suppress_menu and request.user.is_authenticated %}
+    {% if not suppress_menu and request.user.is_authenticated or show_menu_regardless %}
     <div id="menu-title">
         <h2>{% block menu_title %}Main Menu{% endblock %}</h2>
     </div>

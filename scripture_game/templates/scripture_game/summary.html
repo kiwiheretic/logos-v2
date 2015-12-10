@@ -1,0 +1,21 @@
+{% extends "scripture_game/sg_base.html" %}
+{% load game_tags %}
+{% block style %}
+{{ block.super }}
+
+{% endblock %}
+
+{% block content %}
+<h2>Summary</h2>
+
+<div>
+
+<ul>
+<li>Most Games Won ( {{stats | max_lookup_key:"games_won"}} ) {{stats | max_lookup_value:"games_won"}}</li>
+<li>Most Games Played ( {{stats | max_lookup_key:"games_played"}} ) {{stats | max_lookup_value:"games_played"}}</li>
+
+</ul>
+
+</div>
+
+{% endblock %}
