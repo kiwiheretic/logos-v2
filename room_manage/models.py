@@ -4,15 +4,28 @@ from django.db import models
 from django.utils import timezone
 
 # Create your models here.
+class NickHistory(models.Model):
+    network = models.TextField()
+    room = models.TextField()
+    nick = models.CharField(max_length=40)
+    host_mask = models.CharField(max_length=80)
+    time_seen = models.DateTimeField(default = timezone.now)
 
+
+
+class Probation(models.Model):
+    network = models.TextField()
+    room = models.TextField()
+    host_mask = models.CharField(max_length=80)
+    
 class Penalty(models.Model):
     network = models.TextField()
     room = models.TextField()
     nick_mask = models.CharField(max_length=80)
     # When penalty starts
-    begin_time = models.DateTimeField(default = timezone.now())
+    begin_time = models.DateTimeField(default = timezone.now)
     # when penalty ends
-    end_time = models.DateTimeField(default = timezone.now())   
+    end_time = models.DateTimeField(default = timezone.now)   
     # whether to kick from room whilst penalty applies
     kick = models.BooleanField(default = False)
     # whether to mute in room whilst penalty applies
