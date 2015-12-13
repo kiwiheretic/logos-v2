@@ -13,7 +13,7 @@ logger = logging.getLogger(__name__)
 logging.config.dictConfig(settings.LOGGING)
 
 DOWN_VOTE_MINUTES = 5
-DOWN_VOTES_REQUIRED = 2
+DOWN_VOTES_REQUIRED = 1
 PENALTY_TIME = 120
 
 from bot.logos_decorators import irc_room_permission_required, \
@@ -136,7 +136,7 @@ class RoomManagementPlugin(Plugin):
     @check_ops()
     def down_vote(self, regex, chans, nick, **kwargs):
         nick_dv = regex.group('nick')
-        hostmask = self.get_hostmask(nick)
+        hostmask = self.get_hostmask(nick_dv)
         if not hostmask:
             self.notice(nick, "No hostmask available yet")
             return
