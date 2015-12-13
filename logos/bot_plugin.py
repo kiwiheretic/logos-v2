@@ -100,34 +100,43 @@ class SystemCoreCommands(Plugin):
         
     def list_plugins(self, regex, chan, nick, **kwargs):
         self.notice(nick, "=== Plugins ===")
-        self.notice(nick, "  === Network Level ===")
-
+        self.notice(nick, "   === Enabled ===")
         for net_plugin in NetworkPlugins.objects.filter(network=self.network,\
                                                         loaded=True):
             plugin_name = net_plugin.plugin.name
             descr = net_plugin.plugin.description
             enabled = net_plugin.enabled
-            self.notice(nick, "    {0:.<15} {1:.<30} Enabled: {2}".format(plugin_name, descr, enabled))
-        
+            if enabled:
+                self.notice(nick, "    {0:.<15} {1:.<30}".format(plugin_name, descr))
+
+        self.notice(nick, "   === Disabled ===")
+        for net_plugin in NetworkPlugins.objects.filter(network=self.network,\
+                                                        loaded=True):
+            plugin_name = net_plugin.plugin.name
+            descr = net_plugin.plugin.description
+            enabled = net_plugin.enabled
+            if not enabled:
+                self.notice(nick, "    {0:.<15} {1:.<30}".format(plugin_name, descr))
+                
         
     def list_plugins_for_room(self, regex, chan, nick, **kwargs):
         
         room = chan.lower()
-        self.notice(nick, "  === Plugins for room {} ===".format(room))
+        if not self.get_auth().is_authorised(nick, room, 'enable_plugins'):
+            self.notice(nick, "You are not authorised (or logged in) for this room.") 
+            return
+        self.notice(nick, "  === Enabled plugins for room {} ===".format(room))
 
         for plugin in RoomPlugins.objects.filter(net__loaded = True,
                                                  net__enabled = True, 
                                                  room = chan.lower(),
                                                  net__network=self.network):
             name = plugin.net.plugin.name
-
-            if self.get_auth().is_authorised(nick, room, 'enable_plugins'):
-                descr = plugin.net.plugin.description
-                enabled = plugin.enabled
-                self.notice(nick, "      {0:.<15} {1}".format(name, enabled))
-                last_room = room
-            else:
-                self.notice(nick, "You are not authorised for this room.")  
+            descr = plugin.net.plugin.description
+            enabled = plugin.enabled
+            self.notice(nick, "      {0:.<15} {1}".format(name, enabled))
+            last_room = room
+                 
         self.notice(nick, "*** End of List ***")  
     
         
