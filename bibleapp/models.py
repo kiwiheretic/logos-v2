@@ -11,7 +11,7 @@ class BibleColours(models.Model):
     mirc_colour = models.TextField()
     class Meta:
         db_table = 'bible_colours'
-        app_label = 'logos'
+        # app_label = 'logos'
 
 class XRefs(models.Model):
     primary_book = models.CharField(max_length = 15)
@@ -25,7 +25,7 @@ class XRefs(models.Model):
     xref_verse2 = models.IntegerField(null = True, blank = True)
     votes = models.IntegerField()
     class Meta:
-        app_label = 'logos'
+        # app_label = 'logos'
         db_table = 'xrefs'
 
 
@@ -33,7 +33,7 @@ class BibleTranslations(models.Model):
     name = models.CharField(unique=True, max_length=10)
     class Meta:
         db_table = 'bible_translations'
-        app_label = 'logos'
+        # app_label = 'logos'
 
 class BibleBooks(models.Model):
     trans = models.ForeignKey('BibleTranslations')
@@ -42,7 +42,7 @@ class BibleBooks(models.Model):
     canonical = models.TextField(blank=True)
     class Meta:
         db_table = 'bible_books'
-        app_label = 'logos'
+        # app_label = 'logos'
 
 class BibleVerses(models.Model):
     trans = models.ForeignKey('BibleTranslations')
@@ -51,7 +51,7 @@ class BibleVerses(models.Model):
     verse = models.IntegerField()
     verse_text = models.TextField()
     class Meta:
-        app_label = 'logos'
+        # app_label = 'logos'
         db_table = 'bible_verses'
         index_together = [
             ["trans", "book", "chapter", "verse"],
@@ -62,7 +62,7 @@ class BibleStats(models.Model):
     word = models.CharField(max_length=60)
     count = models.IntegerField()
     class Meta:
-        app_label = 'logos'    
+        # app_label = 'logos'    
         index_together = [
             ["trans_idx", "count"],
         ]  
@@ -75,7 +75,7 @@ class BibleConcordance(models.Model):
     word_id = models.IntegerField()
     word = models.CharField(max_length=60)
     class Meta:
-        app_label = 'logos'
+        # app_label = 'logos'
         db_table = 'bible_concordance'
         index_together = [
             ["trans", "book", "chapter", "verse", "word_id"],
@@ -88,7 +88,7 @@ class BibleDict(models.Model):
     strongs = models.CharField(db_index=True, max_length=10)
     description = models.TextField(blank=True)
     class Meta:
-        app_label = 'logos'
+        # app_label = 'logos'
         db_table = 'bible_dict'
 
 
