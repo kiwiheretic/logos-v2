@@ -11,6 +11,7 @@ from django.contrib.auth import authenticate
 from guardian.shortcuts import assign_perm, get_perms, remove_perm
 
 import twisted
+from git import Repo
 import sys
 import types
 from logos.constants import VERSION
@@ -461,11 +462,13 @@ class SystemCoreCommands(Plugin):
         self.msg(chan, "\x033Logos Super Bot -- Version %s \x03" % (VERSION,))
         self.msg(chan, "\x0310--- Courtesy of\x03\x0312 SplatsCreations\x03")        
         self.msg(chan, "\x0310--- Built with Django %s\\Python %s\\Twisted %s  \x03" % (dj_ver, py_ver, twst_ver))        
-        ver_path = settings.BASE_DIR
-        f = open(os.path.join(ver_path, "version.json"),"r")
-        ver_obj = json.load(f)
-        f.close()
-        self.msg(chan, "\x0310Parent SHA = {}\x03".format(ver_obj['sha'][:8]))
+        # ver_path = settings.BASE_DIR
+        # f = open(os.path.join(ver_path, "version.json"),"r")
+        # ver_obj = json.load(f)
+        # f.close()
+        repo = Repo(settings.BASE_DIR)
+        sha = repo.head.ref.commit.hexsha
+        self.msg(chan, "\x0310SHA = {}\x03".format(sha[:8]))
         self.msg(chan, "Repo: \x1f\x0312https://github.com/kiwiheretic/logos-v2/")        
         
     def set_password(self, regex, chan, nick, **kwargs):
