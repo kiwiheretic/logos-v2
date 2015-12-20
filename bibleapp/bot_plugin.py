@@ -25,6 +25,7 @@ from bot.logos_decorators import irc_room_permission_required, \
     irc_network_permission_required
     
 from twisted.internet.error import AlreadyCalled, AlreadyCancelled
+from django.db.models import Min, Max
 
 from bot.pluginDespatch import Plugin, CommandException
 from logos.roomlib import get_room_option, set_room_option, set_global_option, \
@@ -99,6 +100,8 @@ class BibleBot(Plugin):
         super(BibleBot, self).__init__(*args, **kwargs)
         
         self.commands = (\
+                         (r'random$', self.random_verse, "bring up random verse"),
+                         (r'random (?P<translation>[a-zA-Z]+)$', self.random_verse, "bring up random verse"),
                          (r'(next|n)\s*$', self.next, "read next verse"),
                          (r'(?:search|s)\s+((?:\w+\s+)?(?:\w+(?:-\w+)?\s+)?[^"]+)$', self.search, "perform a concordance search"),
                          (r'(?:search|s)\s+((?:\w+\s+)?(?:\w+(?:-\w+)?\s+)?)\"([^"]+)\"\s*$', self.phrase_search, "perform a phrase search"),
@@ -647,6 +650,36 @@ class BibleBot(Plugin):
 
             self.msg(chan, "Verse limit for %s set to %s " % (room,verselmt)) 
                            
+    def random_verse(self, regex, chan, nick, **kwargs):
+        try:
+            translation = regex.group('translation')
+        except IndexError:
+            translation = get_room_option(self.factory.network, chan, "default_translation")
+        
+        try:
+            trans = BibleTranslations.objects.get(name = translation)
+        except BibleTranslations.DoesNotExist:
+            self.say(chan, "Translation {} not known".format(translation))
+            return
+        # Find first index of Genesis and last index of Revelation
+        verse_range_data = BibleVerses.objects.filter(trans = trans).aggregate(Min('id'), Max('id'))
+        v1 = verse_range_data['id__min']
+        v2 = verse_range_data['id__max']
+        
+        random_scripture = BibleVerses.objects.filter(id__gte = v1, id__lt = v2).order_by("?").first()
+        trans_name = random_scripture.trans.name
+        book_name = random_scripture.book.long_book_name
+        vs_text = random_scripture.verse_text
+        
+        random_vs = "{} {} {}:{} {}".format(trans_name.upper(),
+                                            book_name,
+                                            random_scripture.chapter,
+                                            random_scripture.verse,
+                                            vs_text)
+                                            
+        self.say(chan, random_vs)
+        
+        
     def dict(self, regex, chan, nick, **kwargs):
 
         lookup = regex.group(1)
