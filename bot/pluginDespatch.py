@@ -4,7 +4,6 @@ import sys
 import inspect
 import logging
 import bot
-import pdb
 import types
 from twisted.internet import reactor
 from django.conf import settings
@@ -716,7 +715,7 @@ class PluginDespatcher(object):
                             regex2 = re.match(s, msg)
                             if regex2:
                                 # clean_line is line without the plugin id
-                                kwargs['clean_line'] = re.sub(plugin_id + "\s+", "", msg)
+                                kwargs['clean_line'] = re.sub("^" + plugin_id + "\s+", "", msg)
                                 logger.debug(\
                                     "Invoking exact command for plugin {} of \"{}\"".\
                                     format(m.plugin[0], msg))
@@ -755,10 +754,10 @@ class PluginDespatcher(object):
                         logger.debug("Regex {} returns {}".format(rgx_s, regex))
                         if regex:
                             # clean_line is line without the plugin id
-                            kwargs['clean_line'] = re.sub(plugin_id + "\s+", "", msg)
+                            kwargs['clean_line'] = re.sub("^" + plugin_id + "\s+", "", msg)
                             fn(regex, adj_chan, nick, **kwargs)
                             break
-                        # This line not executed if matching regex found, thus refex == None 
+                        # This line not executed if matching regex found, thus regex == None 
                         # if no matches found.
                         regex = None
                     if not regex:
