@@ -134,6 +134,12 @@ def new_note(request):
                     fldr = Folder.objects.get(pk=request.session['notes_folder'], user=request.user)
                 else:
                     fldr = Folder.objects.get(name="Main", user=request.user)
+                
+                # Don't allow user to inadvertently create note in Trash
+                if fldr.name == 'Trash':
+                    fldr = Folder.objects.get(name="Main", user=request.user)
+                
+                
                 obj = Note()
                 obj.title = form.cleaned_data['title']
                 obj.note = form.cleaned_data['note']
