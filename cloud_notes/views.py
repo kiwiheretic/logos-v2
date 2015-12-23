@@ -130,7 +130,10 @@ def new_note(request):
             if form.is_valid():
                 # do stuff
                 # ...
-                main = Folder.objects.get(name="Main", user=request.user)
+                if 'notes_folder' in request.session:
+                    fldr = Folder.objects.get(pk=request.session['notes_folder'], user=request.user)
+                else:
+                    fldr = Folder.objects.get(name="Main", user=request.user)
                 obj = Note()
                 obj.title = form.cleaned_data['title']
                 obj.note = form.cleaned_data['note']
@@ -138,7 +141,7 @@ def new_note(request):
                 obj.created_at = datetime.utcnow()
                 obj.modified_at = datetime.utcnow()
                 obj.user = request.user
-                obj.folder = main
+                obj.folder = fldr
                 obj.save()
                 
                 return redirect('cloud_notes.views.list')
