@@ -22,6 +22,8 @@ class Penalty(models.Model):
     network = models.TextField()
     room = models.TextField()
     nick_mask = models.CharField(max_length=80)
+    # The reason to be added to kick message
+    reason = models.CharField(max_length=80, null=True, blank = True)
     # When penalty starts
     begin_time = models.DateTimeField(default = timezone.now)
     # when penalty ends

@@ -3,6 +3,7 @@ from bot.pluginDespatch import Plugin
 import re
 import logging
 import pytz
+import time
 from twisted.internet.task import LoopingCall
 from datetime import datetime, timedelta
 from django.utils import timezone
@@ -15,6 +16,10 @@ logging.config.dictConfig(settings.LOGGING)
 DOWN_VOTE_MINUTES = 5
 DOWN_VOTES_REQUIRED = 1
 PENALTY_TIME = 120
+
+MIN_FLOOD_INTERVAL = 5  # In Seconds
+FLOOD_THRESHHOLD = 3
+FLOOD_PENALTY_TIME = 60*5 # Flood penalty in seconds
 
 from bot.logos_decorators import irc_room_permission_required, \
     irc_network_permission_required
@@ -99,10 +104,9 @@ class RoomManagementPlugin(Plugin):
         self.commands = ((r'nicks', self.nicks, 'show nicks in room'),
                          (r'kick (?P<room>#\S+) (?P<nick>\S+)', self.kick_nick, 'kick nick from room'),
                          (r'ban (?P<room>#\S+) (?P<nick>\S+)', self.ban_nick, 'ban (mute) nick in room'),
-                         (r'down vote (?P<nick>\S+)', self.down_vote, 'Down vote a nick'),
-                         
-                         (r'dv (?P<nick>\S+)', self.down_vote, 'Down vote a nick'),
-
+                         (r'remove penalty (?P<room>#\S+) (?P<nick>\S+)', self.remove_penalty, 'remove room penalty'),
+                         # (r'down vote (?P<nick>\S+)', self.down_vote, 'Down vote a nick'),
+                         # (r'dv (?P<nick>\S+)', self.down_vote, 'Down vote a nick'),
                          
                          (r'timer', self.timer, 'demonstrates the timer in a plugin'),
                          # (r'mute (?P<room>#\S+) (?P<nick>\S+)', self.mute, 'normal user despatch'),
@@ -111,7 +115,7 @@ class RoomManagementPlugin(Plugin):
                          (r'deop me', self.deop_me, 'removes ops'),
                          (r'kick me', self.kick_me, 'kicks you off channel')
                          )
-        # self.antiflood = {}
+        self.antiflood = {}
     
     def get_hostmask(self, nick):
         hostmask = self.get_host(nick).split('@')[1]
@@ -129,10 +133,65 @@ class RoomManagementPlugin(Plugin):
 
     
     def privmsg(self, user, channel, message):
-        # Append the last 10 messages into the conversation and delete
-        # the other older ones
-        pass
+        # Anti-flood checks
+        if self.is_plugin_enabled(channel):
+            my_nick = self.get_nickname()
+            
+            my_ops = self.get_op_status(my_nick, channel)
+            if my_ops is not None and my_ops in "~@&%":
+                nick, user_mask = user.split('!')
+                nick = nick.lower()
+                user_mask = '*!'+user_mask
+                logger.debug("{} has user_mask {}".format(nick, user_mask))
+                timestamp = time.time()
+                if nick in self.antiflood:
+                    if channel in self.antiflood[nick]:
+                        if message == self.antiflood[nick][channel]['line']:
+                            prior_time = self.antiflood[nick][channel]['timestamp']
+                            if timestamp - prior_time < MIN_FLOOD_INTERVAL:
+                                self.antiflood[nick][channel]['repeat'] += 1
+                                self.antiflood[nick][channel]['timestamp'] = timestamp
+                                if self.antiflood[nick][channel]['repeat'] >= FLOOD_THRESHHOLD:
+                                    self.add_penalty(channel, user_mask, FLOOD_PENALTY_TIME, reason="flooding")
+                                    self.kick(channel, nick, reason = "Stop repeating yourself!")                                    
+                            else:
+                                self.antiflood[nick][channel] = {'line':message, 'timestamp':timestamp, 'repeat':0}
+                        else:
+                            self.antiflood[nick][channel] = {'line':message, 'timestamp':timestamp, 'repeat':0}
+                    else:
+                        self.antiflood[nick][channel] = {'line':message, 'timestamp':timestamp, 'repeat':0}
+                else:
+                    self.antiflood[nick] = { channel: {'line':message, 'timestamp':timestamp, 'repeat':0} }
+                print self.antiflood
+                    
 
+    def add_penalty(self, channel, user_mask, seconds, reason=None):
+        begin_date = timezone.now()
+        end_date = begin_date + timedelta(seconds = seconds)
+        wmask = '*!*@'+user_mask.split('@')[1]
+        penalty = Penalty(network = self.network.lower(),
+            room = channel.lower(),
+            nick_mask = wmask,
+            reason = reason,
+            begin_time = begin_date,
+            end_time = end_date,
+            kick = True)
+        penalty.save()
+
+    @irc_room_permission_required('room_admin')
+    def remove_penalty(self, regex, chan, nick, **kwargs):
+        this_nick = regex.group('nick')
+        this_room = regex.group('room')
+        hostmask = self.get_hostmask(this_nick)
+        wmask = '*!*@' + hostmask.split('@')[1]
+        penalties = Penalty.objects.filter(nick_mask = wmask,
+                               room = this_room.lower(),
+                               end_time__gt = timezone.now())
+        for penalty in penalties:
+            penalty.kick = False
+            penalty.save()
+        self.notice(nick, "Penalty removed")
+    
     @check_ops()
     def down_vote(self, regex, chans, nick, **kwargs):
         nick_dv = regex.group('nick')
@@ -179,7 +238,7 @@ class RoomManagementPlugin(Plugin):
         nicks = self.get_room_nicks(chan)
         nick_plus_hosts = []
         for nck in nicks:
-            nick_plus_hosts.append(nck + " : " + self.get_hostmask(nck) )
+            nick_plus_hosts.append(nck + " :) " + self.get_hostmask(nck) )
         self.notice(nick, "Nicks in room are " + ", ".join(nick_plus_hosts))
 
         
@@ -275,14 +334,14 @@ class RoomManagementPlugin(Plugin):
                 room = room.lower(),
                 nick_mask = hostmask,
                 end_time__gt = timezone.now()).order_by('end_time').last()
-        if penalty:
+        if penalty and penalty.kick:
             time_remaining = (penalty.end_time - timezone.now()).seconds
             hours = time_remaining/3600
             time_remaining -= hours*3600
             minutes = time_remaining/60
             seconds = time_remaining - minutes*60
             
-            msg = "Not allowed in {} for {} hours {} minutes and {} seconds determined by democratic vote".format(room, hours, minutes, seconds)
+            msg = "Not allowed in {} for {} hours {} minutes and {} seconds for {}".format(room, hours, minutes, seconds, penalty.reason)
             
             if action == "kick":
                 self.kick(room, nick, reason = msg)
@@ -312,7 +371,7 @@ class RoomManagementPlugin(Plugin):
         # The _ throws away unneeded userhost
         for nick, userhost in nicklist:
             host = "*!*@" + userhost.split('@')[1]
-            print (nick, host)
+            logger.debug( str((nick, host)) )
             rooms = self.get_rooms_for_nick(nick)
             for room in rooms:
                 hist = NickHistory(network = self.network, room=room, nick = nick, host_mask = host)

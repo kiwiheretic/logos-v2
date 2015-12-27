@@ -341,6 +341,11 @@ LOGGING = {
             'level': 'DEBUG',
             'propagate': False,
         },
+        'room_manage': {
+            'handlers': ['console', 'file'],
+            'level': 'DEBUG',
+            'propagate': False,
+        },
         'bot': {
             'handlers': ['console_info', 'file'],
             'level': 'DEBUG',
