@@ -155,13 +155,13 @@ class RoomManagementPlugin(Plugin):
                                     self.add_penalty(channel, user_mask, FLOOD_PENALTY_TIME, reason="flooding")
                                     self.kick(channel, nick, reason = "Stop repeating yourself!")                                    
                             else:
-                                self.antiflood[nick][channel] = {'line':message, 'timestamp':timestamp, 'repeat':0}
+                                self.antiflood[nick][channel] = {'line':message, 'timestamp':timestamp, 'repeat':1}
                         else:
-                            self.antiflood[nick][channel] = {'line':message, 'timestamp':timestamp, 'repeat':0}
+                            self.antiflood[nick][channel] = {'line':message, 'timestamp':timestamp, 'repeat':1}
                     else:
-                        self.antiflood[nick][channel] = {'line':message, 'timestamp':timestamp, 'repeat':0}
+                        self.antiflood[nick][channel] = {'line':message, 'timestamp':timestamp, 'repeat':1}
                 else:
-                    self.antiflood[nick] = { channel: {'line':message, 'timestamp':timestamp, 'repeat':0} }
+                    self.antiflood[nick] = { channel: {'line':message, 'timestamp':timestamp, 'repeat':1} }
                 print self.antiflood
                     
 
@@ -376,4 +376,5 @@ class RoomManagementPlugin(Plugin):
             for room in rooms:
                 hist = NickHistory(network = self.network, room=room, nick = nick, host_mask = host)
                 hist.save()
-                self.border_patrol(('kick', nick, room))
+                if self.is_plugin_enabled(room):
+                    self.border_patrol(('kick', nick, room))
