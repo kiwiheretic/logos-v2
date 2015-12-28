@@ -102,6 +102,7 @@ class BibleBot(Plugin):
         self.commands = (\
                          (r'random$', self.random_verse, "bring up random verse"),
                          (r'random (?P<translation>[a-zA-Z]+)$', self.random_verse, "bring up random verse"),
+                         (r'view$', self.view_xrefs, "View the next xref"),
                          (r'(next|n)\s*$', self.next, "read next verse"),
                          (r'(?:search|s)\s+((?:\w+\s+)?(?:\w+(?:-\w+)?\s+)?[^"]+)$', self.search, "perform a concordance search"),
                          (r'(?:search|s)\s+((?:\w+\s+)?(?:\w+(?:-\w+)?\s+)?)\"([^"]+)\"\s*$', self.phrase_search, "perform a phrase search"),
@@ -125,6 +126,7 @@ class BibleBot(Plugin):
                          (r'xref\s+(.*)',
                           self.xref, "display xref verses"),
                          )
+
         
         # pending_searches used to remember
         # where up to with users searches
@@ -133,6 +135,8 @@ class BibleBot(Plugin):
         self.pending_searches = {}
         
         self.reading_progress = {}
+
+        self.xref_views = {}
     
     def _get_translations(self):
         trans = BibleTranslations.objects.all()    
@@ -598,7 +602,40 @@ class BibleBot(Plugin):
         translations = self._get_translations()
         tr_str = ",".join(translations)
         self.msg(chan, "Supported translations are %s " % (tr_str,))     
-                   
+    def view_xrefs(self, regex, chan, nick, **kwargs):
+        if nick.lower() not in self.xref_views:
+            self.say(chan, "*** You need to find xrefs first ***")
+            return
+
+        refs = self.xref_views[nick.lower()][0:3]
+        del self.xref_views[nick.lower()][0:3]
+        trans_name = self._get_defaulttranslation(chan)
+        trans = BibleTranslations.objects.get(name = trans_name)
+        if not refs:
+            self.say(chan, "*** No more refs to view ***")
+            return
+
+        for ref in refs:
+            book_name, refwork = ref.split(' ')
+            ref1 = refwork.split('-')[0]
+            chap, vs = ref1.split(':')
+            
+            book =  BibleBooks.objects.get(trans = trans, canonical = book_name)
+            verse = BibleVerses.objects.get(trans = trans,
+                                            book = book,
+                                            chapter = chap,
+                                            verse = vs)
+            msg = u"{} {}:{} {}".format(book.long_book_name,
+                                       chap,
+                                       vs,
+                                       verse.verse_text)
+
+            self.say(chan, msg)                                            
+            
+
+        
+
+               
     @irc_network_permission_required('set_pvt_version')
     def set_pvt_translation(self, regex, chan, nick, **kwargs):
         trans = regex.group(1)
@@ -827,21 +864,17 @@ class BibleBot(Plugin):
                 primary_chapter = chapter,
                 primary_verse = verse ).order_by('-votes')
         xref_list = []
-        for xref in islice(xrefs, 6):
+        for xref in islice(xrefs, 20):
             if xref.xref_book2:
                 s = "{} {}:{}-{}:{}".format(xref.xref_book1, xref.xref_chapter1, xref.xref_verse1, 
                     xref.xref_chapter2, xref.xref_verse2)
             else:
                 s = "{} {}:{}".format(xref.xref_book1, xref.xref_chapter1, xref.xref_verse1)
             xref_list.append(s)
+        self.xref_views[nick.lower()] = xref_list
         xref_resp = ", ".join(xref_list)
         self.say(chan, xref_resp)
         
-                
-             
-
-
-    
     def verse_lookup(self, regex, chan, nick, **kwargs):
 
         user = kwargs['user']
@@ -1029,9 +1062,6 @@ class BibleBot(Plugin):
         else:
             results = self._threaded_search_results(chan, nick, gen)
             
-
-        
-
 
     def _stringify_book_range(self, version, book_range):
         if book_range[0] == None:
