@@ -364,7 +364,8 @@ class RoomManagementPlugin(Plugin):
     def userQuit(self, user, quitMessage):
         # The control room or engine room is often the room designated for notices
         # and or messages if no other room is specified
-        self.say(self.control_room, "%s has just quit with message  %s" % (user,quitMessage))
+        # self.say(self.control_room, "%s has just quit with message  %s" % (user,quitMessage))
+        pass
         
     def userHosts(self, nicklist):
         """ Called when userhost info is available """
