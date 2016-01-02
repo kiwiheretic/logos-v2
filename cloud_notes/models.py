@@ -2,6 +2,7 @@ from django.db import models
 from django.contrib.auth.models import User
 from django.dispatch import receiver
 from django.db.models.signals import post_save
+from django.core.urlresolvers import reverse
 
 import re
 
@@ -28,6 +29,9 @@ class Note(models.Model):
     created_at = models.DateTimeField()
     modified_at = models.DateTimeField()
     note = models.TextField()
+
+    def get_absolute_url(self): 
+        return reverse('cloud_notes.views.preview', args=[self.id])
 
     @property
     def linecount(self):

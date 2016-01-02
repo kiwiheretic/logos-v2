@@ -6,6 +6,9 @@ from haystack.generic_views import SearchView
 from haystack.forms import SearchForm
 from .views import MySearchView
 
+# required to set an app name to resolve 'url' in templates with namespacing
+app_name = "cloud_notes"
+
 urlpatterns = patterns('cloud_notes.views',
     url(r'^$', 'list'),
     url(r'^new/', 'new_note'),
@@ -22,7 +25,5 @@ urlpatterns = patterns('cloud_notes.views',
     url(r'^folders/', 'folders'),
     url(r'^hash_tags/', 'hash_tags'),
     url(r'^download/(\d+)', 'download'),
-    #url(r'^search/', include('haystack.urls')),
-    #url(r'^search/', SearchView.as_view(), name='search_view'),
-    url(r'^search/', MySearchView.as_view(form_class = SearchForm), name='haystack_search'),
+    url(r'^search/', MySearchView.as_view(form_class = SearchForm), name='search_view'),
 )

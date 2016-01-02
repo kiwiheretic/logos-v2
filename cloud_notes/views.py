@@ -6,6 +6,8 @@ from django.db import transaction
 from django.http import HttpResponse, HttpResponseRedirect
 from django.utils import timezone
 from django.contrib import auth  # .models.DoesNotExist
+from django.utils.decorators import method_decorator
+
 import os
 import json
 import re
@@ -31,6 +33,10 @@ from haystack.generic_views import SearchView
 class MySearchView(SearchView):
     """My custom search view."""
 
+    @method_decorator(login_required)
+    def dispatch(self, *args, **kwargs):
+        return super(MySearchView, self).dispatch(*args, **kwargs)
+    
     def get_queryset(self):
         queryset = super(MySearchView, self).get_queryset()
         # further filter queryset based on some set of criteria
