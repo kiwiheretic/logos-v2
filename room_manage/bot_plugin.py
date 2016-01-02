@@ -9,6 +9,7 @@ from datetime import datetime, timedelta
 from django.utils import timezone
 from django.conf import settings
 from .models import DownVotes, Penalty, Probation, NickHistory
+from logos.roomlib import get_room_option
 
 logger = logging.getLogger(__name__)
 logging.config.dictConfig(settings.LOGGING)
@@ -134,7 +135,8 @@ class RoomManagementPlugin(Plugin):
     
     def privmsg(self, user, channel, message):
         # Anti-flood checks
-        if self.is_plugin_enabled(channel):
+        if self.is_plugin_enabled(channel) and message[0] != get_room_option(self.network, channel, 'activation'):
+
             my_nick = self.get_nickname()
             
             my_ops = self.get_op_status(my_nick, channel)
