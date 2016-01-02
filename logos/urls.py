@@ -6,7 +6,7 @@ from django.contrib import admin
 # Remove RegistrationProfile widget from admin interface
 from registration.admin import RegistrationProfile
 admin.autodiscover()
-admin.site.unregister(RegistrationProfile)
+#admin.site.unregister(RegistrationProfile)
 
 
 

@@ -4,6 +4,9 @@ import sys
 import socket
 import logging
 import email_settings
+from importlib import import_module
+
+
 logger = logging.getLogger(__name__)
 
 # BASE_DIR is deemed to be one directory above this file's directory
@@ -259,7 +262,35 @@ INSTALLED_APPS = (
     # Add admin interface permission widget
     # http://permissions-widget.readthedocs.org/en/latest/
     'permissions_widget',
+    'haystack',
 )
+
+
+HAYSTACK_CONNECTIONS = {
+    'default': {
+        'ENGINE': 'haystack.backends.whoosh_backend.WhooshEngine',
+        'PATH': os.path.join(os.path.dirname(__file__), 'whoosh_index'),
+    },
+}
+
+# Look through all settings.py files and import all symbols
+# directly into this file as long as they won't overwrite an existing setting.
+#for app in INSTALLED_APPS:
+#    if app == "logos": continue # Don't reimport this file
+#    app_path = os.path.join(BASE_DIR, app) 
+#    if os.path.isdir(app_path):
+#        settings_path = os.path.join(app_path, 'settings.py')
+#        if os.path.exists(settings_path):
+#            print("Importing {}".format(app + ".settings"))
+#            mod = import_module(app + ".settings")
+#            for elmtname in dir(mod):
+#                if elmtname[0] == '_': continue # skip over __doc__, __name__ and private methods
+#                if elmtname not in globals():
+#                    globals()[elmtname] = getattr(mod, elmtname)
+#                else:
+#                    print("Could not import duplicate symbol {} from {}".format(elmtname, mod.__name__))
+#
+
 
 # A sample logging configuration. The only tangible logging
 # performed by this configuration is to send an email to

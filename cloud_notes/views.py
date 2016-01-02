@@ -26,6 +26,25 @@ logger = logging.getLogger(__name__)
 logging.config.dictConfig(settings.LOGGING)
 
 
+from haystack.generic_views import SearchView
+
+class MySearchView(SearchView):
+    """My custom search view."""
+
+    def get_queryset(self):
+        queryset = super(MySearchView, self).get_queryset()
+        # further filter queryset based on some set of criteria
+        #print queryset
+        return queryset
+
+    def get_context_data(self, *args, **kwargs):
+        context = super(MySearchView, self).get_context_data(*args, **kwargs)
+        # Hack to fix 'page' missing from template
+        context['page'] = context['page_obj']
+        #print context
+        # do something
+        return context
+
 @login_required()
 def hash_tags(request):
     

@@ -2,6 +2,7 @@
 __pycache__/
 *.py[cod~]
 *.*~
+*.swp
 bibles/
 logs/
 logos/email_settings.py
