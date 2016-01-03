@@ -40,6 +40,7 @@ class MySearchView(SearchView):
     def get_queryset(self):
         queryset = super(MySearchView, self).get_queryset()
         # further filter queryset based on some set of criteria
+        queryset = queryset.filter(user=self.request.user)
         #print queryset
         return queryset
 
