@@ -6,6 +6,8 @@ __pycache__/
 bibles/
 logs/
 logos/email_settings.py
+allowed_hosts.txt
+debug_hosts.txt
 
 sqlite-databases/
 

@@ -252,6 +252,7 @@ INSTALLED_APPS = (
     'room_manage',
     'scripture_game',
     'pybb',
+    'gcalendar',
     'widget_tweaks',
 #    'simple_forums',
     # Uncomment the next line to enable the admin:

@@ -1,8 +1,6 @@
 # logos.views
 from __future__ import absolute_import
 
-import pdb
-
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import render, redirect, get_object_or_404
 from django.http import HttpResponse, HttpResponseRedirect
@@ -16,12 +14,14 @@ import copy
 import pickle
 import socket
 import logging
+import inspect
 
 import xmlrpclib
+from bot.pluginDespatch import Plugin
 
-from logos.settings import LOGGING
+from django.conf import settings 
 logger = logging.getLogger(__name__)
-logging.config.dictConfig(LOGGING)
+logging.config.dictConfig(settings.LOGGING)
 
 # def room_settings(request):
     # context = {}
@@ -79,6 +79,37 @@ def plugins(request):
     plugins = NetworkPlugins.objects.order_by('plugin__name')
     networks = []
     for plugin in plugins:
+        for app in settings.INSTALLED_APPS:
+            # 'logos' app causes confusion because it
+            # it matches the Plugin class
+            #if app == 'logos': continue
+            try:
+                plugin_mod = __import__(app + ".bot_plugin").bot_plugin
+                for attr in dir(plugin_mod):
+                    a1 = getattr(plugin_mod, attr)
+                    # Check if the class is a class derived from 
+                    # bot.PluginDespatch.Plugin
+                    # but is not the base class only
+
+                    if inspect.isclass(a1) and \
+                    a1 != Plugin and \
+                    issubclass(a1, Plugin) and \
+                    hasattr(a1, 'plugin') and \
+                    a1.plugin[0] == plugin.plugin.name:  
+                        
+                        appmod = __import__(app + ".settings").settings
+                        if hasattr(appmod, 'USER_SETTINGS_VIEW'):
+                            plugin.user_view = appmod.USER_SETTINGS_VIEW
+                            logger.debug( "Add user settings for " + app) 
+                        if hasattr(appmod, 'SUPERUSER_SETTINGS_VIEW'):
+                            plugin.superuser_view = appmod.SUPERUSER_SETTINGS_VIEW
+                            logger.debug( "Add superuser settings for " + app) 
+                        break
+
+
+            except ImportError:
+                pass
+
         if plugin.network not in networks:
             networks.append(plugin.network)
     context = {'plugins':plugins, 'networks':networks, 'networkpermissions':NetworkPermissions}

@@ -34,6 +34,7 @@ urlpatterns = patterns('',
     url(r'^notes/', include('cloud_notes.urls')),
     url(r'^memos/', include('cloud_memos.urls')),
     url(r'^forum/', include('pybb.urls', namespace='pybb')),
+    url(r'^gcal/', include('gcalendar.urls')),
     url(r'^bots/approve/(\d+)', 'logos.views.bot_approval'),
     url(r'^bots/deny/(\d+)', 'logos.views.bot_deny'),
     
