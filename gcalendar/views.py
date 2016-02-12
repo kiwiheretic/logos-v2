@@ -1,11 +1,13 @@
 from __future__ import absolute_import
-from django.shortcuts import render
+from django.shortcuts import render, redirect
 from django.forms.models import model_to_dict
+from django.contrib import messages
 
 from oauth2client.client import OAuth2WebServerFlow
+from oauth2client.django_orm import Storage
 
 from .forms import SiteSetupForm
-from .models import SiteModel
+from .models import SiteModel, FlowModel, CredentialsModel
 
 # Create your views here.
 def site_setup(request):
@@ -28,12 +30,30 @@ def site_setup(request):
     return render(request, 'gcal/site_setup.html', {'form':form})
 
 def user_setup(request):
+    storage = Storage(CredentialsModel, 'id', request.user, 'credential')
+    credentials = storage.get()
     mdl = SiteModel.objects.first()
     flow = OAuth2WebServerFlow(client_id=mdl.client_id,
                                client_secret=mdl.client_secret,
-                               scope='https://www.googleapis.com/auth/calendar',
-                               redirect_uri='http://localhost:8000/callback')
+                               scope='https://www.googleapis.com/auth/calendar.readonly',
+                               redirect_uri='http://localhost:8000/gcal/callback')
+    f, created = FlowModel.objects.get_or_create(id = request.user)
+    f.flow = flow
+    f.save()
     url = flow.step1_get_authorize_url() 
-    return render(request, 'gcal/user_setup.html', {'url':url, 'form':None})
+    if credentials:
+        return render(request, 'gcal/user_setup.html', {'credentials':credentials, 'url':url})
+    else:
 
+        return render(request, 'gcal/user_setup.html', {'url':url})
+
+
+def oauth_callback(request):
+    code = request.GET['code']
+    flow = FlowModel.objects.get(id = request.user).flow
+    credentials = flow.step2_exchange(code)
+    storage = Storage(CredentialsModel, 'id', request.user, 'credential')
+    storage.put(credentials)
+    messages.add_message(request, messages.INFO, 'Google Authentication Successful')
+    return redirect('user_setup')
 

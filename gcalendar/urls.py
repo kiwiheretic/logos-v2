@@ -10,5 +10,6 @@ app_name = "google_calendar"
 urlpatterns = patterns('gcalendar.views',
 #    url(r'^$', 'list'),
     url(r'^site-setup/$', 'site_setup'),
-    url(r'^user-setup/$', 'user_setup'),
+    url(r'^user-setup/$', 'user_setup', name='user_setup'),
+    url(r'^callback/$', 'oauth_callback'),
 )
