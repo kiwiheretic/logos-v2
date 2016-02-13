@@ -40,7 +40,7 @@ def user_setup(request):
     f, created = FlowModel.objects.get_or_create(id = request.user)
     f.flow = flow
     f.save()
-    url = flow.step1_get_authorize_url() 
+    url = flow.step1_get_authorize_url()+"&approval_prompt=force" 
     if credentials:
         return render(request, 'gcal/user_setup.html', {'credentials':credentials, 'url':url})
     else:
