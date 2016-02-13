@@ -459,17 +459,17 @@ class SystemCoreCommands(Plugin):
         py_ver = ".".join(map(lambda x: str(x), pyver))
         twstver = (twisted.version.major, twisted.version.minor)
         twst_ver = ".".join(map(lambda x: str(x), twstver))
-        self.msg(chan, "\x033Logos Super Bot -- Version %s \x03" % (VERSION,))
-        self.msg(chan, "\x0310--- Courtesy of\x03\x0312 SplatsCreations\x03")        
-        self.msg(chan, "\x0310--- Built with Django %s\\Python %s\\Twisted %s  \x03" % (dj_ver, py_ver, twst_ver))        
+        self.notice(nick, "\x033Logos Super Bot -- Version %s \x03" % (VERSION,))
+        self.notice(nick, "\x0310--- Courtesy of\x03\x0312 SplatsCreations\x03")        
+        self.notice(nick, "\x0310--- Built with Django %s\\Python %s\\Twisted %s  \x03" % (dj_ver, py_ver, twst_ver))        
         # ver_path = settings.BASE_DIR
         # f = open(os.path.join(ver_path, "version.json"),"r")
         # ver_obj = json.load(f)
         # f.close()
         repo = Repo(settings.BASE_DIR)
         sha = repo.head.ref.commit.hexsha
-        self.msg(chan, "\x0310SHA = {}\x03".format(sha[:8]))
-        self.msg(chan, "Repo: \x1f\x0312https://github.com/kiwiheretic/logos-v2/")        
+        self.notice(nick, "\x0310SHA = {}\x03".format(sha[:8]))
+        self.notice(nick, "Repo: \x1f\x0312https://github.com/kiwiheretic/logos-v2/")        
         
     def set_password(self, regex, chan, nick, **kwargs):
 
