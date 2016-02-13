@@ -2,6 +2,7 @@ from __future__ import absolute_import
 from django.shortcuts import render, redirect
 from django.forms.models import model_to_dict
 from django.contrib import messages
+from django.contrib.sites.models import Site
 
 from oauth2client.client import OAuth2WebServerFlow
 from oauth2client.django_orm import Storage
@@ -30,14 +31,14 @@ def site_setup(request):
     return render(request, 'gcal/site_setup.html', {'form':form})
 
 def user_setup(request):
-    scheme_host = request.scheme + "://"+request.META['HTTP_HOST']
     storage = Storage(CredentialsModel, 'id', request.user, 'credential')
     credentials = storage.get()
     mdl = SiteModel.objects.first()
+    domain = Site.objects.get_current().domain
     flow = OAuth2WebServerFlow(client_id=mdl.client_id,
                                client_secret=mdl.client_secret,
                                scope='https://www.googleapis.com/auth/calendar.readonly',
-                               redirect_uri=scheme_host+'/gcal/callback')
+                               redirect_uri="http://"+domain + '/gcal/callback')
     f, created = FlowModel.objects.get_or_create(id = request.user)
     f.flow = flow
     f.save()
