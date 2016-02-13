@@ -30,13 +30,14 @@ def site_setup(request):
     return render(request, 'gcal/site_setup.html', {'form':form})
 
 def user_setup(request):
+    scheme_host = request.scheme + "://"+request.META['HTTP_HOST']
     storage = Storage(CredentialsModel, 'id', request.user, 'credential')
     credentials = storage.get()
     mdl = SiteModel.objects.first()
     flow = OAuth2WebServerFlow(client_id=mdl.client_id,
                                client_secret=mdl.client_secret,
                                scope='https://www.googleapis.com/auth/calendar.readonly',
-                               redirect_uri='http://localhost:8000/gcal/callback')
+                               redirect_uri=scheme_host+'/gcal/callback')
     f, created = FlowModel.objects.get_or_create(id = request.user)
     f.flow = flow
     f.save()
