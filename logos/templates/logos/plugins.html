@@ -65,7 +65,14 @@ It may destablise the running bot.</p>
 <ul>
 {% for plugin in plugins %}
   {% ifchanged plugin.plugin.name %}
-  {% if not forloop.first %}</li>{% endif %}<li>{{plugin.plugin.description}} ({{plugin.plugin.name}})
+  {% if not forloop.first %}</li>{% endif %}<li>
+  {% if plugin.dashboard_view %}
+  <a href="{% url plugin.dashboard_view %}">{{plugin.plugin.description}}</a>
+  {% else %}
+  {{plugin.plugin.description}}
+  {% endif %}
+
+  ({{plugin.plugin.name}})
 
     {% if plugin.superuser_view and request.user.is_superuser %}
     (&nbsp;<a href="{% url plugin.superuser_view %}">site settings</a>&nbsp;)

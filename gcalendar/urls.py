@@ -5,11 +5,14 @@ from django.conf.urls import patterns, include, url
 from .views import site_setup
 
 # required to set an app name to resolve 'url' in templates with namespacing
-app_name = "google_calendar"
+app_name = "gcal"
 
 urlpatterns = patterns('gcalendar.views',
 #    url(r'^$', 'list'),
     url(r'^site-setup/$', 'site_setup'),
     url(r'^user-setup/$', 'user_setup', name='user_setup'),
     url(r'^callback/$', 'oauth_callback'),
+    url(r'^list/$', 'list', name='list'),
+    url(r'^new-event/$', 'new_event'),
+    url(r'^event-detail/([^/]+)/$', 'event_detail'),
 )

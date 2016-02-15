@@ -104,6 +104,9 @@ def plugins(request):
                         if hasattr(appmod, 'SUPERUSER_SETTINGS_VIEW'):
                             plugin.superuser_view = appmod.SUPERUSER_SETTINGS_VIEW
                             logger.debug( "Add superuser settings for " + app) 
+                        if hasattr(appmod, 'DASHBOARD_VIEW'):
+                            plugin.dashboard_view = appmod.DASHBOARD_VIEW
+                            logger.debug( "Add dashboard settings for " + app) 
                         break
 
 

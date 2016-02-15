@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+
+{% block menu_title %}Google Calendar Module Menu{% endblock %}
+{% block button_menu %}
+<ul id="app-button-menu-container" class="btn-menu-container">
+
+    <li><a href="{% url 'gcalendar.views.list' %}" class="button-link">List</a></li>
+    <li><a href="{% url 'gcalendar.views.new_event' %}" class="button-link">New Event</a></li>
+
+    <li><a href="{% url 'logos.views.profile' %}" class="button-link">Main Menu</a></li>
+</ul>
+{% endblock %}
