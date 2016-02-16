@@ -14,5 +14,7 @@ urlpatterns = patterns('gcalendar.views',
     url(r'^callback/$', 'oauth_callback'),
     url(r'^list/$', 'list', name='list'),
     url(r'^new-event/$', 'new_event'),
-    url(r'^event-detail/([^/]+)/$', 'event_detail'),
+    url(r'^edit-event/([^/]+)/$', 'edit_event', name='edit-event'),
+    url(r'^event-detail/([^/]+)/$', 'event_detail', name='normal-delete'),
+    url(r'^event-detail/([^/]+)/1/$', 'event_detail', {'recurrence_delete':True}, name='recurrence-delete'),
 )

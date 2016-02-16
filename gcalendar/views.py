@@ -18,6 +18,45 @@ import pytz
 from .forms import SiteSetupForm, EventForm
 from .models import SiteModel, FlowModel, CredentialsModel
 
+
+def get_service(request):
+    storage = Storage(CredentialsModel, 'id', request.user, 'credential')
+    credentials = storage.get()
+    http = credentials.authorize(httplib2.Http())
+    service = discovery.build('calendar', 'v3', http=http)
+    return service
+
+def create_event_from_form(form):
+    tz = pytz.timezone('Pacific/Auckland')
+    start_time = form.cleaned_data['start_time']
+    start_date = form.cleaned_data['start_date']
+
+    event = {
+      'summary': form.cleaned_data['summary'],
+      'location': form.cleaned_data['location'],
+      'description': form.cleaned_data['description'],
+    }
+    weekdays = ('MO', 'TU', 'WE', 'TH', 'FR', 'SA', 'SU')
+    if start_time:
+        d = datetime.datetime.combine(start_date, start_time)
+        start = (tz.localize(d)).isoformat()
+        event['start'] = {'dateTime':start, 'timeZone': 'Pacific/Auckland'}
+        duration = int(form.cleaned_data['duration'])
+        td = datetime.timedelta(minutes = duration)
+        end_date = tz.localize(d + td).isoformat()
+        event['end'] = {'dateTime':end_date, 'timeZone': 'Pacific/Auckland'}
+    else:
+        d = start_date
+        start = start_date.isoformat()
+        event['start'] = {'date':start, 'timeZone': 'Pacific/Auckland'}
+        event['end'] = event['start']
+    
+    if form.cleaned_data['recurring'] == 'RW':
+        wd = weekdays[d.weekday()]
+        rule = "RRULE:FREQ=WEEKLY;BYDAY="+wd
+        event['recurrence'] = [ rule ]
+    return event
+
 # Create your views here.
 @login_required()
 def site_setup(request):
@@ -73,10 +112,7 @@ def oauth_callback(request):
 @login_required()
 def list(request):
 
-    storage = Storage(CredentialsModel, 'id', request.user, 'credential')
-    credentials = storage.get()
-    http = credentials.authorize(httplib2.Http())
-    service = discovery.build('calendar', 'v3', http=http)
+    service = get_service(request)
 
     now = datetime.datetime.utcnow().isoformat() + 'Z' # 'Z' indicates UTC time
     eventsResult = service.events().list(
@@ -98,54 +134,25 @@ def list(request):
 
 @login_required()
 def new_event(request):
-    tz = pytz.timezone('Pacific/Auckland')
     if request.method == "POST":
         form = EventForm(request.POST)
         if form.is_valid():
             
-            storage = Storage(CredentialsModel, 'id', request.user, 'credential')
-            credentials = storage.get()
-            http = credentials.authorize(httplib2.Http())
-            service = discovery.build('calendar', 'v3', http=http)
-            
-            start_time = form.cleaned_data['start_time']
-            start_date = form.cleaned_data['start_date']
-
-            event = {
-              'summary': form.cleaned_data['summary'],
-              'location': form.cleaned_data['location'],
-              'description': form.cleaned_data['description'],
-            }
-
-            if start_time:
-                d = datetime.datetime.combine(start_date, start_time)
-                start = (tz.localize(d)).isoformat()
-                event['start'] = {'dateTime':start, 'timeZone': 'Pacific/Auckland'}
-                duration = int(form.cleaned_data['duration'])
-                td = datetime.timedelta(minutes = duration)
-                end_date = tz.localize(d + td).isoformat()
-                event['end'] = {'dateTime':end_date, 'timeZone': 'Pacific/Auckland'}
-            else:
-                d = start_date
-                start = start_date.isoformat()
-                event['start'] = {'date':start, 'timeZone': 'Pacific/Auckland'}
-                event['end'] = event['start']
-            
+            service = get_service(request)
+            event = create_event_from_form(form)           
             event = service.events().insert(calendarId='primary', body=event).execute()
             messages.add_message(request, messages.INFO, 'Calendar Event Created Successful')
             return redirect('list')
     else: # GET
+        tz = pytz.timezone('Pacific/Auckland')
         start_date = datetime.datetime.now(tz).date().strftime('%d/%m/%y')
         form = EventForm(initial={'start_date':start_date})
     return render(request, 'gcal/new_event.html', {'form':form})
 
 
 @login_required()
-def event_detail(request, event_id):
-    storage = Storage(CredentialsModel, 'id', request.user, 'credential')
-    credentials = storage.get()
-    http = credentials.authorize(httplib2.Http())
-    service = discovery.build('calendar', 'v3', http=http)
+def event_detail(request, event_id, recurrence_delete=False):
+    service = get_service(request)
 
     event = service.events().get(calendarId='primary', eventId=event_id).execute()
 
@@ -161,15 +168,48 @@ def event_detail(request, event_id):
     if start_datetime and 'dateTime' in event['end']:
         end_date = dateutil.parser.parse(event['end']['dateTime'])
         event['duration'] = (end_date - start_datetime).seconds/60
-
-    ctx = {'event':event}
+    ctx = {'event':event, 'recurring':recurrence_delete}
     if request.method == 'POST':
         ctx.update({'confirm':True})
         if 'confirm' in request.POST and \
         request.POST['confirm'] == 'Yes':
-            service.events().delete(calendarId='primary', eventId=event_id).execute()
+            if recurrence_delete:
+                id_to_delete = event['recurringEventId']
+            else:
+                id_to_delete = event_id
+            service.events().delete(calendarId='primary', eventId=id_to_delete).execute()
             messages.add_message(request, messages.INFO, 'Event Deleted Successfully')
             return redirect('list')
     return render(request, 'gcal/detail.html', ctx)
 
+def edit_event(request, event_id):
+    service = get_service(request)
+    if request.method == "GET":
+        event = service.events().get(calendarId='primary', eventId=event_id).execute()
+        initial = {'summary': event['summary'],
+                'location': event['location'],
+                'description': event['description']}
+
+        if 'date' in event['start']:
+            d = dateutil.parser.parse(event['start']['date'])
+            initial['start_date'] = d.strftime('%d/%m/%y')
+        elif 'dateTime' in event['start']:
+            d = dateutil.parser.parse(event['start']['dateTime'])
+            initial['start_date'] = d.date().strftime('%d/%m/%y')
+            initial['start_time'] = d.time().strftime('%H:%M')
+        if 'recurrence' in event:
+            initial['recurring'] = 'RW' # crude but will work for now.  Need to eventually cater for other recurrence types
+        else:
+            initial['recurring'] = 'NR' 
+        form = EventForm(initial=initial)
+        return render(request, 'gcal/new_event.html', {'form':form})
+    elif request.method == "POST":
+        form = EventForm(request.POST)
+        if form.is_valid():
+            event = create_event_from_form(form)           
+            service.events().update(calendarId='primary', eventId=event_id, body=event).execute()
+            messages.add_message(request, messages.INFO, 'Event updated successfully')
+            return redirect('gcalendar.views.event_detail', event_id)
+        else:
+            return render(request, 'gcal/new_event.html', {'form':form})
 

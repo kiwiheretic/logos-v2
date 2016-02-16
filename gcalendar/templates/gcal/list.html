@@ -53,6 +53,7 @@ input[type="text"] {
 {% if event.start_date %}{{event.start_date|date:"D d-M-Y"}} {% endif %}
 {% if event.start_datetime %}{{event.start_datetime|date:"D d-M-Y H:i"}}{% endif %}
 <a href="{% url 'gcalendar.views.event_detail' event.id %}">{{event.summary}}</a>
+{% if event.recurringEventId %}(&nbsp;recurring&nbsp;) {% endif %}
 </li>
 {% endfor %}
 </ul>

@@ -3,6 +3,10 @@
 {% block style %}
 {{block.super}}
 
+.significant-word {
+   font-weight: bold;
+}
+
 ul {
    list-style-type: none; 
 }
@@ -49,18 +53,22 @@ input[type="text"] {
 <h2>Event Detail</h2>
 
 {% if confirm %}
-<p>Are you sure you wish to delete this event?</p>
+<p>Are you sure you wish to delete this 
+{% if recurring %}<span class="significant-word">recurring</span>
+{% endif %} event?</p>
 <form action="." method="POST">
     {% csrf_token %}
     <input type="submit" name="confirm" value="Yes"/>
     <input type="submit" name="confirm" value="No"/>
 </form>
 {% else %}
-<form action="." method="POST">
-    {% csrf_token %}
-    <input type="submit" value="Delete this event?"/>
+<form action="{% url 'edit-event' event.id %}" method="GET">
+    <input type="submit" value="Edit this event?"/>
 </form>
 {% endif %}
+
+
+
 <p><span class="evt-label">Summary:</span>
 <span class="evt-detail">{{event.summary}}</span>
 </p>
@@ -86,4 +94,19 @@ input[type="text"] {
 <p><span class="evt-label">Description:</span>
 <span class="evt-detail evt-desc">{{event.description}}</span>
 </p>
+
+
+{% if not confirm %}
+<form action="{% url 'normal-delete' event.id %}" method="POST">
+    {% csrf_token %}
+    <input type="submit" value="Delete this event?"/>
+</form>
+{% if event.recurringEventId %}
+<form action="{% url 'recurrence-delete' event.id %}" method="POST">
+    {% csrf_token %}
+    <input type="submit" value="Delete all recurring?"/>
+</form>
+{% endif %}
+{% endif %}
+
 {% endblock %}
