@@ -8,8 +8,10 @@ from django.contrib import messages
 from django.core.urlresolvers import reverse
 from django.core import serializers
 
-from .forms import SettingsForm
+from .forms import SettingsForm, UserSettingsForm
 from .models import Settings, BotsRunning, Plugins, NetworkPlugins, RoomPlugins, NetworkPermissions, RoomPermissions
+from logos.roomlib import get_user_option, set_user_option
+
 import copy
 import pickle
 import socket
@@ -49,6 +51,24 @@ def _get_rpc_url():
 
     
 @login_required()
+def user_settings(request):
+    if request.method == "GET":
+        trigger = get_user_option(request.user, "trigger")
+        if trigger:
+            form = UserSettingsForm(initial={'trigger_choice':trigger})
+        else:
+            form = UserSettingsForm()
+    else: # POST
+        form = UserSettingsForm(request.POST)
+        if form.is_valid():
+            trigger = form.cleaned_data['trigger_choice']
+            set_user_option(request.user, 'trigger', trigger)
+            messages.add_message(request, messages.INFO, 'User Trigger Successfully set to "'+trigger+'"')
+            return redirect('plugins')
+
+    return render(request, 'logos/user_settings.html', {'form':form})
+
+@login_required()
 def admin(request):
     return HttpResponseRedirect(reverse('logos.views.bots'))
 
@@ -74,45 +94,55 @@ def bots(request):
     context = {'bots':bots}
     return render(request, 'logos/bots.html', context)
 
+def configure_plugins(app, plugins):
+    """Populate plugins with configuration view information"""
+    for plugin in plugins:
+        # 'logos' app causes confusion because it
+        # it matches the Plugin class
+
+        try:
+            plugin_mod = __import__(app + ".bot_plugin").bot_plugin
+            for attr in dir(plugin_mod):
+                a1 = getattr(plugin_mod, attr)
+                # Check if the class is a class derived from 
+                # bot.PluginDespatch.Plugin
+                # but is not the base class only
+
+                if inspect.isclass(a1) and \
+                a1 != Plugin and \
+                issubclass(a1, Plugin) and \
+                hasattr(a1, 'plugin') and \
+                a1.plugin[0] == plugin.plugin.name:  
+                    if app == 'logos': 
+                        plugin.user_view = 'logos.views.user_settings'
+                        return
+
+                    appmod = __import__(app + ".settings").settings
+                    if hasattr(appmod, 'USER_SETTINGS_VIEW'):
+                        plugin.user_view = appmod.USER_SETTINGS_VIEW
+                        logger.debug( "Add user settings for " + app) 
+                    if hasattr(appmod, 'SUPERUSER_SETTINGS_VIEW'):
+                        plugin.superuser_view = appmod.SUPERUSER_SETTINGS_VIEW
+                        logger.debug( "Add superuser settings for " + app) 
+                    if hasattr(appmod, 'DASHBOARD_VIEW'):
+                        plugin.dashboard_view = appmod.DASHBOARD_VIEW
+                        logger.debug( "Add dashboard settings for " + app) 
+                    return
+
+
+        except ImportError:
+            pass
+
+
+
 @login_required()    
 def plugins(request):
     plugins = NetworkPlugins.objects.order_by('plugin__name')
     networks = []
+    for app in settings.INSTALLED_APPS:
+        configure_plugins(app, plugins)
+
     for plugin in plugins:
-        for app in settings.INSTALLED_APPS:
-            # 'logos' app causes confusion because it
-            # it matches the Plugin class
-            #if app == 'logos': continue
-            try:
-                plugin_mod = __import__(app + ".bot_plugin").bot_plugin
-                for attr in dir(plugin_mod):
-                    a1 = getattr(plugin_mod, attr)
-                    # Check if the class is a class derived from 
-                    # bot.PluginDespatch.Plugin
-                    # but is not the base class only
-
-                    if inspect.isclass(a1) and \
-                    a1 != Plugin and \
-                    issubclass(a1, Plugin) and \
-                    hasattr(a1, 'plugin') and \
-                    a1.plugin[0] == plugin.plugin.name:  
-                        
-                        appmod = __import__(app + ".settings").settings
-                        if hasattr(appmod, 'USER_SETTINGS_VIEW'):
-                            plugin.user_view = appmod.USER_SETTINGS_VIEW
-                            logger.debug( "Add user settings for " + app) 
-                        if hasattr(appmod, 'SUPERUSER_SETTINGS_VIEW'):
-                            plugin.superuser_view = appmod.SUPERUSER_SETTINGS_VIEW
-                            logger.debug( "Add superuser settings for " + app) 
-                        if hasattr(appmod, 'DASHBOARD_VIEW'):
-                            plugin.dashboard_view = appmod.DASHBOARD_VIEW
-                            logger.debug( "Add dashboard settings for " + app) 
-                        break
-
-
-            except ImportError:
-                pass
-
         if plugin.network not in networks:
             networks.append(plugin.network)
     context = {'plugins':plugins, 'networks':networks, 'networkpermissions':NetworkPermissions}

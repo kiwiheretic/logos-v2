@@ -4,6 +4,10 @@
 {% block style %}
 {{block.super}}
 
+#plugin-list li {
+    margin-bottom:10px;
+}
+
 .custom-button-link {
     font-size: small;
   
@@ -27,8 +31,6 @@
     box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.4), 0 1px 1px rgba(0, 0, 0, 0.2);            
   
 }
-
-
 
 .plugin-activated {
   background-color: steelblue;
@@ -62,7 +64,7 @@ It may destablise the running bot.</p>
 
 <h2>Plugins</h2>
 
-<ul>
+<ul id="plugin-list">
 {% for plugin in plugins %}
   {% ifchanged plugin.plugin.name %}
   {% if not forloop.first %}</li>{% endif %}<li>

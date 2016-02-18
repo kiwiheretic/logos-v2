@@ -8,7 +8,7 @@
 # into your database.
 from __future__ import unicode_literals
 from django.core.urlresolvers import reverse
-
+from django.contrib.auth.models import User
 from django.db import models
 from django.conf import settings
 
@@ -29,6 +29,12 @@ class OptionLabels(models.Model):
     # form field label
     label = models.CharField(max_length=40)
     option_name = models.CharField(max_length=15)
+
+class UserOptions(models.Model):
+    namespace = models.CharField(max_length=250)
+    user = models.ForeignKey(User)
+    option = models.CharField(max_length=50)
+    value = models.CharField(max_length=200, null=True, blank=True)
 
 class RoomOptions(models.Model):
     network = models.TextField()

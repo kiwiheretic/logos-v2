@@ -13,18 +13,17 @@ admin.autodiscover()
 urlpatterns = patterns('',
     # Examples:
     url(r'^$', 'logos.views.root_url'),
-    # url(r'^logos/', include('logos.foo.urls')),
+    url(r'^logos/user-settings/$', 'logos.views.user_settings'),
 
     # Uncomment the admin/doc line below to enable admin documentation:
     # url(r'^admin/doc/', include('django.contrib.admindocs.urls')),
     url(r'^accounts/', include('registration.backends.default.urls')),
     url(r'^accounts/profile/', 'logos.views.profile'),
-#    url(r'^accounts/profile/', include('cloud_notes.urls')),
     
     url(r'^logos-admin/$', 'logos.views.admin'),
     url(r'^logos-admin/bots/', 'logos.views.bots'),
     
-    url(r'^logos-admin/plugins/$', 'logos.views.plugins'),
+    url(r'^logos-admin/plugins/$', 'logos.views.plugins', name='plugins'),
     url(r'^logos-admin/plugins/network/(\d+)', 'logos.views.networkplugins'),
     url(r'^logos-admin/plugins/network/delete/(\S+)/', 'logos.views.deletenetworkplugins'),
     url(r'^logos-admin/plugins/network/room/activate/(\d+)/', 'logos.views.plugin_room_activate'),
@@ -35,6 +34,7 @@ urlpatterns = patterns('',
     url(r'^memos/', include('cloud_memos.urls')),
     url(r'^forum/', include('pybb.urls', namespace='pybb')),
     url(r'^gcal/', include('gcalendar.urls')),
+    url(r'^bible/', include('bibleapp.urls')),
     url(r'^bots/approve/(\d+)', 'logos.views.bot_approval'),
     url(r'^bots/deny/(\d+)', 'logos.views.bot_deny'),
     

@@ -16,7 +16,7 @@ import logos.utils
 
 from copy import copy
 from logos.roomlib import get_room_option, set_room_option, get_startup_rooms, \
-    get_global_option
+    get_global_option, get_user_option
 
 from pluginDespatch import PluginDespatcher as Plugins
 from twisted.internet import reactor, protocol
@@ -689,6 +689,7 @@ class IRCBot(irc.IRCClient):
         # or to the channel if it was public.  The problem with the 'channel'
         # parameter is that is shows the sender (not the recipient) in the context
         # of a private message.  Hence the need to set the chan variable below.
+
         if channel == self.factory.nickname:
             chan = user.split('!')[0]
             # determine the trigger for private chat window

@@ -1,7 +1,6 @@
 #roomlib.py
-from logos.models import RoomOptions, Settings
+from logos.models import RoomOptions, UserOptions, Settings
 from django.core.exceptions import ObjectDoesNotExist
-import pdb
 
 def set_global_option(option, value):
     """ Set a global option for a given plugin"""
@@ -54,3 +53,24 @@ def set_room_option(network, room, opt, value):
     room_opt.value = value
 
     room_opt.save()
+    
+
+def get_user_option(user, opt, namespace="default"):
+    """ Get a user specific option for a given plugin"""
+    try:
+        value_of_opt = UserOptions.objects.get(user = user,
+                                           namespace = namespace,
+                                           option = opt).value
+        return value_of_opt
+    except ObjectDoesNotExist:
+        return None
+
+def set_user_option(user, opt, value, namespace="default"):
+    """ Set a user specific option for a given plugin"""
+    user_opt, _ = UserOptions.objects.get_or_create(user = user,
+                           namespace = namespace,
+                           option = opt)
+
+    user_opt.value = value
+
+    user_opt.save()

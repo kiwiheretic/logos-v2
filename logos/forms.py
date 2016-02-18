@@ -12,6 +12,12 @@ class DynamicOptionsForm(forms.Form):
         for i, row in enumerate(qs):
             self.fields['custom_%d' % (i,)] = forms.CharField(label=row.label)
     
+
+    
+class UserSettingsForm(forms.Form):
+    t_choices = (('', 'Room Default'), ('~','~'),('!', '!'),('.','.'), ('?', '?'))
+    trigger_choice = forms.ChoiceField(choices = t_choices)
+
 class SettingsForm(forms.Form):
     rpc_host = forms.CharField(label='RPC Host',max_length=20, 
                                widget=forms.TextInput(attrs={'size':20}))
