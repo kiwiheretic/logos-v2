@@ -39,8 +39,6 @@ class Command(BaseCommand):
                     help="The IRC nickname the bot assumes.  Defaults to MyBible"),
         make_option('--nick-password', '-p', action='store',
                     help="The bot nickserv password.  Defaults to 'qwerty'"),
-        make_option('--sys-password', '-P', action='store',
-                    help="The bot control password.  Defaults to 'zxcvbnm'"),
         make_option('--no-services', action='store_true',
                     help="Don't try and use IRC services"),
         make_option('--monitor-idle-times', action='store_true',
@@ -71,11 +69,6 @@ class Command(BaseCommand):
         else:
             nick_password = ''
 
-        if options['sys_password']:
-            sys_password = options['sys_password']
-        else:
-            sys_password = 'zxcvbnm'
-        
         if options['rpc_port']:
             rpc_port = int(options['rpc_port'])
         else:
@@ -94,6 +87,6 @@ class Command(BaseCommand):
 
         print ("Starting Logos Bot, Please Wait...")
         irc.instantiateIRCBot(server, engine_room, nickname, \
-                              sys_password, nick_password, rpc_port, \
+                              nick_password, rpc_port, \
                               extra_options)
 

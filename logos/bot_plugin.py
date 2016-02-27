@@ -21,7 +21,7 @@ from bot.logos_decorators import irc_room_permission_required, \
 from logos.roomlib import get_room_option, get_global_option
 from bot.pluginDespatch import Plugin
 from logos.roomlib import get_room_option, set_room_option, set_room_defaults,\
-    set_global_option
+    set_global_option, get_user_option
     
 
 
@@ -87,13 +87,18 @@ class SystemCoreCommands(Plugin):
         what_triggers_rgx = re.search("what are (?:the|your) triggers", message, re.I)
         if what_triggers_rgx:
             chan = channel.lower()
+            nick, _ = user.split('!')
             # determine the trigger for this room
             room_trigger = get_room_option(self.factory.network, channel, 'activation')
             pvt_trigger = get_global_option('pvt-trigger')
             if not pvt_trigger: pvt_trigger = "!"
-            self.say(chan, 
-                     "Room trigger is {} private windows trigger is {}".\
-                         format(room_trigger,pvt_trigger))
+            user = self.get_auth().get_user_obj(nick)
+            user_trigger = get_user_option(user, "trigger")
+            if user_trigger:
+                msg = "Room trigger is {} private windows trigger is {} Your personal user trigger is {}".format(room_trigger,pvt_trigger, user_trigger)
+            else:
+                msg = "Room trigger is {} private windows trigger is {}".format(room_trigger,pvt_trigger)
+            self.say(chan, msg) 
 
 
     def actual_host(self, regex, chan, nick, **kwargs):

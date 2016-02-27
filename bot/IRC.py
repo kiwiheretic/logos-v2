@@ -770,7 +770,7 @@ class IRCBotFactory(protocol.ClientFactory):
     protocol = IRCBot
 
     def __init__(self, reactor, server, channel, nickname,  \
-                 sys_password, nickserv_pw, extra_options):
+                 nickserv_pw, extra_options):
         
         self.shutting_down = False
         self.reactor = reactor
@@ -779,7 +779,6 @@ class IRCBotFactory(protocol.ClientFactory):
         self.conn = None  # No IRC connection yet
         self.network = server
         self.nickserv_password = nickserv_pw
-        self.sys_password = sys_password
         self.extra_options = extra_options
         
  
@@ -804,7 +803,7 @@ class IRCBotFactory(protocol.ClientFactory):
 
 ########################################################################
 
-def instantiateIRCBot(networks, room, botName, sys_password, 
+def instantiateIRCBot(networks, room, botName,  
                       nickserv, rpc_port=None, 
                       extra_options=None):
 
@@ -815,16 +814,23 @@ def instantiateIRCBot(networks, room, botName, sys_password,
     # Start the IRC Bot
     factories = []
     
-    for net_port in networks:
-        if ':' in net_port:
-            network, port = net_port.split(':')
-            port = int(port)
-        else:
-            network = net_port
-            port = 6667
+    for netwrk in networks:
+        params = {'port':'6667', 'nick':botName, 'control':room, 'nickserv':None}
+        for param in netwrk.split('/'):
+            if ':' in param:
+                k, v = param.split(':')
+            else:
+                v = param
+                k = 'network'
+            params.update({k:v})
+        port = int(params['port'])
+        network = params['network']
+        nick = params['nick']
+        control_room = params['control']
+        nickserv = params['nickserv']
         logger.info ("connecting on "+str((network, port)))   
-        factory = IRCBotFactory(reactor, network, room, botName,\
-                                     sys_password, nickserv, \
+        factory = IRCBotFactory(reactor, network, control_room, nick,\
+                                     nickserv, \
                                      extra_options)
         reactor.connectTCP(network, port, factory )
         factories.append(factory)
