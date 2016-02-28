@@ -682,7 +682,7 @@ class IRCBot(irc.IRCClient):
         # ... and make all lower case for easy pattern matching
         #msg = msg.lower()
 
-
+        nick = user.split('!')[0]
 
         # if we wish to return a self.msg(...) to an incoming command
         # we need to send it to a nickname if the message was private
@@ -690,21 +690,22 @@ class IRCBot(irc.IRCClient):
         # parameter is that is shows the sender (not the recipient) in the context
         # of a private message.  Hence the need to set the chan variable below.
 
+
+        user_obj = self.plugins.authenticated_users.get_user_obj(nick)
+        act = get_user_option(user_obj, "trigger")
         if channel == self.factory.nickname:
             chan = user.split('!')[0]
             # determine the trigger for private chat window
-            act = get_global_option('pvt-trigger')
+            if not act: act = get_global_option('pvt-trigger')
             
         else:
             chan = channel.lower()
             # determine the trigger for this room
-            act = get_room_option(self.factory.network, channel, 'activation')
+            if not act: act = get_room_option(self.factory.network, channel, 'activation')
         
         if not act: act = '!'
 
-        # set the nick variable for use with self.msg(...) as user,
-        # as an argument, doesn't work.  
-        nick = user.split('!')[0]
+
         mch = re.match(re.escape(act)+ "(.*)", msg)
         if mch:
             msg = mch.group(1).strip()

@@ -29,7 +29,7 @@ from django.db.models import Min, Max
 
 from bot.pluginDespatch import Plugin, CommandException
 from logos.roomlib import get_room_option, set_room_option, set_global_option, \
-    get_global_option
+    get_global_option, get_user_option
 from logos.pluginlib import CommandDecodeException
 from .models import BibleTranslations, BibleBooks, BibleVerses, \
     BibleConcordance, BibleDict, XRefs
@@ -145,11 +145,14 @@ class BibleBot(Plugin):
             trans_list.append(tr.name)
         return trans_list
     
-    def _get_defaulttranslation(self, channel):
-        if channel[0] == '#':
-            res = get_room_option(self.network, channel,'default_translation')
-        else:
-            res = get_global_option('pvt-translation')
+    def _get_defaulttranslation(self, channel, nick):
+        user = self.get_auth().get_user_obj(nick)
+        res = get_user_option(user, "translation")
+        if not res:
+            if channel[0] == '#':
+                res = get_room_option(self.network, channel,'default_translation')
+            else:
+                res = get_global_option('pvt-translation')
         if not res:
             res = 'kjv' # default translation
             
@@ -183,7 +186,7 @@ class BibleBot(Plugin):
         verselimit = int(self._get_verselimit(chan))
 
         # Find default translation for the current room
-        def_trans = self._get_defaulttranslation(chan)
+        def_trans = self._get_defaulttranslation(chan, nick)
 
         passage_ref = passage_ref.lower().strip()
         mch1 = re.match(r"([a-z\+]+)\s+([1-3]?\s*[a-z]+)\s+(.*)", passage_ref)
@@ -609,7 +612,7 @@ class BibleBot(Plugin):
 
         refs = self.xref_views[nick.lower()][0:3]
         del self.xref_views[nick.lower()][0:3]
-        trans_name = self._get_defaulttranslation(chan)
+        trans_name = self._get_defaulttranslation(chan, nick)
         trans = BibleTranslations.objects.get(name = trans_name)
         if not refs:
             self.say(chan, "*** No more refs to view ***")
@@ -691,7 +694,8 @@ class BibleBot(Plugin):
         try:
             translation = regex.group('translation')
         except IndexError:
-            translation = get_room_option(self.factory.network, chan, "default_translation")
+            translation = self._get_defaulttranslation(chan, nick)
+            #translation = get_room_option(self.factory.network, chan, "default_translation")
         
         try:
             trans = BibleTranslations.objects.get(name = translation)
@@ -738,7 +742,7 @@ class BibleBot(Plugin):
          
         words = [x.lower() for x  in regex.group(1).strip().split(' ')]
 
-        def_trans = self._get_defaulttranslation(chan)
+        def_trans = self._get_defaulttranslation(chan, nick)
         parse_res = self._parse_trans_book_range(def_trans, words)            
 
         if len(words) == 0:
@@ -794,7 +798,7 @@ class BibleBot(Plugin):
         searchlimit = self._get_searchlimit(chan)
         words = [x.lower() for x  in phrase.strip().split(' ')]
         ref_words = [x.lower() for x in ref.strip().split(' ')]
-        def_trans = self._get_defaulttranslation(chan)
+        def_trans = self._get_defaulttranslation(chan, nick)
         parse_res = self._parse_trans_book_range(def_trans, ref_words)
         
         if len(words) == 0:
