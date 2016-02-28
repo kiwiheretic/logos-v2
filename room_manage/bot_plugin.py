@@ -135,7 +135,7 @@ class RoomManagementPlugin(Plugin):
     
     def privmsg(self, user, channel, message):
         # Anti-flood checks
-        if self.is_plugin_enabled(channel) and message[0] != get_room_option(self.network, channel, 'activation'):
+        if self.is_plugin_enabled(channel) and channel[0] == '#' and message[0] != get_room_option(self.network, channel, 'activation'):
 
             my_nick = self.get_nickname()
             
