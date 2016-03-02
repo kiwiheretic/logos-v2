@@ -1,0 +1,10 @@
+{% extends "base.html" %}
+
+{% block menu_title %}Room Management Module Menu{% endblock %}
+{% block button_menu %}
+<ul id="app-button-menu-container" class="btn-menu-container">
+
+    <li><a href="{% url 'room_manage.views.index' %}" class="button-link">List</a></li>
+    <li><a href="{% url 'logos.views.profile' %}" class="button-link">Main Menu</a></li>
+</ul>
+{% endblock %}

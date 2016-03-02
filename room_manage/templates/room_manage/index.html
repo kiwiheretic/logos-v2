@@ -1,0 +1,33 @@
+{% extends 'room_manage/rm_base.html' %}
+
+{% block style %}
+{{block.super}}
+
+ul {
+   list-style-type: none; 
+}
+
+li {
+    margin-left: -40px;
+}
+
+{% endblock %}
+
+{% block content %}
+    <h2>Nick Listing</h2>
+<ul>
+{% for nick in nicklist %}
+
+  {% ifchanged nick.network %}
+  {% if not forloop.first %}</ul> </li>{% endif %}<li>
+
+  <h3>{{nick.network}}</h3>
+    <ul>
+
+  {% endifchanged %}
+<li>
+{{nick.host_mask}} {{nick.nick}} 
+</li>
+{% endfor %}
+</ul>
+{% endblock %}
