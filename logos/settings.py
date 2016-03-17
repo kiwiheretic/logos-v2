@@ -252,6 +252,7 @@ INSTALLED_APPS = (
     'room_manage',
     'scripture_game',
     'pybb',
+    'botnet',
     'gcalendar',
     'widget_tweaks',
 #    'simple_forums',

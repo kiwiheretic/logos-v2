@@ -84,7 +84,8 @@ def bots(request):
             networks = srv.get_networks()
         except Exception as e:
             print e.errno
-            if e.errno == 10061:
+            # error 111 is connection refused
+            if e.errno == 10061 or e.errno == 111:
                 dead = True
             else:
                 raise

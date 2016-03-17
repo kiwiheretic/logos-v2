@@ -53,7 +53,6 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
 #        logger.debug( "options = "+ str(options))
-
         if options['server']:
             server = options['server']
         else:
@@ -80,6 +79,8 @@ class Command(BaseCommand):
             engine_room = '#engineroom'
         
         extra_options = {}
+
+        extra_options['rpc_port'] = options['rpc_port']
         extra_options['no_services'] = options['no_services']
         extra_options['room_key'] = options['room_key']
         extra_options['startup_script'] = options['startup_script']

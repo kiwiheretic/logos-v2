@@ -696,7 +696,7 @@ class PluginDespatcher(object):
             for m in self._obj_list:
                 logger.debug("Examining {} plugin".format(m.plugin[1]))
                 if self.is_plugin_enabled(chan, m): 
-                    if hasattr(m, 'commands'):
+                    if hasattr(m, 'commands') and m.commands:
                         for cmd in m.commands:
                             if len(cmd) == 3:
                                 rgx_s, f, _ = cmd

@@ -1,0 +1,94 @@
+{% extends 'logos/admin_base.html' %}
+{% load guardian_tags %}
+
+{% block style %}
+{{block.super}}
+
+ul {
+   list-style-type: none; 
+}
+
+li {
+    margin-left: -40px;
+}
+
+label {
+    clear:left;
+    float:left;
+    width:100px;
+}
+
+input[type="text"] {
+    max-width:200px;
+    width:100%;
+}
+
+@media screen and (min-width: 400px) {
+    li {
+        margin-left: auto;
+    }
+
+    label {
+        text-align: right;
+        margin-right:5px;
+    }
+
+    input[type="text"] {
+        max-width:600px;
+        width:100%;
+    }
+    /*
+    body {
+        background-color: lightgreen;
+    }
+    */
+}
+
+{% endblock %}
+
+{% block content %}
+<h2>BotNet Setup</h2>
+
+{% if 'delete' in request.POST %}
+<p>Are you sure you wish to delete group &quot;{{group.group_name}}&quot;</p>
+<form action="{% url 'groups' group.id %}" method="POST">
+        {% csrf_token %}
+        <input type="submit" name="delete_confirm_yes" value="Yes"/>
+        <input type="submit" name="delete_confirm_no" value="No"/>
+    </form>
+{% else %}
+    {% if groups %}
+    <p>Groups</p>
+    <ul>
+        {% for group in groups %}
+        <li>{{group.group_name}}
+            <form action="{% url 'groups' group.id %}" method="POST">
+                {% csrf_token %}
+                <input type="submit" name="delete" value="delete"/>
+            </form>
+            <form action="{% url 'groups' group.id %}" method="POST">
+                {% csrf_token %}
+                <input type="submit" name="edit" value="edit"/>
+            </form>
+        </li>
+        {% if group.botnetrooms_set.all %}
+        <li><ul>
+            {% for room in group.botnetrooms_set.all %}
+            <li>{{room.network}} - {{room.room}}</li>
+
+            {% endfor %}
+        </ul></li>
+        {% endif %}
+        {% endfor %}
+    </ul>
+    {% endif %}
+    <form action="." method="POST">
+        {% csrf_token %}
+        <ul>
+        {{form.as_ul}}
+        </ul>
+        <input type="submit" value="save"/>
+
+    </form>
+{% endif %}
+{% endblock %}

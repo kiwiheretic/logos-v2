@@ -770,11 +770,12 @@ class IRCBot(irc.IRCClient):
 class IRCBotFactory(protocol.ClientFactory):
     protocol = IRCBot
 
-    def __init__(self, reactor, server, channel, nickname,  \
+    def __init__(self, factories, reactor, server, channel, nickname,  \
                  nickserv_pw, extra_options):
         
         self.shutting_down = False
         self.reactor = reactor
+        self.factories = factories
         self.channel = channel
         self.nickname = nickname
         self.conn = None  # No IRC connection yet
@@ -830,7 +831,7 @@ def instantiateIRCBot(networks, room, botName,
         control_room = params['control']
         nickserv = params['nickserv']
         logger.info ("connecting on "+str((network, port)))   
-        factory = IRCBotFactory(reactor, network, control_room, nick,\
+        factory = IRCBotFactory(factories, reactor, network, control_room, nick,\
                                      nickserv, \
                                      extra_options)
         reactor.connectTCP(network, port, factory )

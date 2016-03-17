@@ -54,7 +54,8 @@ class RPC(xmlrpc.XMLRPC):
         xmlrpc.XMLRPC.__init__(self, *args, **kwargs)
         self.factories=factories
     
-    """ method names must be prefixed by xmlrpc_ """    
+    """ method names must be prefixed by xmlrpc_ in order
+    for the method to be visible to an RPC client """    
     def xmlrpc_get_networks(self):
         networks = [f.network for f in self.factories]
         return networks
@@ -66,7 +67,20 @@ class RPC(xmlrpc.XMLRPC):
         obj = proxyobj(self.factories, max_recursion = 10)
         return obj
         
-    """        
+    def xmlrpc_get_rooms(self):
+        room_list = []
+        for f in self.factories:
+            if f.conn:
+                rooms = f.conn.nicks_db.get_rooms()
+                room_data = []
+                for room in rooms:
+                    ops = f.conn.nicks_db.get_op_status(f.nickname, room)
+                    room_data.append({'room':room, 'ops':ops})
+                room_list.append({'network':f.network, 'rooms':room_data})
+        return room_list
+
+
+"""
     def xmlrpc_get_network_name(self):
         if self.ircfactory:
             return self.ircfactory.network

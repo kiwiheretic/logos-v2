@@ -99,4 +99,6 @@ class RoomPlugins(models.Model):
     net = models.ForeignKey('NetworkPlugins')
     room = models.TextField()    
     enabled = models.BooleanField(default=False)
-    
+   
+    def __str__(self):
+        return "{}:{}:{}".format(self.net.plugin.name, self.net.network, self.room)
