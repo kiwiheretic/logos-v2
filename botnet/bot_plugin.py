@@ -38,6 +38,26 @@ class BotNetPlugin(Plugin):
                             relay_group['factories'].append(f)
             self.relay_groups.append(relay_group)
 
+
+    def nicklist(self, channel):
+        # Just choose first matching group at this point
+        for group in self.relay_groups:
+            if (self.network, channel.lower()) in group['channels']:
+                userlist = []
+                for f in group['factories']:
+                    for network, chan in group['channels']:
+                        # Skip the network and channel the nick is already on
+                        # (They already have the irc nick list for their own
+                        # network)
+                        if self.network == network and chan == channel.lower():
+                            continue
+                        if network == f.network:
+                            nicks = f.conn.nicks_db.get_room_nicks(channel)
+                            for nick1 in nicks:
+                                yield (f.network, chan, nick1)
+                break  # Just do for first matching group
+
+
     def privmsg(self, user, channel, message):
         nick,_ = user.split('!')
         username = self.get_auth().get_username(nick)
@@ -53,3 +73,13 @@ class BotNetPlugin(Plugin):
             pass
 
 
+    def userJoined(self, nick, channel):
+        """ Notify nick of who is in room when they join room """
+        for network, chan, nnick in self.nicklist(channel):
+            print (network, chan, nnick)
+            msg = "{}/{}/{}".format(network, chan, nnick)
+            self.notice(nick, msg)
+
+
+    def userLeft(self, nick, channel):
+        pass
