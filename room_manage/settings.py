@@ -4,5 +4,5 @@ DASHBOARD_VIEW = 'room_manage.views.index'
 # Button name for front page
 BUTTON_NAME = 'Room Management'
 
-#SUPERUSER_SETTINGS_VIEW = 'gcalendar.views.site_setup'
-#USER_SETTINGS_VIEW = 'gcalendar.views.user_setup'
+SUPERUSER_SETTINGS_VIEW = 'room_manage.views.site_setup'
+USER_SETTINGS_VIEW = 'room_manage.views.user_setup'

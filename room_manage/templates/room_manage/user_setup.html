@@ -1,0 +1,41 @@
+{% extends 'room_manage/rm_user_setup_base.html' %}
+
+{% block style %}
+{{block.super}}
+
+ul {
+   list-style-type: none; 
+}
+
+li {
+    margin-left: -40px;
+}
+
+.room-list {
+    height:150px;
+    width:200px;
+}
+
+{% endblock %}
+
+{% block content %}
+    <h2>User Setup</h2>
+
+    {% for room in rooms %}
+        {% ifchanged room.network %}
+        {% if not forloop.first %}
+            </select>
+            <select class="room-list">
+                <option name="eggs">#eggs</option>
+            </select>
+    
+        {% endif %}
+        <h3>Network: {{room.network}}</h3>
+    <p>Select rooms below to add to a linked group</p>
+        <select multiple class="room-list">
+        {% endifchanged %}
+        {% for room_data in room.rooms %}
+        <option value="{{room_data.room|slice:'1:'}}">{{room_data.room}}</option>
+        {% endfor %}
+    {% endfor %}    
+{% endblock %}

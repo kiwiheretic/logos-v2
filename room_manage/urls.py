@@ -8,4 +8,6 @@ app_name = "rm"
 
 urlpatterns = patterns('room_manage.views',
     url(r'^index/$', 'index', name='index'),
+    url(r'^site-setup/$', 'site_setup'),
+    url(r'^user-setup/$', 'user_setup'),
 )

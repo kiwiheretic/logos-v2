@@ -2,6 +2,8 @@ from __future__ import absolute_import
 from django.shortcuts import render
 
 from .models import NickHistory
+from logos.models import BotsRunning
+import xmlrpclib
 # Create your views here.
 
 def index(request):
@@ -17,3 +19,21 @@ def index(request):
             nicklist.append(rec)
             
     return render(request, 'room_manage/index.html', {'nicklist':nicklist})
+
+def site_setup(request):
+    return render(request, 'room_manage/site_setup.html')
+
+def user_setup(request):
+    bots_running = BotsRunning.objects.all()
+    bots = []
+    rooms = []
+    for bot in bots_running:
+        url = "http://localhost:{}/".format(bot.rpc)
+        srv = xmlrpclib.Server(url)
+        dead = False
+        try:
+            rooms = srv.get_rooms()
+        except Exception as e:
+            logger.error("Errpr occurred when loading rooms - Contact Administrator")
+    return render(request, 'room_manage/user_setup.html', {'rooms':rooms})
+
