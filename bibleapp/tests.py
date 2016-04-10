@@ -13,8 +13,6 @@ class TestBibleBot(LogosTestCase):
     plugin_class = BibleBot
     
     def testVerseLookup(self):
-        
-        
         output = self.plugin.send_command("John 3 16")
         self.assertIn('John 3:16', output)
         print (output)
