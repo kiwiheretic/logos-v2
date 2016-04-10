@@ -560,7 +560,10 @@ class IRCBot(irc.IRCClient):
         
     def joined(self, channel):
         """ callback for when this bot has joined a channel """
-        logger.info( "%s has joined %s on %s " % ( self.factory.nickname, channel, self.factory.network))
+        if channel == self.factory.channel: # control room?
+            logger.info( "%s has joined control room %s on %s " % ( self.factory.nickname, channel, self.factory.network))
+        else:
+            logger.info( "%s has joined %s on %s " % ( self.factory.nickname, channel, self.factory.network))
 
         irc.IRCClient.joined(self, channel)
 
