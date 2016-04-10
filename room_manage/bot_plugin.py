@@ -105,13 +105,14 @@ class RoomManagementPlugin(Plugin):
         self.commands = ((r'nicks', self.nicks, 'show nicks in room'),
                          (r'kick (?P<room>#\S+) (?P<nick>\S+)', self.kick_nick, 'kick nick from room'),
                          (r'ban (?P<room>#\S+) (?P<nick>\S+)', self.ban_nick, 'ban (mute) nick in room'),
-                         (r'remove penalty (?P<room>#\S+) (?P<nick>\S+)', self.remove_penalty, 'remove room penalty'),
+                         # (r'remove penalty (?P<room>#\S+) (?P<nick>\S+)', self.remove_penalty, 'remove room penalty'),
                          # (r'down vote (?P<nick>\S+)', self.down_vote, 'Down vote a nick'),
                          # (r'dv (?P<nick>\S+)', self.down_vote, 'Down vote a nick'),
                          
                          (r'timer', self.timer, 'demonstrates the timer in a plugin'),
                          # (r'mute (?P<room>#\S+) (?P<nick>\S+)', self.mute, 'normal user despatch'),
                          # (r'mute (?P<nick>\S+)', self.mute, 'normal user despatch'),
+                         (r'aka (?P<nick>\S+)', self.aka, 'Show nicks with same ip'),
                          (r'op me', self.op_me, 'gives ops'),
                          (r'deop me', self.deop_me, 'removes ops'),
                          (r'kick me', self.kick_me, 'kicks you off channel')
@@ -179,6 +180,27 @@ class RoomManagementPlugin(Plugin):
             end_time = end_date,
             kick = True)
         penalty.save()
+
+    def aka(self, regex, chan, nick, **kwargs):
+        this_nick = regex.group('nick')
+        hostmask1 = self.get_host(this_nick)
+        # TODO: If hostmask1 is None then abort
+        if not hostmask1:
+            self.say(chan, "Debug Error: Host mask missing")
+            return
+        hostmask = hostmask1.split('@')[1]
+        nicks = NickHistory.objects.filter(host_mask__contains = hostmask).order_by('nick')
+        unique_nicks = set()
+        for nick in nicks:
+            print nick.nick
+            if nick.nick.lower() != this_nick.lower():
+                unique_nicks.add(nick.nick)
+        if len(unique_nicks) > 0:
+            nick_list = ", ".join(list(unique_nicks))
+            self.say(chan, "{} is {}".format(this_nick, nick_list))
+        else:
+            self.say(chan, "No other nicks for {}".format(this_nick))
+
 
     @irc_room_permission_required('room_admin')
     def remove_penalty(self, regex, chan, nick, **kwargs):

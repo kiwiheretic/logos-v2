@@ -116,8 +116,19 @@ class LogosTestCase(unittest.TestCase):
         self.plugin = self.plugin_class()
 
     @property
+    def network(self):
+        return self.plugin.network
+
+    @property
     def room(self):
         return self.plugin.chan    
+
+    def set_host(self, hostmask):
+        if '!' in hostmask:
+            self.plugin.user = hostmask
+        else:
+            self.plugin.user = self.plugin.nickname + "!" + hostmask
+
 
     def set_channel(self, channel):
         self.plugin.chan = channel
