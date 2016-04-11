@@ -40,3 +40,8 @@ class TestRM(LogosTestCase):
         self.set_host('jake@banana.pants.com')
         output = self.plugin.send_command("aka jake")
         self.assertIn('No other nicks for jake', output)
+
+    def testHosts(self):
+        output = self.plugin.send_command("hosts splat")
+        self.assertIn('nowhere', output)
+        self.assertIn('fiasco', output)
