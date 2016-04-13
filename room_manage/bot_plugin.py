@@ -224,13 +224,17 @@ class RoomManagementPlugin(Plugin):
         nicks = NickHistory.objects.filter(network=self.network, nick__iexact = this_nick).order_by('host_mask')
         hosts = set()
         for nickl in nicks:
-            hosts.add(nickl.host_mask)
+            if '@' in nickl.host_mask:
+                hostmask = nickl.host_mask.split('@')[1]
+            else:
+                hostmask = nickl.host_mask
+            hosts.add(hostmask)
 
         if hosts:
             for host in hosts:
-                self.notice(nick, host)
+                self.say(chan, host)
         else:
-            self.notice(nick, 'No host masks found')
+            self.say(chan, 'No host masks found')
 
     @irc_room_permission_required('room_admin')
     def remove_penalty(self, regex, chan, nick, **kwargs):

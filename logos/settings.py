@@ -4,7 +4,6 @@ import sys
 import socket
 import logging
 import email_settings
-from importlib import import_module
 
 
 logger = logging.getLogger(__name__)
@@ -254,6 +253,10 @@ INSTALLED_APPS = (
     'pybb',
     'botnet',
     'gcalendar',
+    'urlcatcher',
+    'twitterapp',
+
+
     'widget_tweaks',
 #    'simple_forums',
     # Uncomment the next line to enable the admin:
@@ -274,24 +277,6 @@ HAYSTACK_CONNECTIONS = {
         'PATH': os.path.join(os.path.dirname(__file__), 'whoosh_index'),
     },
 }
-
-# Look through all settings.py files and import all symbols
-# directly into this file as long as they won't overwrite an existing setting.
-#for app in INSTALLED_APPS:
-#    if app == "logos": continue # Don't reimport this file
-#    app_path = os.path.join(BASE_DIR, app) 
-#    if os.path.isdir(app_path):
-#        settings_path = os.path.join(app_path, 'settings.py')
-#        if os.path.exists(settings_path):
-#            print("Importing {}".format(app + ".settings"))
-#            mod = import_module(app + ".settings")
-#            for elmtname in dir(mod):
-#                if elmtname[0] == '_': continue # skip over __doc__, __name__ and private methods
-#                if elmtname not in globals():
-#                    globals()[elmtname] = getattr(mod, elmtname)
-#                else:
-#                    print("Could not import duplicate symbol {} from {}".format(elmtname, mod.__name__))
-#
 
 
 # A sample logging configuration. The only tangible logging
@@ -375,7 +360,7 @@ LOGGING = {
             'propagate': False,
         },
         'room_manage': {
-            'handlers': ['console', 'file'],
+            'handlers': ['file'],
             'level': 'DEBUG',
             'propagate': False,
         },

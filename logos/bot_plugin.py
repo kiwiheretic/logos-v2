@@ -57,6 +57,7 @@ class SystemCoreCommands(Plugin):
                          (r'list\s+(?:perms|permissions)', self.list_perms, "list all permissions available"),
                          (r'add\s+user\s+(?P<username>\S+)\s+(?P<email>[a-zA-Z0-9-]+@[a-zA-Z0-9\.-]+)\s+(?P<password>\S+)$',
                           self.adduser, 'Add user to system'),
+                         (r'debug\s+users', self.debugusers, 'Debug list users in system'),
                          (r'list\s+users', self.listusers, 'List users in system'),
                          (r'assign\s+(?:perm|permission)\s+(?P<perm>[a-z_]+)\s+to\s+(?P<username>[^\s]+)', self.assign_net_perms, "assign permission to username"),
                          (r'assign\s+(?:perm|permission)\s+(?P<room>#\S+)\s+(?P<perm>[a-z_]+)\s+to\s+(?P<username>[^\s]+)', self.assign_room_perms, "assign permission to username"),
@@ -202,6 +203,13 @@ class SystemCoreCommands(Plugin):
             self.msg(chan, "User successfully created")
         else:
             self.msg(chan, "User already exists in database")
+
+    def debugusers(self, regex, chan, nick, **kwargs):
+        users = self.get_auth().users
+        for user in users:
+            self.say(chan, str(user))
+
+        self.say(chan, '*** end of debug users ***')
 
     @irc_network_permission_required('bot_admin')                     
     def listusers(self, regex, chan, nick, **kwargs):
@@ -393,7 +401,11 @@ class SystemCoreCommands(Plugin):
     @irc_network_permission_required('join_or_part_room')  
     def part_room(self, regex, chan, nick, **kwargs):
         room = regex.group('room')
-        self.part(room)
+        if room.lower() in self.get_rooms():
+            self.say(chan, "Leaving room {} ".format(room))
+            self.part(room)
+        else:
+            self.say(chan, "This bot is not in that room")
            
     @irc_room_permission_required('can_speak')  
     def action(self, regex, chan, nick, **kwargs):
