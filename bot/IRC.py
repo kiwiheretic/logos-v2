@@ -246,7 +246,13 @@ class NicksDB:
 
     def set_host(self, user, host):
         logger.debug("Setting host for %s = %s" % (user, host))
-        self.nicks_info[user.lower()]['host'] = host
+        try:
+            self.nicks_info[user.lower()].update({'host':host})
+        except KeyError:
+            # If chanfix joins and leaves this room this creates a race 
+            # condition where there is no user record
+            pass
+
     
     def get_op_status(self, user, room):
         found = False

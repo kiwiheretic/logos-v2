@@ -113,7 +113,8 @@ class RoomManagementPlugin(Plugin):
                          # (r'mute (?P<room>#\S+) (?P<nick>\S+)', self.mute, 'normal user despatch'),
                          # (r'mute (?P<nick>\S+)', self.mute, 'normal user despatch'),
                          (r'nicksdb', self.nicksdb , 'Show nicks with same ip'),
-                         (r'aka (?P<nick>\S+)', self.aka, 'Show nicks with same ip'),
+                         (r'aka hosts (?P<hostmask>\S+)$', self.nicks_hostmasks, ' Find all nicks matching a hostmask pattern'),
+                         (r'aka (?P<nick>\S+)$', self.aka, 'Show nicks with same ip'),
                          (r'hosts (?P<nick>\S+)', self.hosts, 'Show nicks with same ip'),
                          (r'op me', self.op_me, 'gives ops'),
                          (r'deop me', self.deop_me, 'removes ops'),
@@ -194,34 +195,49 @@ class RoomManagementPlugin(Plugin):
             kick = True)
         penalty.save()
 
+    def nicks_hostmasks(self, regex, chan, nick, **kwargs):
+        """ Find all nicks matching a hostmask """
+        hostmask = regex.group('hostmask')
+        if hostmask[0] == '*' and hostmask[-1] == '*':
+            nicks = NickHistory.objects.filter(network=self.network, host_mask__contains = hostmask[1:-1])
+        elif hostmask[0] == '*':
+            nicks = NickHistory.objects.filter(network=self.network, host_mask__endswith = hostmask[1:])
+        elif hostmask[-1] == '*':
+            nicks = NickHistory.objects.filter(network=self.network, host_mask__startswith = '*!*@' + hostmask[0:-1])
+        else:
+            nicks = NickHistory.objects.filter(network=self.network, host_mask = hostmask)
+
+        unique_nicks = set()
+        for nickl in nicks:
+            unique_nicks.add(nickl.nick)
+        
+        if len(unique_nicks) > 0:
+            nick_list = ", ".join(sorted(unique_nicks))
+            self.say(chan, "{} is also {}".format(hostmask, nick_list))
+        else:
+            self.say(chan, "No nicks for host mask {}".format(hostmask))
+
     def aka(self, regex, chan, nick, **kwargs):
         this_nick = regex.group('nick')
-        hostmask1 = self.get_host(this_nick)
-        if not hostmask1:
-            hostrec = NickHistory.objects.filter(network = self.network,
-                    nick__iexact = this_nick).order_by('time_seen').last()
-            if hostrec:
-                hostmask = hostrec.host_mask.split('@')[1]
-            else:
-                self.say(chan, "Host mask not found")
-                return
-        else:
-            hostmask = hostmask1.split('@')[1]
-        nicks = NickHistory.objects.filter(host_mask__contains = hostmask).order_by('nick')
+
         unique_nicks = set()
-        for nick in nicks:
-            if nick.nick.lower() != this_nick.lower():
-                unique_nicks.add(nick.nick)
-        if len(unique_nicks) > 0:
-            nick_list = ", ".join(list(unique_nicks))
-            self.say(chan, "{} is {}".format(this_nick, nick_list))
+        hostmasks = self._get_hostmasks(this_nick)
+        if hostmasks:
+            for hostmask in self._get_hostmasks(this_nick):
+                nicks = NickHistory.objects.filter(host_mask__contains = hostmask).order_by('nick')
+                for nick in nicks:
+                    if nick.nick.lower() != this_nick.lower():
+                        unique_nicks.add(nick.nick)
+            if len(unique_nicks) > 0:
+                nick_list = ", ".join(sorted(unique_nicks))
+                self.say(chan, "{} is also {}".format(this_nick, nick_list))
+            else:
+                self.say(chan, "No other nicks for {}".format(this_nick))
         else:
-            self.say(chan, "No other nicks for {}".format(this_nick))
+            self.say(chan, '** No host masks found for nick **')
 
-
-    def hosts(self, regex, chan, nick, **kwargs):
-        this_nick = regex.group('nick')
-        nicks = NickHistory.objects.filter(network=self.network, nick__iexact = this_nick).order_by('host_mask')
+    def _get_hostmasks(self, nick):
+        nicks = NickHistory.objects.filter(network=self.network, nick__iexact = nick).order_by('host_mask')
         hosts = set()
         for nickl in nicks:
             if '@' in nickl.host_mask:
@@ -229,10 +245,16 @@ class RoomManagementPlugin(Plugin):
             else:
                 hostmask = nickl.host_mask
             hosts.add(hostmask)
+        return hosts
+
+    def hosts(self, regex, chan, nick, **kwargs):
+        this_nick = regex.group('nick')
+        hosts = self._get_hostmasks(this_nick)
 
         if hosts:
             for host in hosts:
                 self.say(chan, host)
+            self.say(chan, '*** end of hosts list ***')
         else:
             self.say(chan, 'No host masks found')
 
