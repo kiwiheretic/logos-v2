@@ -205,7 +205,7 @@ class RoomManagementPlugin(Plugin):
         elif hostmask[-1] == '*':
             nicks = NickHistory.objects.filter(network=self.network, host_mask__startswith = '*!*@' + hostmask[0:-1])
         else:
-            nicks = NickHistory.objects.filter(network=self.network, host_mask = hostmask)
+            nicks = NickHistory.objects.filter(network=self.network, host_mask = '*!*@'+hostmask)
 
         unique_nicks = set()
         for nickl in nicks:
