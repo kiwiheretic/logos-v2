@@ -20,6 +20,8 @@ from django.conf import settings
 logger = logging.getLogger(__name__)
 logging.config.dictConfig(settings.LOGGING)
 
+FEED_CHECK_TIME = 10*60 # in seconds
+
 class FeedPlugin(Plugin):
     plugin = ("feed", "Atom+RSS Module")
     def __init__(self, *args, **kwargs):
@@ -102,7 +104,7 @@ class FeedPlugin(Plugin):
 
     def on_activate(self):
         """ When this plugin is activated for the network """
-        self.timer.start(5*60, now=False)
+        self.timer.start(FEED_CHECK_TIME, now=False)
         logger.info("Feed check timer started")
         return (True, None)
 

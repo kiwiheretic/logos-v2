@@ -14,10 +14,12 @@ class FeedSubscription(models.Model):
     feed = models.ForeignKey(Feed)
     periodic = models.CharField(blank=True, default="", max_length=15)
     active = models.BooleanField(default=True)
+    class Meta:
+        index_together = [ 'network', 'room' ]
 
 class Cache(models.Model):
     feed = models.ForeignKey(Feed)
-    guid = models.CharField(unique=True, max_length=80)
+    guid = models.CharField(db_index=True, unique=True, max_length=80)
     link = models.URLField(null=False)
     title = models.CharField(null=False, max_length=200)
     description = models.TextField(null=True)
@@ -28,3 +30,5 @@ class CacheViews(models.Model):
     network = models.CharField(null=False, max_length=50)
     room = models.CharField(null=False, max_length=50)
     cache = models.ForeignKey(Cache)
+    class Meta:
+        index_together = [ 'network', 'room' ]
