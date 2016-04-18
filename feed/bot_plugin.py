@@ -1,14 +1,20 @@
 # test plugin
 from __future__ import absolute_import
+from twisted.internet import task
 from bot.pluginDespatch import Plugin
 import re
 import datetime
+import time
+import pytz
 import logging
-from .models import Feed
+from .models import Feed, FeedSubscription, Cache, CacheViews
 import requests
 import feedparser
-from bot.logos_decorators import login_required
+from bot.logos_decorators import login_required, irc_room_permission_required
+from logos.roomlib import get_global_option, set_global_option, \
+    get_room_option, set_room_option
 
+from django.db.models import Q  # for OR queryset
 from django.contrib.auth.models import User
 from django.conf import settings
 logger = logging.getLogger(__name__)
@@ -23,15 +29,118 @@ class FeedPlugin(Plugin):
          (r'add feed (?P<url>https?://\S+) (?P<duration>\S+)$', self.add_feed, "Add a feed to feed list"),
          (r'add feed (?P<url>https?://\S+)$', self.add_feed, "Add a feed to feed list"),
          (r'list feeds$', self.list_feeds, "List all feeds"),
+         (r'pull feeds$', self.pull_feeds, "List all feeds"),
          (r'delete feed (?P<id>\d+)$', self.delete_feed, "delete a feed"),
          (r'get feed (?P<id>\d+)$', self.get_feed, "get a feed"),
+         (r'set (?P<room>#[a-zA-Z0-9-]+) feed display limit (?P<count>\d+)',
+           self.set_feed_limit, 
+          'Set number of messages per feed to display each time in room'), 
+         (r'get (?P<room>#[a-zA-Z0-9-]+) feed display limit',
+           self.get_feed_limit, 
+          'Set number of messages per feed to display each time in room'), 
         )
-    
+        self.timer = task.LoopingCall(self.on_timer)
+
+    def on_timer(self):
+        feedsubs = Feed.objects.filter(active=True)
+        for feed in feedsubs:
+            url = feed.feedurl
+            try:
+                logger.info('Feed requesting url {}'.format(url))
+                r = requests.get(url)
+                if r.status_code == 200:
+                    d = feedparser.parse(r.text)
+                    for entry in d['entries']:
+                        if not Cache.objects.filter(guid = entry.id).exists():
+
+                            # assume published date is in UTC timezone and 
+                            # convert to datetime object
+                            published_date = pytz.utc.localize(datetime.datetime.fromtimestamp(time.mktime(entry.published_parsed)))
+
+                            if hasattr(entry,'description'):
+                                description = entry.description
+                            else:
+                                description = None
+
+                            cache = Cache(feed = feed,
+                                    guid = entry.id,
+                                    link = entry.link,
+                                    title = entry.title,
+                                    description = description,
+                                    published = published_date)
+                            cache.save()
+            except requests.exceptions.ConnectionError:
+                pass
+        self.output_feeds()
+
+    def output_feeds(self, room=None):
+        if room:
+            feedsubs = FeedSubscription.objects.filter(network = self.network, room = room.lower()) 
+            exclude_recs = CacheViews.objects.filter(network = self.network,
+                    room = room.lower()).values('id')
+        else:
+            feedsubs = FeedSubscription.objects.filter(network = self.network) 
+            exclude_recs = CacheViews.objects.filter(network = self.network).values('id')
+
+        for sub in feedsubs:
+            feed_limit = get_room_option(self.network, sub.room, "feed-post-limit")
+            if not feed_limit: 
+                feed_limit = 1
+            else:
+                feed_limit = int(feed_limit)
+            cache_recs = Cache.objects.filter(feed = sub.feed).exclude(cacheviews__id__in = exclude_recs).order_by('published')
+            for rec in cache_recs[:feed_limit]:
+                title = rec.title
+                link = rec.link
+                published = rec.published.strftime("%b %d %Y %H:%M UTC")
+                msg = u"{}: {} {}".format(published, title, link)
+                self.say(sub.room, msg)
+                cv = CacheViews(network = self.network, room = sub.room,
+                        cache = rec)
+                cv.save()
+
+
+    def on_activate(self):
+        """ When this plugin is activated for the network """
+        self.timer.start(5*60, now=False)
+        logger.info("Feed check timer started")
+        return (True, None)
+
+    def on_deactivate(self):
+        """ When this plugin is deactivated for the network """
+        self.timer.stop()
+        logger.info("Feed check timer stopped")
+
     def privmsg(self, user, channel, message):
         # Capture any matching urls and keep it in buffer
         pass
+
+    @irc_room_permission_required('room_admin')
+    def set_feed_limit(self, regex, chan, nick, **kwargs):
+        """ Set the number of feed messages per feed limit """
+        room = regex.group('room')
+        limit = regex.group('count')
+        set_room_option(self.network, room, "feed-post-limit", limit)
+        self.say(chan,"Feed post limit set successfully set")
             
+    def get_feed_limit(self, regex, chan, nick, **kwargs):
+        """ Get the number of feed messages per feed """
+        room = regex.group('room')
+        feed_limit = get_room_option(self.network, room, "feed-post-limit")
+        self.say(chan,"Message post limit per feed is {} messages".format(feed_limit))
+
     @login_required()
+    def pull_feeds(self, regex, chan, nick, **kwargs):
+        self.output_feeds(chan.lower())
+
+    @irc_room_permission_required('room_admin')
+    def reset(self, regex, chan, nick, **kwargs):
+        room = regex.group('room')
+        CacheViews.objects.filter(network=self.network,
+              room=room).delete()
+        self.say(chan, "Cache for room {} now reset".format(room))
+
+    @irc_room_permission_required('room_admin')
     def add_feed(self, regex, chan, nick, **kwargs):
         username = self.get_auth().get_username(nick)
         user = User.objects.get(username = username)
@@ -42,12 +151,13 @@ class FeedPlugin(Plugin):
             if r.status_code == 200:
                 d = feedparser.parse(r.text)
                 if d['entries']:
-                    feed = Feed(network = self.network,
+                    feed, _ = Feed.objects.get_or_create(feedurl = url)
+                    feedsub = FeedSubscription(network = self.network,
                             room = chan.lower(),
                             user_added = user,
-                            feedurl = url,
+                            feed = feed,
                             periodic = "1h")
-                    feed.save()
+                    feedsub.save()
                     self.say(chan, 'Feed added successfully')
                 else:
                     self.say(chan, 'Your url was not a valid feed')
@@ -59,21 +169,21 @@ class FeedPlugin(Plugin):
 
     @login_required()
     def list_feeds(self, regex, chan, nick, **kwargs):
-        feeds = Feed.objects.filter(network=self.network,
+        feedsubs = FeedSubscription.objects.filter(network=self.network,
                 room = chan.lower())
-        if feeds:
-            for feed in feeds:
-                self.say(chan, "{} {}".format(feed.id, feed.feedurl))
+        if feedsubs:
+            for feed in feedsubs:
+                self.say(chan, "{} {}".format(feed.id, feed.feed.feedurl))
             self.say(chan, "End of feeds lists")
         else:
             self.say(chan, "No feeds found for this room")
 
 
-    @login_required()
+    @irc_room_permission_required('room_admin')
     def delete_feed(self, regex, chan, nick, **kwargs):
         id = regex.group('id')
         try:
-            feed = Feed.objects.get(network=self.network, room=chan.lower(), pk = id)
+            feed = FeedSubscription.objects.get(network=self.network, room=chan.lower(), pk = id)
             feed.delete()
             self.say(chan, "Feed deleted successfully")
         except Feed.DoesNotExist:
@@ -85,10 +195,10 @@ class FeedPlugin(Plugin):
     def get_feed(self, regex, chan, nick, **kwargs):
         id = regex.group('id')
         try:
-            feed = Feed.objects.get(network=self.network, room=chan.lower(), pk = id)
+            feedsub = FeedSubscription.objects.get(network=self.network, room=chan.lower(), pk = id)
 
             try:
-                r = requests.get(feed.feedurl)
+                r = requests.get(feedsub.feed.feedurl)
                 if r.status_code == 200:
                     d = feedparser.parse(r.text)
                     title = d['feed']['title']
@@ -102,5 +212,5 @@ class FeedPlugin(Plugin):
                     self.say(chan, "Feed get error code {}".format(r.error_code))
             except requests.exceptions.ConnectionError:
                 self.say(chan, "Unable to add feed {}, check url".format(url))
-        except Feed.DoesNotExist:
+        except FeedSubscription.DoesNotExist:
             self.say(chan, "No feed {} exists for this room".format(id))

@@ -365,6 +365,11 @@ LOGGING = {
             'level': 'DEBUG',
             'propagate': False,
         },
+        'feed': {
+            'handlers': ['console', 'file'],
+            'level': 'DEBUG',
+            'propagate': False,
+        },
         'bot': {
             'handlers': ['console_info', 'file'],
             'level': 'DEBUG',
