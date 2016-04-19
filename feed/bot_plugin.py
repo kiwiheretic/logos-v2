@@ -30,6 +30,7 @@ class FeedPlugin(Plugin):
         self.commands = (\
          (r'add feed (?P<url>https?://\S+) (?P<duration>\S+)$', self.add_feed, "Add a feed to feed list"),
          (r'add feed (?P<url>https?://\S+)$', self.add_feed, "Add a feed to feed list"),
+         (r'reset feeds$', self.reset_feeds, "List all feeds"),
          (r'list feeds$', self.list_feeds, "List all feeds"),
          (r'pull feeds$', self.pull_feeds, "List all feeds"),
          (r'delete feed (?P<id>\d+)$', self.delete_feed, "delete a feed"),
@@ -94,8 +95,16 @@ class FeedPlugin(Plugin):
             for rec in cache_recs[:feed_limit]:
                 title = rec.title
                 link = rec.link
+                if rec.description:
+                    descr = "-" + rec.description[:120]
+                    if len(rec.description) >= 120:
+                        descr += " ..."
+
+
+                else:
+                    descr = ""
                 published = rec.published.strftime("%b %d %Y %H:%M UTC")
-                msg = u"{}: {} {}".format(published, title, link)
+                msg = u"{}: {}{} {}".format(published, title, descr, link)
                 self.say(sub.room, msg)
                 cv = CacheViews(network = self.network, room = sub.room,
                         cache = rec)
@@ -136,8 +145,8 @@ class FeedPlugin(Plugin):
         self.output_feeds(chan.lower())
 
     @irc_room_permission_required('room_admin')
-    def reset(self, regex, chan, nick, **kwargs):
-        room = regex.group('room')
+    def reset_feeds(self, regex, chan, nick, **kwargs):
+        room = chan.lower()
         CacheViews.objects.filter(network=self.network,
               room=room).delete()
         self.say(chan, "Cache for room {} now reset".format(room))
