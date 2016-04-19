@@ -11,12 +11,12 @@ logger = logging.getLogger(__name__)
 logging.config.dictConfig(settings.LOGGING)
 
 class WeatherPlugin(Plugin):
-    plugin = ("w", "Weather Plugin")
+    plugin = ("weather", "Weather Plugin")
     def __init__(self, *args, **kwargs):
         Plugin.__init__(self, *args, **kwargs)
         
         self.commands = (\
-         (r'w (?P<arg>\S+)$', self.weather, "Weather query"),
+         (r'w (?P<arg>\S.*)$', self.weather, "Weather query"),
         )
     
     def privmsg(self, user, channel, message):
@@ -34,8 +34,11 @@ class WeatherPlugin(Plugin):
         str1 += " Status : {}. ".format(w.get_status())
         str1 += " Wind: speed {speed} ".format(**w.get_wind())
         str1 += " Humidity: {}.".format(w.get_humidity())
-        str1 += " Temperature (F): {temp_min}, {temp}, {temp_max}.".format(**w.get_temperature())
-        str1 += " Temperature (C): {temp_min}, {temp}, {temp_max}.".format(**w.get_temperature('celsius'))
+        celsius = w.get_temperature('celsius')['temp']
+        fahrenheit = w.get_temperature('fahrenheit')['temp']
+        str1 += " Temperature {} F {} C".format(celsius, fahrenheit)
+#        str1 += " Temperature (F): {temp_min}, {temp}, {temp_max}.".format(**w.get_temperature())
+#        str1 += " Temperature (C): {temp_min}, {temp}, {temp_max}.".format(**w.get_temperature('celsius'))
         self.say(chan, str1)
 
 
