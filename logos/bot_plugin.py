@@ -38,6 +38,7 @@ class SystemCoreCommands(Plugin):
     def __init__(self, *args):
         super(SystemCoreCommands, self).__init__(*args)
         self.commands = ( \
+                         (r'ping', self.ping, 'ping the bot'),
                          (r'login\s+(?P<password>\S+)$', self.login, 'Login into the bot'),
                          (r'login\s+(?P<userid>\S+)\s+(?P<password>\S+)$', self.login, 'Login into the bot'),
                          
@@ -101,6 +102,9 @@ class SystemCoreCommands(Plugin):
                 msg = "Room trigger is {} private windows trigger is {}".format(room_trigger,pvt_trigger)
             self.say(chan, msg) 
 
+
+    def ping(self, regex, chan, nick, **kwargs):
+        self.say(chan, "pong")
 
     def actual_host(self, regex, chan, nick, **kwargs):
         self.say(chan, "Actual IRC server is {}".format(self.irc_conn.actual_host))
