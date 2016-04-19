@@ -1,0 +1,60 @@
+{% extends 'logos/admin_base.html' %}
+{% load guardian_tags %}
+
+{% block style %}
+{{block.super}}
+
+ul {
+   list-style-type: none; 
+}
+
+li {
+    margin-left: -40px;
+}
+
+label {
+    clear:left;
+    float:left;
+    width:100px;
+}
+
+input[type="text"] {
+    max-width:200px;
+    width:100%;
+}
+
+@media screen and (min-width: 400px) {
+    li {
+        margin-left: auto;
+    }
+
+    label {
+        text-align: right;
+        margin-right:5px;
+    }
+
+    input[type="text"] {
+        max-width:600px;
+        width:100%;
+    }
+    /*
+    body {
+        background-color: lightgreen;
+    }
+    */
+}
+
+{% endblock %}
+
+{% block content %}
+<h2>OpenWeather Site Settings</h2>
+
+<form action="." method="POST">
+    {% csrf_token %}
+    <ul>
+    {{form.as_ul}}
+    </ul>
+    <input type="submit" value="save"/>
+
+</form>
+{% endblock %}
