@@ -247,6 +247,7 @@ INSTALLED_APPS = (
     'logos',
     'bibleapp',
     'feed',
+    'weather',
     'cloud_notes',
     'cloud_memos',
     'room_manage',
