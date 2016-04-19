@@ -195,6 +195,7 @@ class RoomManagementPlugin(Plugin):
             kick = True)
         penalty.save()
 
+    @irc_room_permission_required('room_admin')
     def nicks_hostmasks(self, regex, chan, nick, **kwargs):
         """ Find all nicks matching a hostmask """
         hostmask = regex.group('hostmask')
@@ -217,6 +218,7 @@ class RoomManagementPlugin(Plugin):
         else:
             self.say(chan, "No nicks for host mask {}".format(hostmask))
 
+    @irc_room_permission_required('room_admin')
     def aka(self, regex, chan, nick, **kwargs):
         this_nick = regex.group('nick')
 
@@ -247,6 +249,7 @@ class RoomManagementPlugin(Plugin):
             hosts.add(hostmask)
         return hosts
 
+    @irc_room_permission_required('room_admin')
     def hosts(self, regex, chan, nick, **kwargs):
         this_nick = regex.group('nick')
         hosts = self._get_hostmasks(this_nick)
