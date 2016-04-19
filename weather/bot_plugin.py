@@ -27,12 +27,14 @@ class WeatherPlugin(Plugin):
         owm = pyowm.OWM(api_key)
         arg = regex.group('arg')
         observation = owm.weather_at_place(arg)
+        location = observation.get_location().get_name()
         w = observation.get_weather()
         tm = w.get_reference_time()
-        tm_str = datetime.datetime.fromtimestamp(tm).strftime("%b %d %Y %H:%M")
-        str1 = "Reference time : " + tm_str
+        tm_str = datetime.datetime.fromtimestamp(tm).strftime("%b %d %Y %H:%M UTC")
+        str1 = "Reference time : {}.  ".format(tm_str)
+        str1 += " Location : {}. ".format(location)
         str1 += " Status : {}. ".format(w.get_status())
-        str1 += " Wind: speed {speed} ".format(**w.get_wind())
+        str1 += " Wind speed : {speed} ".format(**w.get_wind())
         str1 += " Humidity: {} ".format(w.get_humidity())
         celsius = w.get_temperature('celsius')['temp']
         fahrenheit = w.get_temperature('fahrenheit')['temp']
