@@ -168,7 +168,7 @@ class RoomManagementPlugin(Plugin):
                         self.antiflood[nick][channel] = {'line':message, 'timestamp':timestamp, 'repeat':1}
                 else:
                     self.antiflood[nick] = { channel: {'line':message, 'timestamp':timestamp, 'repeat':1} }
-                print self.antiflood
+                #print self.antiflood
                     
 
     def nicksdb(self, regex, chan, nick, **kwargs):
