@@ -114,6 +114,7 @@ class RoomManagementPlugin(Plugin):
                          # (r'mute (?P<nick>\S+)', self.mute, 'normal user despatch'),
                          (r'nicksdb', self.nicksdb , 'Show nicks with same ip'),
                          (r'aka hosts (?P<hostmask>\S+)$', self.nicks_hostmasks, ' Find all nicks matching a hostmask pattern'),
+                         (r'aka latest (?P<nick>\S+)$', self.aka_latest, 'Show nicks with latest ip'),
                          (r'aka (?P<nick>\S+)$', self.aka, 'Show nicks with same ip'),
                          (r'hosts (?P<nick>\S+)', self.hosts, 'Show nicks with same ip'),
                          (r'op me', self.op_me, 'gives ops'),
@@ -237,6 +238,26 @@ class RoomManagementPlugin(Plugin):
                 self.say(chan, "No other nicks for {}".format(this_nick))
         else:
             self.say(chan, '** No host masks found for nick **')
+
+    @irc_room_permission_required('room_admin')
+    def aka_latest(self, regex, chan, nick, **kwargs):
+        this_nick = regex.group('nick')
+
+        unique_nicks = set()
+        hostrec = NickHistory.objects.filter(network=self.network, nick__iexact = this_nick).order_by('time_seen').last()
+        if hostrec:
+            hostmask = hostrec.host_mask
+            nicks = NickHistory.objects.filter(host_mask = hostmask).order_by('nick')
+            for nick in nicks:
+                if nick.nick.lower() != this_nick.lower():
+                    unique_nicks.add(nick.nick)
+            if len(unique_nicks) > 0:
+                nick_list = ", ".join(sorted(unique_nicks))
+                self.say(chan, "{} is also {}".format(this_nick, nick_list))
+            else:
+                self.say(chan, "No other nicks for {}".format(this_nick))
+        else:
+            self.say(chan, "No records for nick {} found".format(this_nick))
 
     def _get_hostmasks(self, nick):
         nicks = NickHistory.objects.filter(network=self.network, nick__iexact = nick).order_by('host_mask')
