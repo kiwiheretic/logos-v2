@@ -466,6 +466,7 @@ class RoomManagementPlugin(Plugin):
             nh.save()
 
     def userJoined(self, user, channel):
+        """ Not used - nick/room info collected in userHosts method """
         pass
 
     def userLeft(self, user, channel):

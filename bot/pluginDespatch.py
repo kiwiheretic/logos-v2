@@ -569,7 +569,7 @@ class PluginDespatcher(object):
     def userHosts(self, nicklist):
         for m in self._obj_list:
             ## TODO: Check if plugin activated for network
-            if hasattr(m, 'userHosts'):
+            if hasattr(m, 'userHosts') and nicklist:
                 m.userHosts(nicklist)
         
     def userJoined(self, user, channel):
