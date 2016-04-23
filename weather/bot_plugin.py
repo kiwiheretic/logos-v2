@@ -3,12 +3,75 @@ from bot.pluginDespatch import Plugin
 import re
 import datetime
 import logging
-import pyowm
+import requests
+from urllib import quote
+import json
 from logos.roomlib import get_global_option
 
 from django.conf import settings
 logger = logging.getLogger(__name__)
 logging.config.dictConfig(settings.LOGGING)
+
+def convert_f(celsius):
+    return celsius *9/5 + 32
+
+def weather(loc):
+    query = "select * from weather.forecast where woeid in (select woeid from geo.places(1) where text=\"{}\") and u = 'c'".format(loc)
+    endpoint = "https://query.yahooapis.com/v1/public/yql?format=json&q="
+    url = endpoint + quote(query)
+    r = requests.get(url)
+    j1 = json.loads(r.text)['query']['results']
+    if not j1: return "No weather data"
+    j = j1['channel']
+    title = j['item']['title']
+    try:
+        celsius = int(j['item']['condition']['temp'])
+        fahrenheit = convert_f(celsius)
+    except ValueError:
+        fahrenheit = "*error*"
+        celsius = "*error*"
+    temperature = "Temp: {} F, {} C.".format(fahrenheit, celsius)
+    condition = "Condition: {}.".format(j['item']['condition']['text'])
+    try:
+        chill_c = int(j['wind']['chill'])
+        chill_f = convert_f(chill_c)
+    except ValueError:
+        chill_f = "*error*"
+        chill_c = "*error*"
+        
+    try:
+        kph = int(float(j['wind']['speed']))
+        mph = int( kph / 0.621371 )
+    except ValueError:
+        mph = "*error*"
+        kph = "*error*"
+    direction = j['wind']['direction']
+    wind = "Wind: chill {} F, {} C  Degrees: {} Speed: {} mph, {} kph".format(chill_f, chill_c, direction, mph, kph)
+    p = int(float(j['atmosphere']['pressure']))
+    lb = int(0.014503773801 * p)
+    h = j['atmosphere']['humidity']
+    try:
+        r = j['atmosphere']['rising']
+    except KeyError:
+        r = "N/A"
+    vk = int(float(j['atmosphere']['visibility']))
+    vm = int(vk / 0.621371)
+    atmosphere = "Pressure {} mb {} lb/sq in, humidity {}%, rising {}, visibility {} km {} mi.".format(p, lb,  h, r, vk, vm)
+    forecasts = "Forecasts: "
+    for fc in j['item']['forecast']:
+        pass
+        day = fc['day']
+        hi_c = int(fc['high'])
+        lo_c = int(fc['low'])
+        hi_f = convert_f(hi_c)
+        lo_f = convert_f(lo_c)
+        txt = fc['text']
+        forecasts += " {} hi: {} C {} F. lo: {} C {} F {}.".format(day, hi_c, hi_f, hi_c, lo_f, txt)
+
+
+    msg = " ".join([title, condition, temperature, wind, atmosphere])
+    msg += forecasts
+    return msg
 
 class WeatherPlugin(Plugin):
     plugin = ("weather", "Weather Plugin")
@@ -23,28 +86,9 @@ class WeatherPlugin(Plugin):
         pass
 
     def weather(self, regex, chan, nick, **kwargs):
-        api_key = get_global_option('weather_api_key')
-        owm = pyowm.OWM(api_key)
         arg = regex.group('arg')
-        observation = owm.weather_at_place(arg)
-        if observation:
-            location = observation.get_location().get_name()
-            w = observation.get_weather()
-            tm = w.get_reference_time()
-            tm_str = datetime.datetime.fromtimestamp(tm).strftime("%b %d %Y %H:%M UTC")
-            str1 = "Reference time : {}.  ".format(tm_str)
-            str1 += " Location : {}. ".format(location)
-            str1 += " Status : {}. ".format(w.get_status())
-            str1 += " Wind speed : {speed} ".format(**w.get_wind())
-            str1 += " Humidity: {} ".format(w.get_humidity())
-            celsius = w.get_temperature('celsius')['temp']
-            fahrenheit = w.get_temperature('fahrenheit')['temp']
-            str1 += " Temperature {} F  {} C".format(fahrenheit, celsius)
-    #        str1 += " Temperature (F): {temp_min}, {temp}, {temp_max}.".format(**w.get_temperature())
-    #        str1 += " Temperature (C): {temp_min}, {temp}, {temp_max}.".format(**w.get_temperature('celsius'))
-            self.say(chan, str1)
-        else:
-            self.say(chan, "This weather location could not be found")
+        str1 = weather(arg)
+        self.say(chan, str1)
 
             
 
