@@ -97,6 +97,7 @@ class FakePlugin(object):
 # based on http://stackoverflow.com/questions/9646187/how-to-copy-a-member-function-of-another-class-into-myclass-in-python
 FakePlugin.command = pluginDespatch.PluginDespatcher.__dict__['command']
 FakePlugin.privmsg = pluginDespatch.PluginDespatcher.__dict__['privmsg']
+FakePlugin.userRenamed = pluginDespatch.PluginDespatcher.__dict__['userRenamed']
 
 # override this class
 class LogosTestCase(unittest.TestCase):
@@ -129,12 +130,15 @@ class LogosTestCase(unittest.TestCase):
         else:
             self.plugin.user = self.plugin.nickname + "!" + hostmask
 
-
     def set_channel(self, channel):
         self.plugin.chan = channel
     
     def set_nick(self, new_nick):
         self.plugin.nickname = new_nick 
+
+    def change_nick(self, old, new):
+        self.plugin.userRenamed(old, new)
+        self.plugin.nickname = new
 
     def create_user(self, username, email, password):
         user = User.objects.create_user(username, email, password)
@@ -158,3 +162,10 @@ class LogosTestCase(unittest.TestCase):
             self.plugin.get_auth().add(self.plugin.nickname, host, user)
             return user
         return None
+
+    def get_logged_in_users(self):
+        auth_users = self.plugin.get_auth().users
+        users = []
+        for auser in auth_users:
+            users.append(auser['nick'])
+        return users

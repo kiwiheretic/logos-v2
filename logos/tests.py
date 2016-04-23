@@ -13,6 +13,7 @@ class TestSystemPlugin(LogosTestCase):
     
     def setUp(self):
         self.fred = self.create_user('fred', "fred@noemail.com", "password1")
+        self.john= self.create_user('john', "john@noemail.com", "password2")
         
     def testGreet(self):
         self.assign_room_permission('fred', self.room, 'set_greeting')
@@ -24,6 +25,25 @@ class TestSystemPlugin(LogosTestCase):
         output = self.plugin.send_command("set {} greet message \"hello\"".format(self.room))
         self.assertIn('Greet message for {} set to "hello"'.format(self.room), output)
         
+    def testNickRename(self):
+        self.set_nick("fred")
+        output = self.plugin.send_command("login password1")
+        self.assertIn('Login successful', output)  
+
+        self.set_nick("john")
+        output = self.plugin.send_command("login password2")
+        self.assertIn('Login successful', output)  
+
+        logged_in_users = self.get_logged_in_users()
+        self.assertIn("john", logged_in_users)
+        self.assertIn("fred", logged_in_users)
+
+        self.change_nick("john", "jake")
+        logged_in_users = self.get_logged_in_users()
+        self.assertIn("jake", logged_in_users)
+        self.assertIn("fred", logged_in_users)
+
+
     def testSetTrigger(self):
         self.assign_room_permission('fred', self.room, 'change_trigger')
         self.set_nick("fred")
@@ -65,3 +85,4 @@ class TestSystemPlugin(LogosTestCase):
         
     def tearDown(self):
         self.fred.delete()
+        self.john.delete()

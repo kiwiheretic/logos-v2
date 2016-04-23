@@ -376,6 +376,11 @@ LOGGING = {
             'level': 'DEBUG',
             'propagate': False,
         },
+#        'bot.pluginDespatch': {
+#            'handlers': ['console', 'file'],
+#            'level': 'DEBUG',
+#            'propagate': False,
+#        },
         'scripture_game': {
             'handlers': ['console_info', 'file'],
             'level': 'DEBUG',

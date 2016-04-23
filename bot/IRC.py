@@ -560,9 +560,8 @@ class IRCBot(irc.IRCClient):
         self.nicks_db.rename_user(oldname, newname)
         self.plugins.userRenamed(oldname, newname)
         
-#        self.factory.reactor.callLater(5, self.do_whois, newname)
-        logger.debug(str( self.nicks_db.nicks_in_room))
-        logger.debug(str( self.nicks_db.nicks_info))
+        #logger.debug(str( self.nicks_db.nicks_in_room))
+        #logger.debug(str( self.nicks_db.nicks_info))
         
     def joined(self, channel):
         """ callback for when this bot has joined a channel """

@@ -154,7 +154,7 @@ class AuthenticatedUsers(object):
         for d in self.users:
             if old.lower() == d['nick']:
                 d['nick'] = new.lower()
-                new_list.append(d)
+            new_list.append(d)
         self.users = new_list
         
 
@@ -609,7 +609,6 @@ class PluginDespatcher(object):
 
 
     def command(self, nick, user, chan, orig_msg, msg, act):
-
         try:
             kwargs = {'trigger':act,
                       'line': msg,

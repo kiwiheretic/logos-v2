@@ -32,16 +32,30 @@ class TestRM(LogosTestCase):
                 network = self.network, room='#room')
         n.save()
 
+        self.fred = self.create_user('fred', "fred@noemail.com", "password1")
+
     def testAka(self):
+        self.assign_room_permission('fred', self.room, 'room_admin')
+        self.set_nick("fred")
+        self.login("password1")
+
         self.set_host('splat@fiasco.pants.com')
         output = self.plugin.send_command("aka splat")
-        self.assertIn('splat is kiwiheretic', output)
+        self.assertIn('splat is also kiwiheretic', output)
 
         self.set_host('jake@banana.pants.com')
         output = self.plugin.send_command("aka jake")
         self.assertIn('No other nicks for jake', output)
 
     def testHosts(self):
+        self.assign_room_permission('fred', self.room, 'room_admin')
+        self.set_nick("fred")
+        self.login("password1")
         output = self.plugin.send_command("hosts splat")
         self.assertIn('nowhere', output)
         self.assertIn('fiasco', output)
+
+
+    def tearDown(self):
+        self.fred.delete()
+        NickHistory.objects.all().delete()
