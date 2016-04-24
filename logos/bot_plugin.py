@@ -476,7 +476,7 @@ class SystemCoreCommands(Plugin):
     def version(self, regex, chan, nick, **kwargs):
 
         dj_ver = ".".join(map(lambda x: str(x), django.VERSION[0:3]))
-        pyver = (sys.version_info.major, sys.version_info.minor)
+        pyver = (sys.version_info.major, sys.version_info.minor, sys.version_info.micro)
         py_ver = ".".join(map(lambda x: str(x), pyver))
         twstver = (twisted.version.major, twisted.version.minor)
         twst_ver = ".".join(map(lambda x: str(x), twstver))
