@@ -35,18 +35,18 @@ class TwitterPlugin(Plugin):
     def __init__(self, *args, **kwargs):
         Plugin.__init__(self, *args, **kwargs)
         self.commands = (\
-                         (r'list\s+follows\s+(?P<room>#[a-zA-Z0-9-]+)$',
+                         (r'list\s+follows\s+(?P<room>#\S+)$',
                           self.list_follows, 'list all follows for room'),
-                         (r'add\s+follow\s+(?P<room>#[a-zA-Z0-9-]+)\s+(?P<follow>@[a-zA-Z_]+)', 
+                         (r'add\s+follow\s+(?P<room>#\S+)\s+(?P<follow>@[a-zA-Z_]+)', 
                           self.add_follow, 
                           'Add screen name to follow'),
-                         (r'remove\s+follow\s+(?P<room>#[a-zA-Z0-9-]+)\s+(?P<follow>@[a-zA-Z_]+)', 
+                         (r'remove\s+follow\s+(?P<room>#\S+)\s+(?P<follow>@[a-zA-Z_]+)', 
                           self.remove_follow, 
-                          'Add screen name to follow'),                          
-                         (r'set\s+(?P<room>#[a-zA-Z0-9-]+)\s+twitter\s+display\s+limit\s+(?P<count>\d+)',
+                          'Remove screen name to follow'),                          
+                         (r'set\s+(?P<room>#\S+)\s+twitter\s+display\s+limit\s+(?P<count>\d+)',
                            self.set_room_limit, 
                           'Set number of tweets to display each time in room'), 
-                         (r'reset\s+(?P<room>#[a-zA-Z0-9-]+)', self.reset, 
+                         (r'reset\s+(?P<room>#\S+)', self.reset, 
                           'Reset reported tweets'),
                          (r'set check time (\d+)', self.set_check_time, 
                           'set the twitter check time'),
@@ -63,18 +63,10 @@ class TwitterPlugin(Plugin):
     def on_activate(self):
         """ When this plugin is activated for the network """
         
-        try:
-            pth = os.path.dirname(__file__)
-            f = open(os.path.join(pth,"secrets.json"), "r")
-            json_secrets = json.load(f)
-        except IOError:
-            return (False, "Could not open secrets.json file")
-        
-        self.consumer_key = json_secrets['consumer_key']
-        self.consumer_secret = json_secrets['consumer_secret']
-        self.access_token = json_secrets['access_token']
-        self.token_secret = json_secrets['token_secret']
-        
+        self.consumer_key = get_global_option('twitter-consumer-key')
+        self.consumer_secret = get_global_option('twitter-consumer-secret')
+        self.access_token = get_global_option('twitter-access-token')
+        self.token_secret = get_global_option('twitter-token-secret')
         self.api = twitter.Api(consumer_key=self.consumer_key,
                       consumer_secret=self.consumer_secret,
                       access_token_key=self.access_token,
