@@ -12,7 +12,7 @@ logger = logging.getLogger(__name__)
 logging.config.dictConfig(settings.LOGGING)
 
 class SympyPlugin(Plugin):
-    plugin = ("sympy", "Symbolics")
+    plugin = ("sym", "Symbolics")
     def __init__(self, *args, **kwargs):
         Plugin.__init__(self, *args, **kwargs)
         

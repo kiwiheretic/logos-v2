@@ -64,6 +64,25 @@ class MyNodeVisitor(ast.NodeVisitor):
         node.valuestr = node.func.valuestr + "(" + ", ".join(arglist) + ")"
         self.result = node.valuestr
 
+    def visit_UAdd(self,node):
+        pass
+
+    def visit_USub(self,node):
+        pass
+
+    def visit_UnaryOp(self, node):
+        #if type(node.operand) in [ast.BinOp, ast.Name, ast.Num, ast.Call]:
+        self.visit_children(node)
+        if type(node.op) == ast.USub:
+            prefix = "-"
+        elif type(node.op) == ast.UAdd:
+            prefix = "+"
+        else:
+            raise SyntaxError("AST invalid unary op")
+        #if hasattr(node.operand,'valuestr'):
+        node.valuestr = prefix +"("+ node.operand.valuestr+")"
+        self.result = node.valuestr
+
     def visit_BinOp(self, node):
         print "**", node
         if type(node.op) == ast.Add:
@@ -108,11 +127,22 @@ def run_tests():
 
     tree = ast.parse(s)
 
+    nv.initvars()
     nv.visit(tree)
     print "result = ",nv.result
     assert(nv.result == "(x+3)*(x-4)+x+sympy.Rational(3,4)+sympy.sin(sympy.pi/4)")
     print "symbols used : " + str(nv.symbol_vars)
 
+    # Test unary
+
+    s = "-(x+3)"
+
+    tree = ast.parse(s)
+
+    nv.initvars()
+    nv.visit(tree)
+    print "result = ",nv.result
+    assert(nv.result == "-(x+3)")
     s = '2**(3*(4+2))'
 
     tree = ast.parse(s)
