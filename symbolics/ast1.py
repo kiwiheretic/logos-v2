@@ -43,7 +43,7 @@ class MyNodeVisitor(ast.NodeVisitor):
         if node.id in ['pi', 'E', 'sqrt', 'sin', 'cos', 'tan', 'asin', 'acos', 
                 'atan', 'sinh', 'cosh', 'tanh', 'asinh', 'acosh', 'atanh',
                 'atan2', 'log', 'ln', 'exp', 'diff', 'integrate', 'simplify', 
-                'expand', 'collect', 'apart', 'trigsimp', 'expand_trig',
+                'factor', 'expand', 'collect', 'apart', 'trigsimp', 'expand_trig',
                 'cancel', 'powsimp', 'expand_log']:
             node.valuestr = 'sympy.'+node.id
         else:
