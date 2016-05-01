@@ -11,17 +11,21 @@ This is the Logos-V2 project, a Django/Twisted IRC bot  originally based (in con
 ### Features ###
 
 Features include:
-  * Cloud Memos - just like a web based MemoServ
-  * [Cloud Notes](https://biblebot.wordpress.com/cloud-notes/) system accessible from web and IRC.  Useful for storing bible notes.
   * Fine grained permission system based on Django-guardian (new feature)
   * User and developer documentation on [wiki](https://github.com/kiwiheretic/logos-v2/wiki)
   * Written in Python using Twisted and Django frameworks
   * Compatible with CancelBot bible translations
   * Easy to customise for your own personalised bot
-
-Plugins:
   * Everything (or mostly) is designed as a plugin
   * Plugin architecture for extending bot
+
+Plugins:
+  * Cloud Memos - just like a web based MemoServ
+  * [Cloud Notes](https://biblebot.wordpress.com/cloud-notes/) system accessible from web and IRC.  Useful for storing bible notes.
+  * Atom+RSS Feed plugin for room news feed
+  * Twitter Plugin for room news feed from Twitter
+  * Google Calendar access
+  * Symbolic Computations from IRC (uses SymPy)  (**coming soon**)
 
 Bible Plugin:
   * Simple bible verse lookups
