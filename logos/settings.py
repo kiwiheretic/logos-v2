@@ -67,6 +67,7 @@ DATABASES = {
     'bibles': {
         'ENGINE': 'django.db.backends.sqlite3', # Add 'postgresql_psycopg2', 'mysql', 'sqlite3' or 'oracle'.
         'NAME': os.path.join(DB_ROOT, 'bibles.sqlite3.db'),  # Or path to database file if using sqlite3.
+        # TODO: TEST_NAME will be removed in Django 1.9
         'TEST_NAME': os.path.join(DB_ROOT, 'test-bibles.sqlite3.db'),
         # Don't overwrite the test database
         'CLOBBER_TEST_DB':False,
@@ -74,6 +75,9 @@ DATABASES = {
         'PASSWORD': '',
         'HOST': '',                      # Empty for localhost through domain sockets or '127.0.0.1' for localhost through TCP.
         'PORT': '',                      # Set to empty string for default.
+        'TEST': {
+            'NAME': os.path.join(DB_ROOT, 'test-bibles.sqlite3.db'),
+        },
     },
 }
 

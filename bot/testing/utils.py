@@ -1,7 +1,7 @@
 # logos testing base class
 from __future__ import print_function, absolute_import
 from bot import pluginDespatch
-from django.utils import unittest
+import unittest
 from twisted.internet import reactor
 
 from django.contrib.auth.models import User
