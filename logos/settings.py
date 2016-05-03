@@ -254,6 +254,7 @@ INSTALLED_APPS = (
     'scripture_game',
     'pybb',
     'botnet',
+    'symbolics',
     'gcalendar',
     'urlcatcher',
     'twitterapp',

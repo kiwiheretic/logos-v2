@@ -312,8 +312,6 @@ class PluginDespatcher(object):
         self.irc_conn = irc_conn
         self.authenticated_users = AuthenticatedUsers(self.irc_conn.factory.network)
         NetworkPlugins.objects.filter(network=self.irc_conn.factory.network).update(loaded=False)
-        plugin_path = os.path.join(settings.BASE_DIR, 'plugins')
-        dirs = os.listdir(plugin_path)
         
         for app in settings.INSTALLED_APPS:
             pth = os.path.join(settings.BASE_DIR, app)

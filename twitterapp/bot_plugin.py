@@ -33,24 +33,24 @@ class TwitterPlugin(Plugin):
     plugin = ('twitter', 'Twitter News Feed')
     
     def __init__(self, *args, **kwargs):
-        Plugin.__init__(self, *args, **kwargs)
+        super(TwitterPlugin, self).__init__(*args, **kwargs)
         self.commands = (\
                          (r'list\s+follows\s+(?P<room>#\S+)$',
                           self.list_follows, 'list all follows for room'),
-                         (r'add\s+follow\s+(?P<room>#\S+)\s+(?P<follow>@[a-zA-Z_]+)', 
+                         (r'add\s+follow\s+(?P<room>#\S+)\s+(?P<follow>@\S+)', 
                           self.add_follow, 
                           'Add screen name to follow'),
-                         (r'remove\s+follow\s+(?P<room>#\S+)\s+(?P<follow>@[a-zA-Z_]+)', 
+                         (r'remove\s+follow\s+(?P<room>#\S+)\s+(?P<follow>@\S+)', 
                           self.remove_follow, 
                           'Remove screen name to follow'),                          
                          (r'set\s+(?P<room>#\S+)\s+twitter\s+display\s+limit\s+(?P<count>\d+)',
                            self.set_room_limit, 
                           'Set number of tweets to display each time in room'), 
-                         (r'reset\s+(?P<room>#\S+)', self.reset, 
+                         (r'reset tweets (?P<room>#\S+)', self.reset, 
                           'Reset reported tweets'),
                          (r'set check time (\d+)', self.set_check_time, 
                           'set the twitter check time'),
-                         (r'pull',self.pull_tweet, "Pull some tweets without waiting for timer"),
+                         (r'pull tweets',self.pull_tweet, "Pull some tweets without waiting for timer"),
                          
                          )
         
@@ -104,14 +104,15 @@ class TwitterPlugin(Plugin):
         set_room_option(self.network, room, "twitter-post-limit", limit)
         self.say(chan,"Twitter post limit set successfully set")
     
+    @irc_room_permission_required('twitter_op')
     def list_follows(self, regex, chan, nick, **kwargs):
         room = regex.group('room')
-        self.notice(nick, "List of twitter follows for room "+room)
+        self.say(chan, "List of twitter follows for room "+room)
         follows = TwitterFollows.objects.filter(network=self.network,
                                          room=room.lower())
         for follow in follows:
-            self.notice(nick, follow.screen_name)
-        self.notice(nick, "== End of List==")
+            self.say(chan, follow.screen_name)
+        self.say(chan, "== End of List==")
 
     @irc_room_permission_required('twitter_op')
     def add_follow(self, regex, chan, nick, **kwargs):
