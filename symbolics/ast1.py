@@ -171,11 +171,38 @@ def run_tests():
     print "result = ",nv.result
     assert(nv.result == "2*(3*4+2)")
 
+def long_calc():
+    from sympy import integrate, sin, exp
+    s = "integrate(sin(a*x)*exp(-x*x),x)"
+    a,x = sympy.symbols('a x')
+    print eval(s)
+
+def subprocess_test():
+    from subprocess import Popen, PIPE
+    import os
+    import signal
+    from time import sleep
+    s = os.path.join(os.getcwd(), 'subprocess.sh')
+    p = Popen(s, bufsize=1, stdout=PIPE, shell=True, preexec_fn=os.setsid)
+    print p.stdout
+    sleep(10)
+    print "killing subprocess"
+    # kill based on http://stackoverflow.com/questions/4789837/how-to-terminate-a-python-subprocess-launched-with-shell-true
+    os.killpg(os.getpgid(p.pid), signal.SIGTERM) 
+    sleep(5)
+
 if __name__ == '__main__':
     if len(sys.argv) >= 2:
         if sys.argv[1] == 'tests':
             run_tests()
             sys.exit()
+        elif sys.argv[1] == 'long-calc':
+            long_calc()
+            sys.exit()
+        elif sys.argv[1] == 'subprocess':
+            subprocess_test()
+            sys.exit()
+
 
     symvars = SymVars()
     nv = MyNodeVisitor()
