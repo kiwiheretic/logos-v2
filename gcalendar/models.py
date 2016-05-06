@@ -11,10 +11,10 @@ class SiteModel(models.Model):
     client_secret = models.CharField(max_length=200)
 
 class FlowModel(models.Model):
-    id = models.ForeignKey(User, primary_key=True)
+    id = models.OneToOneField(User, primary_key=True)
     flow = FlowField()
 
 class CredentialsModel(models.Model):
-    id = models.ForeignKey(User, primary_key=True)
+    id = models.OneToOneField(User, primary_key = True)
     credential = CredentialsField()
 

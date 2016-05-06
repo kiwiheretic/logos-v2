@@ -5,9 +5,9 @@ from django.utils import timezone
 
 # Create your models here.
 class NickHistory(models.Model):
-    network = models.TextField()
+    network = models.TextField(db_index=True)
     room = models.TextField()
-    nick = models.CharField(max_length=40)
+    nick = models.CharField(db_index=True, max_length=40)
     host_mask = models.CharField(max_length=80)
     time_seen = models.DateTimeField(default = timezone.now)
 
