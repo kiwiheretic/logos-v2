@@ -8,11 +8,14 @@ from guardian.shortcuts import assign_perm, get_perms, remove_perm, \
     get_perms
 
 import re
-import pdb
 
 class Command(BaseCommand):
 #    args = '<poll_id poll_id ...>'
 #    help = 'Closes the specified poll for voting'
+
+    def add_arguments(self, parser):
+        # compatibility with django 1.7
+        parser.add_argument('args', nargs='*')
 
     def handle(self, *args, **options):
         largs = list(args)
