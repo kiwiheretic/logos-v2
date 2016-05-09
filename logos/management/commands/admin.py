@@ -49,6 +49,16 @@ class Command(BaseCommand):
         user.set_password(password)
         user.save()       
         self.stdout.write("Password successfully changed")
+
+    def cmd_setsuperuser(self, username):
+        try:
+            user = User.objects.get(username__iexact = username.lower())
+        except User.DoesNotExist:
+            self.stdout.write("Unknown user")
+            return 
+        user.is_superuser = True
+        user.save()       
+        self.stdout.write("Superuser successfully set for {}".format(username))
         
     def cmd_listusers(self):
         for user in User.objects.all():
