@@ -3,8 +3,14 @@ from __future__ import print_function, absolute_import
 from .bot_plugin import NotesPlugin
 from django.contrib.auth.models import User
 from django.contrib.auth import authenticate
+from django.test import Client
+from django.core.urlresolvers import reverse
+import datetime
+import pytz
+
 # Subclass your test class from LogosTestCase
 from bot.testing.utils import LogosTestCase
+from .models import Folder, Note
 
 class TestNotes(LogosTestCase):
     # set plugin_class to the actual class
@@ -34,6 +40,18 @@ class TestNotes(LogosTestCase):
         output = self.plugin.send_channel_msg("# test note logging")
         self.assertNotIn('logged to cloud notes', output)  
         
+    def test__note_edit_view(self):
+        """ Make sure no exceptions occur on get note for editing"""
+        client = Client()
+        resp = client.login(username = 'fred', password = 'pass123')
+        fldr = Folder.objects.get(user = self.u1, name='Main')
+        now = datetime.datetime.now(tz=pytz.UTC)
+        note = Note(user=self.u1, folder = fldr, created_at = now,
+                modified_at = now, title='Test Note', note='note body' )
+        note.save()
+        note_id = note.id
+        response = client.get(reverse('cloud_notes.views.edit_note', args=(note_id,)))
+
     def test_channel_independence(self):
         self.set_nick("fred")
         self.login('pass123')

@@ -7,6 +7,7 @@ from django.http import HttpResponse, HttpResponseRedirect
 from django.utils import timezone
 from django.contrib import auth  # .models.DoesNotExist
 from django.utils.decorators import method_decorator
+from django.forms.models import model_to_dict
 
 import os
 import json
@@ -195,7 +196,7 @@ def edit_note(request, note_id):
         return redirect('cloud_notes.views.preview', note_id)
     else: # GET
         note = Note.objects.get(pk=note_id)
-        form = NoteForm(note)
+        form = NoteForm(model_to_dict(note))
         context = {'form':form, 'suppress_menu':True}
         return render(request, 'cloud_notes/new.html', context)
         
