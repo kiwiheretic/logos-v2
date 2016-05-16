@@ -975,6 +975,9 @@ class BibleBot(Plugin):
         signal_data = {'chan': chan, 'nick': nick, 'verses':results }
         self.signal("verse_search", signal_data)
         for result in results:
+            # remove all <word-match> tags from result stream
+            # (Not yet implemented anyway.)
+            result = re.sub(r"<[^>]*>", "", result)
             self.say(chan, result)
             
         if finished:
