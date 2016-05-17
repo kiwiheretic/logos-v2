@@ -4,6 +4,14 @@ from django.shortcuts import render
 from .models import NickHistory
 from logos.models import BotsRunning
 import xmlrpclib
+import logging
+import xmlrpclib
+from bot.pluginDespatch import Plugin
+
+from django.conf import settings 
+logger = logging.getLogger(__name__)
+logging.config.dictConfig(settings.LOGGING)
+
 # Create your views here.
 
 def index(request):
