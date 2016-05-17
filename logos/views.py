@@ -94,13 +94,15 @@ def bots(request):
         bots.append({'id': bot.id, 'pid':bot.pid, 'alive':not dead, 'rpc':bot.rpc, 'networks':networks})
     context = {'bots':bots}
     return render(request, 'logos/bots.html', context)
+def configure_plugins(plugins):
+    for app in settings.INSTALLED_APPS:
+        configure_app_plugins(app, plugins)
 
-def configure_plugins(app, plugins):
+def configure_app_plugins(app, plugins):
     """Populate plugins with configuration view information"""
     for plugin in plugins:
         # 'logos' app causes confusion because it
         # it matches the Plugin class
-
         try:
             plugin_mod = __import__(app + ".bot_plugin").bot_plugin
             for attr in dir(plugin_mod):
@@ -113,7 +115,7 @@ def configure_plugins(app, plugins):
                 a1 != Plugin and \
                 issubclass(a1, Plugin) and \
                 hasattr(a1, 'plugin') and \
-                a1.plugin[0] == plugin.plugin.name:  
+                a1.plugin[0] == plugin.name:  
                     if app == 'logos': 
                         plugin.user_view = 'logos.views.user_settings'
                         return
@@ -135,17 +137,43 @@ def configure_plugins(app, plugins):
             pass
 
 
+def add_new_plugins(plugins):
+    for app in settings.INSTALLED_APPS:
+        try:
+            plugin_mod = __import__(app + ".bot_plugin").bot_plugin
+            for attr in dir(plugin_mod):
+                a1 = getattr(plugin_mod, attr)
+                # Check if the class is a class derived from 
+                # bot.PluginDespatch.Plugin
+                # but is not the base class only
+
+                if inspect.isclass(a1) and \
+                a1 != Plugin and \
+                issubclass(a1, Plugin) and \
+                hasattr(a1, 'plugin'):
+                    plugin_name = a1.plugin[0]
+                    plugin_descr = a1.plugin[1]
+                    if not Plugins.objects.filter(name = plugin_name).exists():
+                        plugin = Plugins(name = plugin_name,
+                                description = plugin_descr)
+                        plugin.save()
+                    break
+
+
+        except ImportError:
+            pass
 
 @login_required()    
 def plugins(request):
-    plugins = NetworkPlugins.objects.order_by('plugin__name')
-    networks = []
-    for app in settings.INSTALLED_APPS:
-        configure_plugins(app, plugins)
+    plugins = Plugins.objects.order_by('name')
+    add_new_plugins(plugins)
+    configure_plugins(plugins)
 
+    networks = []
     for plugin in plugins:
-        if plugin.network not in networks:
-            networks.append(plugin.network)
+        for network in plugin.networkplugins_set.all():
+            if network.network not in networks:
+                networks.append(network.network)
     context = {'plugins':plugins, 'networks':networks, 'networkpermissions':NetworkPermissions}
     return render(request, 'logos/plugins.html', context)
 

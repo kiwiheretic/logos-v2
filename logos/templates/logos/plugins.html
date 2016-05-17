@@ -47,34 +47,31 @@
 
 {% block content %}
 {% get_obj_perms request.user for networkpermissions as "net_perms" %}
+{% if request.user.is_superuser %}
 <h2>Networks</h2>
-{% if 'bot_admin' in net_perms %}
 <p>Warning:  Before deleting a network ensure no running bots are connected to this network first!!  
 It may destablise the running bot.</p>
-{% endif %}
 <ul>
 {% for network in networks %}
 <li class="large-vertical-spacing">{{network}} 
-{% if 'bot_admin' in net_perms %}
 <a href="{% url 'logos.views.deletenetworkplugins' network %}" class="custom-button-link" style="margin-left:4em;">Delete Network</a>
-{% endif %}
 </li>
 {% endfor %}
 </ul>
+{% endif %}
 
 <h2>Plugins</h2>
 
 <ul id="plugin-list">
 {% for plugin in plugins %}
-  {% ifchanged plugin.plugin.name %}
-  {% if not forloop.first %}</li>{% endif %}<li>
+<li>
   {% if plugin.dashboard_view %}
-  <a href="{% url plugin.dashboard_view %}">{{plugin.plugin.description}}</a>
+  <a href="{% url plugin.dashboard_view %}">{{plugin.description}}</a>
   {% else %}
-  {{plugin.plugin.description}}
+  {{plugin.description}}
   {% endif %}
 
-  ({{plugin.plugin.name}})
+  ({{plugin.name}})
 
     {% if plugin.superuser_view and request.user.is_superuser %}
     (&nbsp;<a href="{% url plugin.superuser_view %}">site settings</a>&nbsp;)
@@ -84,10 +81,11 @@ It may destablise the running bot.</p>
     (&nbsp;<a href="{% url plugin.user_view %}">user settings</a>&nbsp;)
     {% endif %}
 
-  {% endifchanged %}
   <ul>
-    <li><a href="{% url 'logos.views.networkplugins' plugin.id %}">{{plugin.network}}</a> {% if plugin.enabled %}<span class="plugin-activated">&nbsp;active&nbsp;</span>{% endif %}
+      {% for network in plugin.networkplugins_set.all %}
+    <li><a href="{% url 'logos.views.networkplugins' network.id %}">{{network.network}}</a> {% if network.enabled %}<span class="plugin-activated">&nbsp;active&nbsp;</span>{% endif %}
     </li>
+    {% endfor %}
   </ul>
 
 {% endfor %}
