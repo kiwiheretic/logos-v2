@@ -52,7 +52,7 @@ class LogosRouter(object):
         """
         return None
 
-    def allow_migrate(self, db, model):
+    def allow_migrate(self, db, app_label, model_name=None, **hints):
         """
         Whether to allow data migrations on this model
         manage.py loaddata seems to not work without this
@@ -62,8 +62,8 @@ class LogosRouter(object):
             try:
                 if hasattr(mod.models, 'DB_ROUTER'):
                     for k, models in mod.models.DB_ROUTER.iteritems():
-                        for model_name in models:
-                            if model.__name__ == model_name:
+                        for modelname in models:
+                            if model_name == modelname:
                                 if db == k:
                                     return True
                                 else:
