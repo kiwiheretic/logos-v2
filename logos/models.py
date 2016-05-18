@@ -84,6 +84,9 @@ class Plugins(models.Model):
     name = models.TextField(unique=True)
     description = models.TextField()
     system = models.BooleanField(default=False)
+    
+    def __str__(self):
+        return self.name
         
 class NetworkPlugins(models.Model):
     plugin = models.ForeignKey('Plugins')
