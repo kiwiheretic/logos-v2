@@ -11,6 +11,16 @@ class NickHistory(models.Model):
     host_mask = models.CharField(max_length=80)
     time_seen = models.DateTimeField(default = timezone.now)
 
+class NickSummary(models.Model):
+    network = models.TextField(db_index=True)
+    nick = models.CharField(db_index=True, max_length=40)
+    host_mask = models.CharField(max_length=80)
+    last_seen = models.DateTimeField()
+    class Meta:
+        index_together = [
+            ['network', 'nick'],
+            ['network', 'host_mask']
+        ]
 
 
 class Probation(models.Model):
