@@ -5,7 +5,6 @@ import re
 import os
 import twitter
 import json
-import threading
 import HTMLParser
 
 from datetime import timedelta, datetime
@@ -23,7 +22,6 @@ from bot.logos_decorators import irc_network_permission_required, \
 logger = logging.getLogger(__name__)
 logging.config.dictConfig(LOGGING)
 
-USE_THREADS = True
 
 # If using this file as a starting point for your plugin
 # then remember to change the class name 'MyBotPlugin' to
@@ -62,15 +60,6 @@ class TwitterPlugin(Plugin):
        
     def on_activate(self):
         """ When this plugin is activated for the network """
-        
-        self.consumer_key = get_global_option('twitter-consumer-key')
-        self.consumer_secret = get_global_option('twitter-consumer-secret')
-        self.access_token = get_global_option('twitter-access-token')
-        self.token_secret = get_global_option('twitter-token-secret')
-        self.api = twitter.Api(consumer_key=self.consumer_key,
-                      consumer_secret=self.consumer_secret,
-                      access_token_key=self.access_token,
-                      access_token_secret=self.token_secret)        
         
         check_time = get_global_option("twitter-check-time")
         if check_time:
@@ -153,73 +142,29 @@ class TwitterPlugin(Plugin):
     
     def pull_tweet(self, regex, chan, nick, **kwargs):
         self.say(chan, "Manually requesting tweet")
-        self._process_tweets(manual_request=True, chan=chan)
+        self._process_tweets(channel=chan)
         
         
     def on_timer(self):
-        logger.debug("Num Threads = "+str(threading.active_count()))
         dt = datetime.now(pytz.utc)
         logger.debug("on_timer {}".format(str(dt)))
-        if USE_THREADS:
-            self.reactor.callInThread(self._process_tweets)
-        else:
-            self._process_tweets()
+        self._process_tweets()
             
-    def _process_results(self, responses, manual_request=False, chan=None):
-        for room, msg in responses:
-            msg = re.sub(r"\n|\r", "", msg)
-            msg = self.h.unescape(msg)
-
-            self.say(room, msg)
-        if not responses and manual_request:
-            self.say(chan, "=== No Tweets Found ===")
-            
-    def _process_tweets(self, **kwargs):
+    def _process_tweets(self, channel=None):
         
         responses = []
 
-        
-        follows = TwitterFollows.objects.filter(network=self.network).\
-            values('screen_name').distinct()
-                                      
-        get_tweets_from = [x['screen_name'] for x in follows]
-        for tweeter in get_tweets_from:
-            try:
-                last_tweet = TwitterStatuses.objects.\
-                    filter(screen_name__iexact=tweeter[1:]).order_by('twitter_id').last()
-                if last_tweet:
-                    since_id = long(last_tweet.twitter_id)
-                    statuses = self.api.GetUserTimeline(screen_name=tweeter,
-                                                        since_id = since_id)
-                else:
-                    statuses = self.api.GetUserTimeline(screen_name=tweeter)
-                
-                for status in statuses:
-                    if TwitterStatuses.objects.filter(twitter_id=status.id).exists():
-                        logger.error("Twitter status {} already exists".format(status.id))
-                    else:
-                        ts = TwitterStatuses()
-                        ts.twitter_id = status.id
-                        ts.screen_name = status.user.screen_name
-                        try:
-                            ts.url = status.urls[0].url
-                        except IndexError:
-                            ts.url = None
-                        ts.text = status.text
-                        ts.created_at = parser.parse(status.created_at)
-                        ts.save()        
-            
-            except twitter.error.TwitterError:
-                logger.error("An error occurred fetching tweets")
-            
         now = datetime.now(pytz.utc)
-        n_days_ago = now - timedelta(days=14)
+        n_days_ago = now - timedelta(days=365)
 
         statuses = TwitterStatuses.objects.\
             filter(created_at__gt = n_days_ago).\
                 order_by('created_at')
 
-        rooms = self.get_rooms()
+        if channel:
+            rooms = [ channel ]
+        else:
+            rooms = self.get_rooms()
         for room in rooms:
             if not self.is_plugin_enabled(room): continue
 
@@ -239,15 +184,12 @@ class TwitterPlugin(Plugin):
                 room=room.lower(),\
                 screen_name__iexact = "@"+status.screen_name).exists():
                     continue
-                        
-#                if count==0:
-#                    self.say(room, "Your Christian Twitter Feed :)")
-                    
-                chan_text = "@{} -- {}".format(status.screen_name,
-                                           status.text.encode("ascii", "replace_spc"))
+                created_at = status.created_at.strftime("%d-%b-%Y %H:%M")         
+                chan_text = "@{} {} -- {}".format(status.screen_name, 
+                    created_at,
+                    status.text.encode("ascii", "replace_spc"))
 
                 responses.append((room, chan_text))
-#                self.say(room, chan_text)
                 reported_twt = ReportedTweets()
                 reported_twt.tweet = status
                 reported_twt.network = self.network.lower()
@@ -257,8 +199,12 @@ class TwitterPlugin(Plugin):
                 count += 1
                 
                 if count >= limit: break
-        if USE_THREADS:
-            self.reactor.callFromThread(self._process_results, responses, **kwargs)
-        else:
-            self._process_results(responses, **kwargs)
+            for room, msg in responses:
+                if not self.is_plugin_enabled(room): continue
+                msg = re.sub(r"\n|\r", "", msg)
+                msg = self.h.unescape(msg)
+
+                self.say(room, msg)
+            if not responses and channel: # manual pull
+                self.say(channel, "=== No Tweets Found ===")
             
