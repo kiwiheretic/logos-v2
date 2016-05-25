@@ -8,7 +8,7 @@ from twisted.internet.task import LoopingCall
 from datetime import datetime, timedelta
 from django.utils import timezone
 from django.conf import settings
-from .models import DownVotes, Penalty, Probation, NickHistory
+from .models import DownVotes, Penalty, Probation, NickHistory, NickSummary
 from logos.roomlib import get_room_option
 from logos.qs_iter import queryset_foreach
 
@@ -202,13 +202,13 @@ class RoomManagementPlugin(Plugin):
         """ Find all nicks matching a hostmask """
         hostmask = regex.group('hostmask')
         if hostmask[0] == '*' and hostmask[-1] == '*':
-            nicks = NickHistory.objects.filter(network=self.network, host_mask__contains = hostmask[1:-1])
+            nicks = NickSummary.objects.filter(network=self.network, host_mask__contains = hostmask[1:-1])
         elif hostmask[0] == '*':
-            nicks = NickHistory.objects.filter(network=self.network, host_mask__endswith = hostmask[1:])
+            nicks = NickSummary.objects.filter(network=self.network, host_mask__endswith = hostmask[1:])
         elif hostmask[-1] == '*':
-            nicks = NickHistory.objects.filter(network=self.network, host_mask__startswith = '*!*@' + hostmask[0:-1])
+            nicks = NickSummary.objects.filter(network=self.network, host_mask__startswith = '*!*@' + hostmask[0:-1])
         else:
-            nicks = NickHistory.objects.filter(network=self.network, host_mask = '*!*@'+hostmask)
+            nicks = NickSummary.objects.filter(network=self.network, host_mask = '*!*@'+hostmask)
 
         unique_nicks = set()
         for nickl in nicks:
@@ -224,19 +224,19 @@ class RoomManagementPlugin(Plugin):
     def aka(self, regex, chan, nick, **kwargs):
         this_nick = regex.group('nick')
 
-        def f(nick):
-            if nick.nick.lower() != this_nick.lower():
-                unique_nicks.add(nick.nick)
-
         unique_nicks = set()
-        hostmasks = self._get_hostmasks(this_nick)
-        if hostmasks:
-            for hostmask in self._get_hostmasks(this_nick):
-                qs = NickHistory.objects.filter(host_mask__contains = hostmask, network=self.network).order_by('nick')
-                queryset_foreach(qs, f)
+        qs = NickSummary.objects.filter(network=self.network, nick__iexact = this_nick.lower())
+        if len(qs) > 0:
+            for rec in qs:
+                hostmask = rec.host_mask
+                qs2 = NickSummary.objects.filter(network=self.network, host_mask = hostmask)
+                for rec2 in qs2:
+                    if rec2.nick.lower() != this_nick.lower():
+                        unique_nicks.add(rec2.nick)
             if len(unique_nicks) > 0:
                 nick_list = ", ".join(sorted(unique_nicks))
                 self.say(chan, "{} is also {}".format(this_nick, nick_list))
+                self.say(chan, "*** end of nick list ***")
             else:
                 self.say(chan, "No other nicks for {}".format(this_nick))
         else:
@@ -250,13 +250,14 @@ class RoomManagementPlugin(Plugin):
         hostrec = NickHistory.objects.filter(network=self.network, nick__iexact = this_nick).order_by('time_seen').last()
         if hostrec:
             hostmask = hostrec.host_mask
-            nicks = NickHistory.objects.filter(network=self.network, host_mask = hostmask).order_by('nick')
+            nicks = NickSummary.objects.filter(network=self.network, host_mask = hostmask).order_by('nick')
             for nick in nicks:
                 if nick.nick.lower() != this_nick.lower():
                     unique_nicks.add(nick.nick)
             if len(unique_nicks) > 0:
                 nick_list = ", ".join(sorted(unique_nicks))
                 self.say(chan, "{} is also {}".format(this_nick, nick_list))
+                self.say(chan, "*** end of list ***")
             else:
                 self.say(chan, "No other nicks for {}".format(this_nick))
         else:
@@ -265,15 +266,13 @@ class RoomManagementPlugin(Plugin):
     def _get_hostmasks(self, nick):
 
         hosts = set()
-        def f(nick):
-            if '@' in nick.host_mask:
-                hostmask = nick.host_mask.split('@')[1]
+        qs = NickSummary.objects.filter(network=self.network, nick__iexact = nick).order_by('host_mask')
+        for rec in qs:
+            if '@' in rec.host_mask:
+                hostmask = rec.host_mask.split('@')[1]
             else:
-                hostmask = nick.host_mask
+                hostmask = rec.host_mask
             hosts.add(hostmask)
-
-        qs = NickHistory.objects.filter(network=self.network, nick__iexact = nick).order_by('host_mask')
-        queryset_foreach(qs, f)
         return hosts
 
     @irc_room_permission_required('room_admin')
