@@ -10,7 +10,7 @@ admin.autodiscover()
 
 
 
-urlpatterns = patterns('',
+urlpatterns = [
     # Examples:
     url(r'^$', 'logos.views.root_url'),
     url(r'^logos/user-settings/$', 'logos.views.user_settings'),
@@ -32,11 +32,11 @@ urlpatterns = patterns('',
     url(r'^scripture_game/', include('scripture_game.urls')),
     url(r'^notes/', include('cloud_notes.urls')),
     url(r'^memos/', include('cloud_memos.urls')),
-    url(r'^forum/', include('pybb.urls', namespace='pybb')),
     url(r'^gcal/', include('gcalendar.urls')),
     url(r'^weather/', include('weather.urls')),
     url(r'^twitter/', include('twitterapp.urls')),
     url(r'^botnet/', include('botnet.urls')),
+    url(r'^reddit/', include('reddit.urls')),
     url(r'^room_manage/', include('room_manage.urls')),
     url(r'^bible/', include('bibleapp.urls')),
     url(r'^bots/approve/(\d+)', 'logos.views.bot_approval'),
@@ -51,4 +51,4 @@ urlpatterns = patterns('',
     url(r'^admin/', include(admin.site.urls)),
     
     url(r'^static/(?P<path>.*)$', 'django.contrib.staticfiles.views.serve'),
-)
+]

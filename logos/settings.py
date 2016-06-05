@@ -225,6 +225,7 @@ WSGI_APPLICATION = 'logos.wsgi.application'
 TEMPLATE_CONTEXT_PROCESSORS = (
   # ...
   'django.core.context_processors.request',
+  'logos.context_processors.request',
   # ...
   'django.contrib.messages.context_processors.messages',
   'django.contrib.auth.context_processors.auth',
@@ -256,7 +257,6 @@ INSTALLED_APPS = (
     'cloud_memos',
     'room_manage',
     'scripture_game',
-    'pybb',
     'botnet',
     'symbolics',
     'gcalendar',

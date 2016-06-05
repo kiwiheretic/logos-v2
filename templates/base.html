@@ -33,6 +33,9 @@
 		<li><a href="{% url 'logos.views.admin' %}" class="button-link">Administration</a></li>
         <li><a href="{% url 'cloud_notes.views.list' %}" class="button-link">Notes</a></li>
         <li><a href="{% url 'cloud_memos.views.inbox' %}" class="button-link">Memos</a></li>
+        {% for button, view in menu_buttons %}
+        <li><a href="{% url view %}" class="button-link">{{button}}</a></li>
+        {% endfor %}
 		<li><a href="/accounts/password/change/" class="button-link">Password Change</a></li>
         <li><a href="/accounts/logout/" class="button-link">Logout</a></li>
     </ul>

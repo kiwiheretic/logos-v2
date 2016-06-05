@@ -11,6 +11,7 @@ from django.core import serializers
 from .forms import SettingsForm, UserSettingsForm
 from .models import Settings, BotsRunning, Plugins, NetworkPlugins, RoomPlugins, NetworkPermissions, RoomPermissions
 from logos.roomlib import get_user_option, set_user_option
+from .pluginlib import configure_app_plugins
 
 import copy
 import pickle
@@ -97,44 +98,6 @@ def bots(request):
 def configure_plugins(plugins):
     for app in settings.INSTALLED_APPS:
         configure_app_plugins(app, plugins)
-
-def configure_app_plugins(app, plugins):
-    """Populate plugins with configuration view information"""
-    for plugin in plugins:
-        # 'logos' app causes confusion because it
-        # it matches the Plugin class
-        try:
-            plugin_mod = __import__(app + ".bot_plugin").bot_plugin
-            for attr in dir(plugin_mod):
-                a1 = getattr(plugin_mod, attr)
-                # Check if the class is a class derived from 
-                # bot.PluginDespatch.Plugin
-                # but is not the base class only
-
-                if inspect.isclass(a1) and \
-                a1 != Plugin and \
-                issubclass(a1, Plugin) and \
-                hasattr(a1, 'plugin') and \
-                a1.plugin[0] == plugin.name:  
-                    if app == 'logos': 
-                        plugin.user_view = 'logos.views.user_settings'
-                        return
-
-                    appmod = __import__(app + ".settings").settings
-                    if hasattr(appmod, 'USER_SETTINGS_VIEW'):
-                        plugin.user_view = appmod.USER_SETTINGS_VIEW
-                        logger.debug( "Add user settings for " + app) 
-                    if hasattr(appmod, 'SUPERUSER_SETTINGS_VIEW'):
-                        plugin.superuser_view = appmod.SUPERUSER_SETTINGS_VIEW
-                        logger.debug( "Add superuser settings for " + app) 
-                    if hasattr(appmod, 'DASHBOARD_VIEW'):
-                        plugin.dashboard_view = appmod.DASHBOARD_VIEW
-                        logger.debug( "Add dashboard settings for " + app) 
-                    return
-
-
-        except ImportError:
-            pass
 
 
 def add_new_plugins(plugins):
