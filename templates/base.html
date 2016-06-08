@@ -36,6 +36,7 @@
         {% for button, view in menu_buttons %}
         <li><a href="{% url view %}" class="button-link">{{button}}</a></li>
         {% endfor %}
+        <li><a href="{% url 'logos.views.preferences' %}" class="button-link">Preferences</a></li>
 		<li><a href="/accounts/password/change/" class="button-link">Password Change</a></li>
         <li><a href="/accounts/logout/" class="button-link">Logout</a></li>
     </ul>

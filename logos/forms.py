@@ -12,7 +12,6 @@ class DynamicOptionsForm(forms.Form):
         for i, row in enumerate(qs):
             self.fields['custom_%d' % (i,)] = forms.CharField(label=row.label)
     
-
     
 class UserSettingsForm(forms.Form):
     t_choices = (('', 'Room Default'), ('~','~'),('!', '!'),('.','.'), ('?', '?'))

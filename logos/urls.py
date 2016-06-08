@@ -19,6 +19,7 @@ urlpatterns = [
     # url(r'^admin/doc/', include('django.contrib.admindocs.urls')),
     url(r'^accounts/', include('registration.backends.default.urls')),
     url(r'^accounts/profile/', 'logos.views.profile'),
+    url(r'^logos/preferences/', 'logos.views.preferences'),
     
     url(r'^logos-admin/$', 'logos.views.admin'),
     url(r'^logos-admin/bots/', 'logos.views.bots'),

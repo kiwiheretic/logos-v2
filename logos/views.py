@@ -19,6 +19,7 @@ import socket
 import logging
 import inspect
 
+import pytz
 import xmlrpclib
 from bot.pluginDespatch import Plugin
 
@@ -50,7 +51,36 @@ def _get_rpc_url():
     url = 'http://%s:%s/' % (host,port)
     return url
 
+@login_required
+def set_timezone(request):
+    if request.method == 'POST':
+        #request.session['django_timezone'] = request.POST['timezone']
+        set_user_option(request.user, 'timezone', request.POST['timezone'])
+        messages.add_message(request, messages.INFO, 'Time Zone Information Saved')
+        return redirect('/accounts/profile/')
+    else:
+        return render(request, 'logos/preferences.html', {'timezones': pytz.common_timezones})
     
+@login_required()
+def preferences(request):
+    return set_timezone(request)
+
+#    if request.method == 'POST':
+#        tzfrm = TimeZoneForm(request.POST)
+#        if tzfrm.is_valid():
+#            zid = tzfrm.cleaned_data['timezone']
+#            set_user_option(request.user, 'timezone-id', zid)
+#            messages.add_message(request, messages.INFO, 'Preferences Saved')
+#            return HttpResponseRedirect(reverse('logos.views.profile'))
+#    else:
+#        zid = get_user_option(request.user, 'timezone-id')
+#        if zid:
+#            tzfrm = TimeZoneForm(initial={'timezone':zid})
+#        else:
+#            tzfrm = TimeZoneForm()
+#    forms = [(tzfrm, 'Time Zone')]
+#    return render(request, 'logos/preferences.html',{'forms':forms})
+
 @login_required()
 def user_settings(request):
     if request.method == "GET":
