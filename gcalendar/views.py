@@ -4,6 +4,7 @@ from django.forms.models import model_to_dict
 from django.contrib import messages
 from django.contrib.sites.models import Site
 from django.contrib.auth.decorators import login_required
+from django.utils import timezone
 
 from oauth2client.client import OAuth2WebServerFlow
 from oauth2client.django_orm import Storage
@@ -14,10 +15,10 @@ import datetime
 import dateutil
 import dateutil.parser
 import pytz
+from logos.roomlib import get_user_option, set_user_option
 
 from .forms import SiteSetupForm, EventForm
 from .models import SiteModel, FlowModel, CredentialsModel
-
 
 def get_service(request):
     storage = Storage(CredentialsModel, 'id', request.user, 'credential')
@@ -26,8 +27,8 @@ def get_service(request):
     service = discovery.build('calendar', 'v3', http=http)
     return service
 
-def create_event_from_form(form):
-    tz = pytz.timezone('Pacific/Auckland')
+def create_event_from_form(form, user):
+    tzname = get_user_option(user, 'timezone')
     start_time = form.cleaned_data['start_time']
     start_date = form.cleaned_data['start_date']
 
@@ -39,16 +40,16 @@ def create_event_from_form(form):
     weekdays = ('MO', 'TU', 'WE', 'TH', 'FR', 'SA', 'SU')
     if start_time:
         d = datetime.datetime.combine(start_date, start_time)
-        start = (tz.localize(d)).isoformat()
-        event['start'] = {'dateTime':start, 'timeZone': 'Pacific/Auckland'}
+        start = timezone.make_aware(d, timezone = pytz.timezone(tzname)).isoformat()
+        event['start'] = {'dateTime':start }
         duration = int(form.cleaned_data['duration'])
         td = datetime.timedelta(minutes = duration)
-        end_date = tz.localize(d + td).isoformat()
-        event['end'] = {'dateTime':end_date, 'timeZone': 'Pacific/Auckland'}
+        end_date = timezone.make_aware(d+td, timezone=pytz.timezone(tzname)).isoformat()
+        event['end'] = {'dateTime':end_date}
     else:
-        d = start_date
-        start = start_date.isoformat()
-        event['start'] = {'date':start, 'timeZone': 'Pacific/Auckland'}
+        #d = start_date
+        #start = start_date.isoformat()
+        event['start'] = {'date':start_date}
         event['end'] = event['start']
     
     if form.cleaned_data['recurring'] == 'RW':
@@ -114,12 +115,13 @@ def list(request):
 
     service = get_service(request)
 
-    now = datetime.datetime.utcnow().isoformat() + 'Z' # 'Z' indicates UTC time
+    now = pytz.utc.normalize(timezone.now()).isoformat()
     eventsResult = service.events().list(
         calendarId='primary', timeMin=now, maxResults=10, singleEvents=True,
         orderBy='startTime').execute()
     events = eventsResult.get('items', [])
     for event in events:
+        print event['start']
         if 'date' in event['start']:
             event['start_date'] = dateutil.parser.parse(event['start']['date'])
         elif 'dateTime' in event['start']:
@@ -139,13 +141,12 @@ def new_event(request):
         if form.is_valid():
             
             service = get_service(request)
-            event = create_event_from_form(form)           
+            event = create_event_from_form(form, request.user)           
             event = service.events().insert(calendarId='primary', body=event).execute()
             messages.add_message(request, messages.INFO, 'Calendar Event Created Successful')
             return redirect('list')
     else: # GET
-        tz = pytz.timezone('Pacific/Auckland')
-        start_date = datetime.datetime.now(tz).date().strftime('%d/%m/%y')
+        start_date = timezone.now().date().strftime('%d/%m/%y')
         form = EventForm(initial={'start_date':start_date})
     return render(request, 'gcal/new_event.html', {'form':form})
 
@@ -206,7 +207,7 @@ def edit_event(request, event_id):
     elif request.method == "POST":
         form = EventForm(request.POST)
         if form.is_valid():
-            event = create_event_from_form(form)           
+            event = create_event_from_form(form, request.user)           
             service.events().update(calendarId='primary', eventId=event_id, body=event).execute()
             messages.add_message(request, messages.INFO, 'Event updated successfully')
             return redirect('gcalendar.views.event_detail', event_id)
