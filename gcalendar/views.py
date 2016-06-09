@@ -5,6 +5,7 @@ from django.contrib import messages
 from django.contrib.sites.models import Site
 from django.contrib.auth.decorators import login_required
 from django.utils import timezone
+from django.http import HttpResponse
 
 from oauth2client.client import OAuth2WebServerFlow
 from oauth2client.django_orm import Storage
@@ -23,9 +24,13 @@ from .models import SiteModel, FlowModel, CredentialsModel
 def get_service(request):
     storage = Storage(CredentialsModel, 'id', request.user, 'credential')
     credentials = storage.get()
-    http = credentials.authorize(httplib2.Http())
-    service = discovery.build('calendar', 'v3', http=http)
-    return service
+    if credentials:
+        http = credentials.authorize(httplib2.Http())
+        service = discovery.build('calendar', 'v3', http=http)
+        return service
+    else:
+        return None
+
 
 def create_event_from_form(form, user):
     tzname = get_user_option(user, 'timezone')
@@ -85,6 +90,9 @@ def user_setup(request):
     storage = Storage(CredentialsModel, 'id', request.user, 'credential')
     credentials = storage.get()
     mdl = SiteModel.objects.first()
+    if not mdl:
+        messages.add_message(request, messages.ERROR, "Google Calendar not set up - Contact Administrator")
+        return redirect('/aacounts/profile')
     domain = Site.objects.get_current().domain
     flow = OAuth2WebServerFlow(client_id=mdl.client_id,
                                client_secret=mdl.client_secret,
@@ -102,37 +110,42 @@ def user_setup(request):
 
 
 def oauth_callback(request):
-    code = request.GET['code']
-    flow = FlowModel.objects.get(id = request.user).flow
-    credentials = flow.step2_exchange(code)
-    storage = Storage(CredentialsModel, 'id', request.user, 'credential')
-    storage.put(credentials)
-    messages.add_message(request, messages.INFO, 'Google Authentication Successful')
-    return redirect('user_setup')
+    code = request.GET.get('code', False)
+    if code:
+        flow = FlowModel.objects.get(id = request.user).flow
+        credentials = flow.step2_exchange(code)
+        storage = Storage(CredentialsModel, 'id', request.user, 'credential')
+        storage.put(credentials)
+        messages.add_message(request, messages.INFO, 'Google Authentication Successful')
+        return redirect('user_setup')
+    else:
+        return HttpResponse("Called without authorization code")
 
 @login_required()
 def list(request):
 
     service = get_service(request)
-
-    now = pytz.utc.normalize(timezone.now()).isoformat()
-    eventsResult = service.events().list(
-        calendarId='primary', timeMin=now, maxResults=10, singleEvents=True,
-        orderBy='startTime').execute()
-    events = eventsResult.get('items', [])
-    for event in events:
-        print event['start']
-        if 'date' in event['start']:
-            event['start_date'] = dateutil.parser.parse(event['start']['date'])
-        elif 'dateTime' in event['start']:
-            event['start_datetime'] = dateutil.parser.parse(event['start']['dateTime'])
-        else:
-            event.start_date = None  # unhandled error
-#        dt = dateutil.parser.parse(start_date)
-#        estr = "{} {}".format(str(dt), event['summary'])
-#        self.notice(nick, estr)
-#
-    return render(request, 'gcal/list.html', {'events':events})
+    if service:
+        now = pytz.utc.normalize(timezone.now()).isoformat()
+        eventsResult = service.events().list(
+            calendarId='primary', timeMin=now, maxResults=10, singleEvents=True,
+            orderBy='startTime').execute()
+        events = eventsResult.get('items', [])
+        for event in events:
+            print event['start']
+            if 'date' in event['start']:
+                event['start_date'] = dateutil.parser.parse(event['start']['date'])
+            elif 'dateTime' in event['start']:
+                event['start_datetime'] = dateutil.parser.parse(event['start']['dateTime'])
+            else:
+                event.start_date = None  # unhandled error
+    #        dt = dateutil.parser.parse(start_date)
+    #        estr = "{} {}".format(str(dt), event['summary'])
+    #        self.notice(nick, estr)
+    #
+        return render(request, 'gcal/list.html', {'events':events})
+    else:
+        return HttpResponse("Google Services not iset up - Contact Administrator")
 
 @login_required()
 def new_event(request):

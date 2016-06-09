@@ -112,12 +112,12 @@ def export(request):
         
 @login_required()
 def superuser_import(request):
-    pass
+    return HttpResponse("Not Implemented")
 
             
 @login_required()
 def superuser_export(request):
-   if request.user.is_superuser:
+    if request.user.is_superuser:
 
         memos = Memo.objects.all()
         memo_list = aggregate_memos(memos)
@@ -131,6 +131,9 @@ def superuser_export(request):
         response['Content-Disposition'] = \
             "attachment; filename=\"sys_memos_{}.json\"".format(data_version)
         return response
+    else:
+        return HttpResponse("Not Superuser - Cannot export")
+
 
 def aggregate_memos(memos):
     memo_list = []

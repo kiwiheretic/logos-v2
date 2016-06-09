@@ -274,6 +274,8 @@ def export_all(request):
         response['Content-Disposition'] = \
             "attachment; filename=\"all_notes.json\""
         return response
+    else:
+        return HttpResponse("Not Superuser - cannot export all")
 
 @login_required()
 def import_all(request):

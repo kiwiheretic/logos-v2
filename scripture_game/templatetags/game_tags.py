@@ -7,11 +7,13 @@ register = template.Library()
     
 def max_lookup_value(dict, key):
     """lookup in dictionary via key"""
+    if not dict: return None
     value = max(dict.iteritems(), key=lambda d:d[1][key])[1][key]
     return value
 
 def max_lookup_key(dict, key):
     """lookup in dictionary via key"""
+    if not dict: return None
     value = max(dict.iteritems(), key=lambda d:d[1][key])[1]['nick']
     return value
     

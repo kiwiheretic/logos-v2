@@ -1,5 +1,6 @@
 from __future__ import absolute_import
 from django.shortcuts import render
+from django.http import HttpResponse
 
 from .models import NickHistory
 from logos.models import BotsRunning
@@ -29,7 +30,8 @@ def index(request):
     return render(request, 'room_manage/index.html', {'nicklist':nicklist})
 
 def site_setup(request):
-    return render(request, 'room_manage/site_setup.html')
+    return HttpResponse("Not Implemented")
+    #return render(request, 'room_manage/site_setup.html')
 
 def user_setup(request):
     bots_running = BotsRunning.objects.all()

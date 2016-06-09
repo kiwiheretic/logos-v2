@@ -37,15 +37,15 @@ urlpatterns = [
     url(r'^weather/', include('weather.urls')),
     url(r'^twitter/', include('twitterapp.urls')),
     url(r'^botnet/', include('botnet.urls')),
-    url(r'^reddit/', include('reddit.urls')),
+    #url(r'^reddit/', include('reddit.urls')),
     url(r'^room_manage/', include('room_manage.urls')),
     url(r'^bible/', include('bibleapp.urls')),
-    url(r'^bots/approve/(\d+)', 'logos.views.bot_approval'),
-    url(r'^bots/deny/(\d+)', 'logos.views.bot_deny'),
+    #url(r'^bots/approve/(\d+)', 'logos.views.bot_approval'),
+    #url(r'^bots/deny/(\d+)', 'logos.views.bot_deny'),
     
     # parameter is room name
-    url(r'^bots/colours/$', 'logos.views.bot_colours'),
-    url(r'^bots/colours/get-room-colours/([^/]+)/([^/]+)/', 'logos.views.ajax_get_room_colours'),
+    #url(r'^bots/colours/$', 'logos.views.bot_colours'),
+    #url(r'^bots/colours/get-room-colours/([^/]+)/([^/]+)/', 'logos.views.ajax_get_room_colours'),
     
     url(r'^web-views/nicks-css/', 'logos.views.nicks_css'),
     # Uncomment the next line to enable the admin:
