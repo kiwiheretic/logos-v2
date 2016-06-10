@@ -68,8 +68,9 @@ def format_weather(results):
     return msg
 
 def format_forecasts(results):
-    forecasts = "Forecasts: "
     j = results['channel']
+    title = j['item']['title']
+    forecasts = "Forecasts and {}: ".format(title)
     for fc in j['item']['forecast'][:3]:
         day = fc['day']
         hi_c = int(fc['high'])
