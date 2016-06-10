@@ -8,7 +8,6 @@ import time
 import pytz
 import logging
 from .models import Feed, FeedSubscription, Cache, CacheViews
-import requests
 import feedparser
 from bot.logos_decorators import login_required, irc_room_permission_required
 from logos.roomlib import get_global_option, set_global_option, \
@@ -30,7 +29,7 @@ class FeedPlugin(Plugin):
         self.commands = (\
          (r'add feed (?P<url>https?://\S+) (?P<duration>\S+)$', self.add_feed, "Add a feed to feed list"),
          (r'add feed (?P<url>https?://\S+)$', self.add_feed, "Add a feed to feed list"),
-         (r'reset feeds$', self.reset_feeds, "List all feeds"),
+         (r'reset feeds$', self.reset_feeds, "Reset feeds for current room"),
          (r'list feeds$', self.list_feeds, "List all feeds"),
          (r'pull feeds$', self.pull_feeds, "List all feeds"),
          (r'delete feed (?P<id>\d+)$', self.delete_feed, "delete a feed"),
@@ -45,35 +44,6 @@ class FeedPlugin(Plugin):
         self.timer = task.LoopingCall(self.on_timer)
 
     def on_timer(self):
-        feedsubs = Feed.objects.filter(active=True)
-        for feed in feedsubs:
-            url = feed.feedurl
-            try:
-                logger.info('Feed requesting url {}'.format(url))
-                r = requests.get(url)
-                if r.status_code == 200:
-                    d = feedparser.parse(r.text)
-                    for entry in d['entries']:
-                        if not Cache.objects.filter(guid = entry.id).exists():
-
-                            # assume published date is in UTC timezone and 
-                            # convert to datetime object
-                            published_date = pytz.utc.localize(datetime.datetime.fromtimestamp(time.mktime(entry.published_parsed)))
-
-                            if hasattr(entry,'description'):
-                                description = entry.description
-                            else:
-                                description = None
-
-                            cache = Cache(feed = feed,
-                                    guid = entry.id,
-                                    link = entry.link,
-                                    title = entry.title,
-                                    description = description,
-                                    published = published_date)
-                            cache.save()
-            except requests.exceptions.ConnectionError:
-                pass
         self.output_feeds()
 
     def output_feeds(self, room=None):
