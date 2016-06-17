@@ -131,8 +131,8 @@ class SystemCoreCommands(Plugin):
                 
         
     def list_plugins_for_room(self, regex, chan, nick, **kwargs):
-        
-        room = chan.lower()
+        room = regex.group('room')
+        #room = chan.lower()
         if not self.get_auth().is_authorised(nick, room, 'enable_plugins'):
             self.notice(nick, "You are not authorised (or logged in) for this room.") 
             return
