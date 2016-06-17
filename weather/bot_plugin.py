@@ -78,7 +78,7 @@ def format_forecasts(results):
         hi_f = convert_f(hi_c)
         lo_f = convert_f(lo_c)
         txt = fc['text']
-        forecasts += " {} hi: {} C {} F. lo: {} C {} F {}.".format(day, hi_c, hi_f, hi_c, lo_f, txt)
+        forecasts += " {} hi: {} C {} F. lo: {} C {} F {}.".format(day, hi_c, hi_f, lo_c, lo_f, txt)
 
     return forecasts
 
