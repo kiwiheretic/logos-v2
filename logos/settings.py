@@ -252,6 +252,7 @@ INSTALLED_APPS = (
     'guardian',
 
     'logos',
+    'reddit',
     'bibleapp',
     'feed',
     'weather',

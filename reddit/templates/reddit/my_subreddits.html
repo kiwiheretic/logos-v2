@@ -1,0 +1,18 @@
+{% extends "reddit/reddit_base.html" %}
+
+{% block style %}
+{{ block.super }}
+
+{% endblock %}
+
+{% block content %}
+<h2>My Subreddits</h2>
+
+<ul class="mysubreddits-list">
+    {% for note in notes %}
+    <li><a class="note-title" href="">{{note.title}}</a>
+    {% endfor %}
+</ul>    
+
+
+{% endblock %}

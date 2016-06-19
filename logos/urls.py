@@ -37,7 +37,7 @@ urlpatterns = [
     url(r'^weather/', include('weather.urls')),
     url(r'^twitter/', include('twitterapp.urls')),
     url(r'^botnet/', include('botnet.urls')),
-    #url(r'^reddit/', include('reddit.urls')),
+    url(r'^reddit/', include('reddit.urls')),
     url(r'^room_manage/', include('room_manage.urls')),
     url(r'^bible/', include('bibleapp.urls')),
     #url(r'^bots/approve/(\d+)', 'logos.views.bot_approval'),
