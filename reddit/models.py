@@ -14,3 +14,11 @@ class RedditCredentials(models.Model):
     def tokens(self):
         data = pickle.loads(self.token_data)
         return [('Access Token', data['access_token']), ('Refresh Token', data['refresh_token'])]
+
+class Subreddits(models.Model):
+    name = models.CharField(max_length = 40)
+    url = models.URLField()
+
+class MySubreddits(models.Model):
+    user = models.OneToOneField(settings.AUTH_USER_MODEL, unique=True)
+    subreddits = models.ManyToManyField(Subreddits, related_name='subscriptions')
