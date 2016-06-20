@@ -61,7 +61,7 @@ class Command(BaseCommand):
     def get_posts(self):
         for subr in Subreddits.objects.all():
             sr = self.r.get_subreddit(subr.display_name)
-            for sub in sr.get_new(limit=3):
+            for sub in sr.get_new(limit=20):
                 cdate = datetime.datetime.fromtimestamp(
                                 int(sub.created_utc)
                                     )
