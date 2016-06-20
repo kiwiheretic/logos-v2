@@ -9,8 +9,8 @@
 <h2>My Subreddits</h2>
 
 <ul class="mysubreddits-list">
-    {% for note in notes %}
-    <li><a class="note-title" href="">{{note.title}}</a>
+    {% for sub in mysubs.subreddits.all %}
+    <li><a class="note-title" href="http://reddit.com{{sub.url}}">{{sub.display_name}}</a>
     {% endfor %}
 </ul>    
 

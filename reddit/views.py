@@ -16,7 +16,7 @@ import praw
 import pickle
 import datetime
 from .forms import SiteSetupForm
-from .models import RedditCredentials
+from .models import RedditCredentials, MySubreddits
 
 REDDIT_BOT_DESCRIPTION = 'Reddit plugin for IRC Logos u/kiwiheretic ver 0.1'
 # Create your views here.
@@ -91,7 +91,7 @@ def oauth_callback(request):
 @login_required
 def authorise(request):
     r = get_r(request)
-    url = r.get_authorize_url('logosRedditKey', 'identity submit', True)
+    url = r.get_authorize_url('logosRedditKey', 'identity read mysubreddits submit', True)
     return redirect(url)
 
 @login_required
@@ -105,4 +105,8 @@ def discard_tokens(request):
 
 @login_required
 def my_subreddits(request):
-    return render(request, 'reddit/my_subreddits.html', {})
+    try:
+        mysubs = MySubreddits.objects.get(user = request.user)
+    except MySubreddits.DoesNotExist:
+        mysubs = None
+    return render(request, 'reddit/my_subreddits.html', {'mysubs':mysubs})
