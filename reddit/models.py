@@ -28,11 +28,12 @@ class MySubreddits(models.Model):
     user = models.OneToOneField(settings.AUTH_USER_MODEL, unique=True)
     subreddits = models.ManyToManyField(Subreddits, related_name='subscriptions')
 
-class Posts(models.Model):
+class Submission(models.Model):
     name = models.CharField(max_length = 30, unique = True)
     subreddit = models.ForeignKey(Subreddits)
     created_at = models.DateTimeField()
     title = models.CharField(max_length = 250)
+    author = models.CharField(max_length = 50)
     body = models.TextField()
     url = models.URLField()
     score = models.IntegerField()

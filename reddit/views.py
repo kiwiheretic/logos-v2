@@ -16,7 +16,7 @@ import praw
 import pickle
 import datetime
 from .forms import SiteSetupForm
-from .models import RedditCredentials, MySubreddits
+from .models import RedditCredentials, MySubreddits, Submission
 
 REDDIT_BOT_DESCRIPTION = 'Reddit plugin for IRC Logos u/kiwiheretic ver 0.1'
 # Create your views here.
@@ -110,3 +110,8 @@ def my_subreddits(request):
     except MySubreddits.DoesNotExist:
         mysubs = None
     return render(request, 'reddit/my_subreddits.html', {'mysubs':mysubs})
+
+@login_required
+def list_posts(request, subreddit):
+    posts = Submission.objects.filter(subreddit__display_name = subreddit).order_by('-created_at')
+    return render(request, 'reddit/list_posts.html', {'subreddit':subreddit, 'posts':posts})

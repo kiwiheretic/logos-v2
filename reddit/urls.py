@@ -13,4 +13,5 @@ urlpatterns = patterns('reddit.views',
     url(r'^discard-tokens/$', 'discard_tokens'),
     url(r'^oauth-callback/$', 'oauth_callback'),
     url(r'^my-subreddits$', 'my_subreddits'),
+    url(r'^list-subreddit-posts/([^/]+)/$', 'list_posts'),
 )

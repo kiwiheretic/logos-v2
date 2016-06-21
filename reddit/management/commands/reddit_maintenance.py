@@ -11,7 +11,7 @@ import pytz
 import praw
 
 import datetime
-from ...models import RedditCredentials, MySubreddits, Subreddits, Posts
+from ...models import RedditCredentials, MySubreddits, Subreddits, Submission
 from django.conf import settings
 import logging
 
@@ -41,8 +41,8 @@ class Command(BaseCommand):
 
     def reddit_maintenance(self, port):
         self.authenticate(port)
-        #self.my_subreddits()
-        self.get_posts()
+        self.my_subreddits()
+        self.get_submissions()
 
     def authenticate(self, port):
         site = Site.objects.get(pk=settings.SITE_ID)
@@ -58,7 +58,7 @@ class Command(BaseCommand):
                  client_secret=consumer_secret,
                  redirect_uri=redirect_uri)
 
-    def get_posts(self):
+    def get_submissions(self):
         for subr in Subreddits.objects.all():
             sr = self.r.get_subreddit(subr.display_name)
             for sub in sr.get_new(limit=20):
@@ -68,10 +68,11 @@ class Command(BaseCommand):
                 udate = timezone.make_aware(cdate, timezone = pytz.utc)
                 print sub.name, udate, sub.num_comments, repr(sub.title)
                 try:
-                    post = Posts(name = sub.name,
+                    post = Submission(name = sub.name,
                             created_at = udate,
                             subreddit = subr,
                             title = sub.title,
+                            author = sub.author,
                             body = sub.selftext,
                             url = sub.url,
                             score = sub.score,

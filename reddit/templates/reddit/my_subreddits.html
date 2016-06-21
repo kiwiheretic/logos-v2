@@ -10,7 +10,7 @@
 
 <ul class="mysubreddits-list">
     {% for sub in mysubs.subreddits.all %}
-    <li><a class="note-title" href="http://reddit.com{{sub.url}}">{{sub.display_name}}</a>
+    <li><a class="note-title" href="{% url 'reddit.views.list_posts' sub.display_name %}">{{sub.display_name}}</a>
     {% endfor %}
 </ul>    
 
