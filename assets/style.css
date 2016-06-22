@@ -50,13 +50,14 @@ form {
 /* ------- login panels ------------- */
 #login-fieldset {
     border-radius: 5px;
-    border: 2px groove threedface;
-    background: #eae3d2;
+    border: 1px groove threedface;
+    background: #cccccc;
 
 }
 
 #login-fieldset legend {
     background: #63b363;
+    border: 1px groove threedface;
     color: white;
     border-radius: 5px;
     padding: 5px;
@@ -70,21 +71,10 @@ form {
 /*######## Smart Green ########*/
 .smart-green {
 
-    xbackground: #F8F8F8;
     padding: 30px 10px 20px 10px;
     font: 12px Arial, Helvetica, sans-serif;
     color: #666;
-    border-radius: 5px;
-    -webkit-border-radius: 5px;
-    -moz-border-radius: 5px;
-}
-.smart-green h1 {
-    font: 24px "Trebuchet MS", Arial, Helvetica, sans-serif;
-    padding: 20px 0px 20px 40px;
-    display: block;
-    margin: -30px -30px 10px -30px;
-    color: #FFF;
-
+    margin-left: -5px;
 /* Permalink - use to edit and share this gradient: http://colorzilla.com/gradient-editor/#42aa42+34,88c17f+48,006e2e+71 */
     background: #42aa42; /* Old browsers */
     background: -moz-linear-gradient(-45deg,  #42aa42 34%, #88c17f 48%, #006e2e 71%); /* FF3.6-15 */
@@ -93,11 +83,19 @@ form {
     filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#42aa42', endColorstr='#006e2e',GradientType=1 ); /* IE6-9 fallback on horizontal gradient */
 
     //background: #9DC45F;
-    text-shadow: 1px 1px 1px #949494;
-    border-radius: 5px 5px 0px 0px;
-    -webkit-border-radius: 5px 5px 0px 0px;
-    -moz-border-radius: 5px 5px 0px 0px;
-    border-bottom:1px solid #89AF4C;
+    text-shadow: 2px 2px 1px #4e342a;
+    //border-radius: 5px 5px 0px 0px;
+    //-webkit-border-radius: 5px 5px 0px 0px;
+    //-moz-border-radius: 5px 5px 0px 0px;
+    border-bottom:2px solid #d6a45a; /* light purple */
+}
+.smart-green h1 {
+    font: 24px "Trebuchet MS", Arial, Helvetica, sans-serif;
+    padding: 20px 0px 20px 40px;
+    display: block;
+    margin: -30px -30px 10px -30px;
+    color: #FFF;
+
 
 }
 
