@@ -50,7 +50,17 @@ form {
 /* ------- login panels ------------- */
 #login-fieldset {
     border-radius: 5px;
+    border: 2px groove threedface;
+    background: #eae3d2;
 
+}
+
+#login-fieldset legend {
+    background: #63b363;
+    color: white;
+    border-radius: 5px;
+    padding: 5px;
+    font-size: small;
 }
 
 .fieldset-wrapper {
