@@ -11,7 +11,7 @@ import pytz
 import praw
 
 import datetime
-from ...models import RedditCredentials, MySubreddits, Subreddits, Submission
+from ...models import RedditCredentials, MySubreddits, Subreddits, Submission, Comments
 from django.conf import settings
 import logging
 
@@ -29,20 +29,25 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         subcommand = options['subcommand']
         if subcommand:
-            self.stdout.write('Nothing done')
+            self.stdout.write('Subcommand = '+subcommand)
+        if options['port']:
+            port = options['port']
         else:
-            if options['port']:
-                port = options['port']
-            else:
-                port = None
+            port = None
 
-            self.reddit_maintenance(port)
-            self.stdout.write('Successfully finished reddit maintenance.')
+        self.reddit_maintenance(port, subcommand)
+        self.stdout.write('Successfully finished reddit maintenance.')
 
-    def reddit_maintenance(self, port):
-        self.authenticate(port)
-        self.my_subreddits()
-        self.get_submissions()
+    def reddit_maintenance(self, port, subcommand):
+        if subcommand == "commentsonly":
+            self.authenticate(port)
+            self.get_comments()
+        elif subcommand == None:
+            print "all"
+            self.authenticate(port)
+            self.my_subreddits()
+            self.get_submissions()
+            self.get_comments()
 
     def authenticate(self, port):
         site = Site.objects.get(pk=settings.SITE_ID)
@@ -61,7 +66,12 @@ class Command(BaseCommand):
     def get_submissions(self):
         for subr in Subreddits.objects.all():
             sr = self.r.get_subreddit(subr.display_name)
-            for sub in sr.get_new(limit=100):
+            last_sub = Submission.objects.filter(subreddit = subr).order_by('-created_at').first()
+            if last_sub:
+                thing = last_sub.name
+            else:
+                thing = None
+            for sub in sr.get_new(limit=1000, params={'after':thing}):
                 # Don't save deleted posts (ie. author is blank)
                 # https://www.reddit.com/r/redditdev/comments/1630jj/praw_is_returning_postauthorname_errors/c7s8zx9
                 if not sub.author: continue
@@ -111,3 +121,44 @@ class Command(BaseCommand):
                             'url' : sub.url})
                 mysub, _ = MySubreddits.objects.get_or_create(user = cred.user)
                 mysub.subreddits.add(obj)
+
+    def _traverse_comments(self, submission, submission_obj, parent):
+        if parent == None:
+            comments = submission_obj.comments
+        else:
+            comments = parent.replies
+        for comment in comments:
+            if not hasattr(comment, 'author') or not comment.author: continue
+            cdate = datetime.datetime.fromtimestamp(
+                int(comment.created_utc)
+                )
+            udate = timezone.make_aware(cdate, timezone = pytz.utc)
+            if parent:
+                parent_name = parent.name
+            else:
+                parent_name = submission.name
+            try:
+                comm = Comments(name = comment.name,
+                        submission = submission,
+                        parent_thing = parent_name,
+                        created_at = udate,
+                        author = comment.author.name,
+                        body = comment.body,
+                        score = comment.score)
+                comm.save()
+                print comm.name
+            except IntegrityError:
+                pass
+
+            self._traverse_comments(submission, submission_obj, comment)
+
+
+    def get_comments(self):
+        for sub in Submission.objects.all().order_by('-created_at'):
+            subobj = self.r.get_info(thing_id = sub.name)
+            print subobj.num_comments
+            sub.num_comments = subobj.num_comments
+            sub.save()
+            self._traverse_comments(sub,subobj, None)
+
+

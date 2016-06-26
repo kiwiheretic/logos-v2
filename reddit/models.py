@@ -40,4 +40,13 @@ class Submission(models.Model):
     link_flair_text = models.CharField(max_length = 50, null=True)
     num_comments = models.IntegerField()
 
+class Comments(models.Model):
+    name = models.CharField(max_length = 30, unique = True)
+    submission = models.ForeignKey(Submission)
+    parent_thing = models.CharField(max_length = 30)
+    created_at = models.DateTimeField(db_index=True)
+    author = models.CharField(max_length = 50)
+    body = models.TextField()
+    score = models.IntegerField(db_index = True)
+
 
