@@ -31,12 +31,12 @@ class MySubreddits(models.Model):
 class Submission(models.Model):
     name = models.CharField(max_length = 30, unique = True)
     subreddit = models.ForeignKey(Subreddits)
-    created_at = models.DateTimeField()
+    created_at = models.DateTimeField(db_index=True)
     title = models.CharField(max_length = 250)
     author = models.CharField(max_length = 50)
-    body = models.TextField()
+    body = models.TextField(null=True)
     url = models.URLField()
-    score = models.IntegerField()
+    score = models.IntegerField(db_index = True)
     link_flair_text = models.CharField(max_length = 50, null=True)
     num_comments = models.IntegerField()
 

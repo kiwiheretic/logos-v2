@@ -61,7 +61,11 @@ class Command(BaseCommand):
     def get_submissions(self):
         for subr in Subreddits.objects.all():
             sr = self.r.get_subreddit(subr.display_name)
-            for sub in sr.get_new(limit=20):
+            for sub in sr.get_new(limit=100):
+                # Don't save deleted posts (ie. author is blank)
+                # https://www.reddit.com/r/redditdev/comments/1630jj/praw_is_returning_postauthorname_errors/c7s8zx9
+                if not sub.author: continue
+
                 cdate = datetime.datetime.fromtimestamp(
                                 int(sub.created_utc)
                                     )
@@ -80,10 +84,11 @@ class Command(BaseCommand):
                             num_comments = sub.num_comments)
                     post.save()
                 except IntegrityError:
-                    if Posts.objects.filter(name = sub.name).exists():
+                    if Submission.objects.filter(name = sub.name).exists():
                         print "{} already exists".format(sub.name)
                     else:
-                        print "Error: Could not insert {} {}".format(sub.name, sub.display_name)
+                        print "Error: Could not insert {} {}".format(sub.name, sub.title)
+                        import pdb; pdb.set_trace()
 
     def my_subreddits(self):
         for cred in RedditCredentials.objects.all():
