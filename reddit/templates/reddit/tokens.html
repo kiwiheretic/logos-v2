@@ -71,7 +71,7 @@ label {
     <div class="clear-fix"></div>
 
 </div>
-<form action="{% url 'reddit.views.discard_tokens' %}" method="POST">
+<form action="{% url 'reddit:discard_tokens' %}" method="POST">
     {% csrf_token %}
     <p>Do you wish to discard your tokens?
     <input type="submit" value="Discard"/>

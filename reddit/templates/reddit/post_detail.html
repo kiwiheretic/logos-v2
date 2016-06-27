@@ -1,0 +1,61 @@
+{% extends "reddit/reddit_base.html" %}
+
+{% block style %}
+{{ block.super }}
+
+.reddit-post {
+    list-style-type: none;
+    //position: relative;
+    //left: -15px;
+    margin-left: -20px;
+}
+
+.reddit-post li {
+    border: 1px solid blue;
+    max-width: 500px;
+    margin-bottom: 10px;
+    margin-right: 15px;
+}
+
+.reddit-post-body {
+    margin-top: 10px;
+}
+
+.reddit-comment {
+    margin-top: 10px;
+}
+{% endblock %}
+
+{% block content %}
+<h2>Subreddit: {{submission.subreddit.display_name}}</h2>
+
+<div style="float:left; clear:left;">
+<ul class="reddit-post">
+    <li><a class="reddit-title" href="">{{submission.title}}</a>
+    <div class="reddit-post-item">Thing ID: <a href="{{submission.url}}">{{submission.name}}</a></div>
+    <div class="reddit-post-item">Author: {{submission.author}}</div>
+    <div class="reddit-post-item">Title: {{submission.title}}</div>
+    <div class="reddit-post-item reddit-post-body">{{submission.body}}</div>
+</ul>    
+
+{% for comment in comments %}
+<div class="reddit-comment">
+<div>/u/{{comment.author}} [{{comment.score}}]</div>
+<div>{{comment.body}}</div>
+</div>
+{% endfor %}
+
+{% if comments.has_other_pages %}
+<div class="pagination">
+                <a href="?page=1" class="page gradient">first</a>
+                {% if comments.has_previous %}
+                <a href="?page={{comments.previous_page_number}}" class="page gradient">prev</a>
+                {% endif %}
+                <span class="page active">{{comments.number}}</span>
+                {% if comments.has_next %}
+                <a href="?page={{notes.next_page_number}}" class="page gradient">next</a>
+                {% endif %}
+                <a href="?page={{comments.paginator.num_pages}}" class="page gradient">last</a>
+</div> <!-- pagination -->        
+{% endif %}
+{% endblock %}

@@ -25,7 +25,7 @@
 <ul class="reddit-post">
     {% for post in posts %}
     <li><a class="note-title" href="">{{note.title}}</a>
-    <div class="reddit-post-item">Thing ID: <a href="{{post.url}}">{{post.name}}</a></div>
+    <div class="reddit-post-item">Thing ID: <a href="{% url 'reddit:post_detail' post.id %}">{{post.name}}</a></div>
     <div class="reddit-post-item">Author: {{post.author}}</div>
     <div class="reddit-post-item">Title: {{post.title}}</div>
     {% empty %}

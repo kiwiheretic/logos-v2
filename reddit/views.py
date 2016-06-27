@@ -1,10 +1,11 @@
 from __future__ import absolute_import
-from django.shortcuts import render, redirect
+from django.shortcuts import render, redirect, get_object_or_404
 from django.http import Http404
 from logos.roomlib import get_global_option, set_global_option
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.core.urlresolvers import reverse
+from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from django.conf import settings
 from django.contrib import messages
 import logging
@@ -56,7 +57,7 @@ def get_r(request):
     r = praw.Reddit(REDDIT_BOT_DESCRIPTION)
 
     # Set authorised app via https://www.reddit.com/prefs/apps
-    redirect_url = request.scheme + "://" + request.META['HTTP_HOST'] + reverse('reddit.views.oauth_callback')
+    redirect_url = request.scheme + "://" + request.META['HTTP_HOST'] + reverse('reddit:oauth_callback')
 
     r.set_oauth_app_info(client_id=consumer_key,
                          client_secret=consumer_secret,
@@ -86,7 +87,7 @@ def oauth_callback(request):
     except praw.errors.OAuthInvalidGrant:
         logger.info("Invalid OAuth Grant to {} ".format(request.user.username))
         messages.error(request, 'There was a problem with your Reddit permissions grant.')
-    return redirect(reverse('reddit.views.user_setup'))
+    return redirect(reverse('reddit:user_setup'))
 
 @login_required
 def authorise(request):
@@ -99,7 +100,7 @@ def discard_tokens(request):
     try:
         RedditCredentials.objects.get(user = request.user).delete()
         messages.success(request, 'Reddit tokens successfully discarded')
-        return redirect(reverse('reddit.views.user_setup'))
+        return redirect(reverse('reddit:user_setup'))
     except RedditCredentials.DoesNotExist:
         raise Http404("Reddit credentials for user not found")
 
@@ -115,3 +116,22 @@ def my_subreddits(request):
 def list_posts(request, subreddit):
     posts = Submission.objects.filter(subreddit__display_name = subreddit).order_by('-created_at')
     return render(request, 'reddit/list_posts.html', {'subreddit':subreddit, 'posts':posts})
+
+
+@login_required
+def post_detail(request, post_id):
+    sub = get_object_or_404(Submission, pk = post_id)
+    comment_list = sub.comments_set.order_by('-created_at')
+    paginator = Paginator(comment_list, 10) # Show 10 comments per page
+
+    page = request.GET.get('page')
+    try:
+        comments = paginator.page(page)
+    except PageNotAnInteger:
+        # If page is not an integer, deliver first page.
+        comments = paginator.page(1)
+    except EmptyPage:
+        # If page is out of range (e.g. 9999), deliver last page of results.
+        comments = paginator.page(paginator.num_pages)
+
+    return render(request, 'reddit/post_detail.html', {"submission":sub, "comments": comments})
