@@ -43,11 +43,9 @@ class Command(BaseCommand):
             self.authenticate(port)
             self.get_comments()
         elif subcommand == None:
-            print "all"
             self.authenticate(port)
             self.my_subreddits()
             self.get_submissions()
-            self.get_comments()
 
     def authenticate(self, port):
         site = Site.objects.get(pk=settings.SITE_ID)

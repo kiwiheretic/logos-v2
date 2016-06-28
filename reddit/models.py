@@ -40,6 +40,14 @@ class Submission(models.Model):
     link_flair_text = models.CharField(max_length = 50, null=True)
     num_comments = models.IntegerField()
 
+class PendingSubmissions(models.Model):
+    """ Reddit submissions to be sent but dont yet have a thing ID.
+    The record is to be deleted once accepted by reddit."""
+    user = models.OneToOneField(settings.AUTH_USER_MODEL, unique=True)
+    subreddit = models.ForeignKey(Subreddits)
+    title = models.CharField(max_length = 250)
+    body = models.TextField()
+
 class Comments(models.Model):
     name = models.CharField(max_length = 30, unique = True)
     submission = models.ForeignKey(Submission)

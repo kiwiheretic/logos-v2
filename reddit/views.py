@@ -16,8 +16,8 @@ logging.config.dictConfig(settings.LOGGING)
 import praw
 import pickle
 import datetime
-from .forms import SiteSetupForm
-from .models import RedditCredentials, MySubreddits, Submission
+from .forms import SiteSetupForm, RedditSubmitForm
+from .models import RedditCredentials, MySubreddits, Submission, PendingSubmissions, Subreddits
 
 REDDIT_BOT_DESCRIPTION = 'Reddit plugin for IRC Logos u/kiwiheretic ver 0.1'
 # Create your views here.
@@ -135,3 +135,29 @@ def post_detail(request, post_id):
         comments = paginator.page(paginator.num_pages)
 
     return render(request, 'reddit/post_detail.html', {"submission":sub, "comments": comments})
+
+
+@login_required
+def new_post(request):
+    choices = []
+    try:
+        my_subreddits = MySubreddits.objects.get(user = request.user).subreddits.all()
+        for mysub in my_subreddits:
+            choices.append((mysub.id, mysub.display_name))
+    except MySubreddits.DoesNotExist:
+        pass
+    if request.method == 'POST':
+        form = RedditSubmitForm(request.POST, choices = choices)
+        if form.is_valid():
+            psub = PendingSubmissions()
+            psub.user = request.user
+            subr = Subreddits.objects.get(pk = int(form.cleaned_data['subreddit']))   
+            psub.subreddit = subr
+            psub.title = form.cleaned_data['title']
+            psub.body = form.cleaned_data['body']
+            psub.save()
+            messages.add_message(request, messages.INFO, 'Submission successfully saved for upload')
+            return redirect(reverse('reddit:mysubreddits'))
+    else:
+        form = RedditSubmitForm(choices = choices)
+    return render(request, 'reddit/new_post.html', {'form':form})
