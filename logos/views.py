@@ -10,7 +10,7 @@ from django.core import serializers
 
 from .forms import SettingsForm, UserSettingsForm
 from .models import Settings, BotsRunning, Plugins, NetworkPlugins, RoomPlugins, NetworkPermissions, RoomPermissions
-from logos.roomlib import get_user_option, set_user_option
+from logos.roomlib import get_user_option, set_user_option, get_global_option, set_global_option
 from .pluginlib import configure_app_plugins
 
 import copy
@@ -52,18 +52,31 @@ def _get_rpc_url():
     return url
 
 @login_required
-def set_timezone(request):
+def set_timezone(request, extra_ctx):
     if request.method == 'POST':
         #request.session['django_timezone'] = request.POST['timezone']
         set_user_option(request.user, 'timezone', request.POST['timezone'])
         messages.add_message(request, messages.INFO, 'Time Zone Information Saved')
         return redirect('/accounts/profile/')
     else:
-        return render(request, 'logos/preferences.html', {'timezones': pytz.common_timezones})
+        ctx = {'timezones': pytz.common_timezones}
+        ctx.update(extra_ctx)
+        return render(request, 'logos/preferences.html', ctx)
     
 @login_required()
 def preferences(request):
-    return set_timezone(request)
+    ctx = {}
+    if request.method == 'POST':
+        set_global_option('site-name', request.POST['site-name'])
+        set_global_option('tag-line', request.POST['tag-line'])
+        messages.add_message(request, messages.INFO, 'Site information saved')
+    else:
+        site_name = get_global_option('site-name')
+        if not site_name: site_name = "Set this site name in preferences"
+        tag_line = get_global_option('tag-line')
+        if not tag_line: tag_line = "Tag line not set"
+        ctx = {'site_name':site_name, 'tag_line':tag_line}
+    return set_timezone(request, ctx)
 
 #    if request.method == 'POST':
 #        tzfrm = TimeZoneForm(request.POST)
