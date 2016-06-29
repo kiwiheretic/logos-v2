@@ -2,6 +2,8 @@ from __future__ import absolute_import
 from django.conf import settings
 from .models import Plugins
 from .pluginlib import configure_app_plugins
+from .roomlib import get_global_option
+
 import logging
 from django.conf import settings 
 logger = logging.getLogger(__name__)
@@ -19,4 +21,10 @@ def request(ctx):
             bname = plugin.button_name
             menu_buttons.append((bname, dview))
 
-    return {'menu_buttons':menu_buttons}
+    ctx = {'menu_buttons':menu_buttons}
+
+    # ----- Get site name and tag lines if exist
+    site_name = get_global_option('site-name')
+    tag_line = get_global_option('tag-line')
+    ctx.update({'logos_site_name':site_name, 'tag_line': tag_line})
+    return ctx
