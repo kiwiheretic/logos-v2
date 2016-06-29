@@ -115,6 +115,16 @@ def my_subreddits(request):
 @login_required
 def list_posts(request, subreddit):
     posts = Submission.objects.filter(subreddit__display_name = subreddit).order_by('-created_at')
+    paginator = Paginator(posts, 10) # Show 10 comments per page
+    page = request.GET.get('page')
+    try:
+        posts = paginator.page(page)
+    except PageNotAnInteger:
+        # If page is not an integer, deliver first page.
+        posts = paginator.page(1)
+    except EmptyPage:
+        # If page is out of range (e.g. 9999), deliver last page of results.
+        posts = paginator.page(paginator.num_pages)
     return render(request, 'reddit/list_posts.html', {'subreddit':subreddit, 'posts':posts})
 
 
@@ -161,3 +171,7 @@ def new_post(request):
     else:
         form = RedditSubmitForm(choices = choices)
     return render(request, 'reddit/new_post.html', {'form':form})
+
+@login_required
+def feeds(request):
+    return render(request, 'reddit/feeds_list.html', {})

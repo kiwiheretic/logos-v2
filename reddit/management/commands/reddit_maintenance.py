@@ -11,7 +11,7 @@ import pytz
 import praw
 
 import datetime
-from ...models import RedditCredentials, MySubreddits, Subreddits, Submission, Comments
+from ...models import RedditCredentials, MySubreddits, Subreddits, Submission, Comments, PendingSubmissions
 from django.conf import settings
 import logging
 
@@ -42,8 +42,12 @@ class Command(BaseCommand):
         if subcommand == "commentsonly":
             self.authenticate(port)
             self.get_comments()
+        elif subcommand == "submitonly":
+            self.authenticate(port)
+            self.post_pending()
         elif subcommand == None:
             self.authenticate(port)
+            self.post_pending()
             self.my_subreddits()
             self.get_submissions()
 
@@ -61,6 +65,25 @@ class Command(BaseCommand):
                  client_secret=consumer_secret,
                  redirect_uri=redirect_uri)
 
+    def post_pending(self):
+        """ Post pending submissions to reddit """
+        psubs = PendingSubmissions.objects.filter(submitted=False).order_by('user')
+        luser = None
+        for psub in psubs:
+            if luser == None or luser != psub.user:
+                credentials = RedditCredentials.objects.get(user = psub.user).credentials()
+                self.r.set_access_credentials(**credentials)
+                authenticated_user = self.r.get_me()
+                print "authenticated user = "+authenticated_user.name
+                submission = self.r.submit('newsonreddit', 'Logos Bot Test', text="My lines of test text for my logos bot, https://github.com/kiwiheretic/logos-v2.  Admins feel free to delete this message.",
+                    raise_captcha_exception = False)
+            luser = psub.user
+            #psub.submitted = True
+            #psub.save()
+
+
+
+
     def get_submissions(self):
         for subr in Subreddits.objects.all():
             sr = self.r.get_subreddit(subr.display_name)
@@ -69,7 +92,7 @@ class Command(BaseCommand):
                 thing = last_sub.name
             else:
                 thing = None
-            for sub in sr.get_new(limit=1000, params={'after':thing}):
+            for sub in sr.get_new(limit='none', params={'before':thing}):
                 # Don't save deleted posts (ie. author is blank)
                 # https://www.reddit.com/r/redditdev/comments/1630jj/praw_is_returning_postauthorname_errors/c7s8zx9
                 if not sub.author: continue

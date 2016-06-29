@@ -42,11 +42,14 @@ class Submission(models.Model):
 
 class PendingSubmissions(models.Model):
     """ Reddit submissions to be sent but dont yet have a thing ID.
-    The record is to be deleted once accepted by reddit."""
+    The record is to be deleted once this post has been successfully been
+    verified to be on reddit"""
     user = models.OneToOneField(settings.AUTH_USER_MODEL, unique=True)
     subreddit = models.ForeignKey(Subreddits)
     title = models.CharField(max_length = 250)
     body = models.TextField()
+    # submitted to reddit yet?
+    submitted = models.BooleanField(default=False)
 
 class Comments(models.Model):
     name = models.CharField(max_length = 30, unique = True)
