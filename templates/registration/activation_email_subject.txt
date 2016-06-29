@@ -1,1 +1,1 @@
-Activate your chatopia account - you have {{ expiration_days }} days!
+Activate your {{site.name}} account - you have {{ expiration_days }} days!
