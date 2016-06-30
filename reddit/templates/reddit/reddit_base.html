@@ -1,4 +1,22 @@
 {% extends "base.html" %}
+{% block style %}
+{{ block.super }}
+
+.reddit-username {
+    float:right;
+    clear: right;
+    margin-right: 10px;
+    margin-top: 5px;
+    padding: 5px;
+    background: Cadetblue;
+    color: white;
+    border-radius: 5px;
+    font=family: "Arial, Helvetica, sans-serif";
+}
+{% endblock %}
+{% block under_banner %}
+<span class="reddit-username">Linked Reddit Account : {% if request.session.reddit_username %}/u/{{request.session.reddit_username}}{% else %}None{% endif %}</span>
+{% endblock %}
 
 {% block menu_title %}Reddit Menu{% endblock %}
 {% block button_menu %}

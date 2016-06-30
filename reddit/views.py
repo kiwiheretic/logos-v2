@@ -19,7 +19,7 @@ import datetime
 from .forms import SiteSetupForm, RedditSubmitForm
 from .models import RedditCredentials, MySubreddits, Submission, PendingSubmissions, Subreddits
 
-REDDIT_BOT_DESCRIPTION = 'Reddit plugin for IRC Logos u/kiwiheretic ver 0.1'
+REDDIT_BOT_DESCRIPTION = 'Heretical by /u/kiwiheretic ver 0.1'
 # Create your views here.
 
 @login_required
@@ -77,8 +77,11 @@ def oauth_callback(request):
         access_information = r.get_access_information(code)
         print access_information
         access_data = pickle.dumps(access_information)
+        r.set_access_credentials(**access_information)
+        authenticated_user = r.get_me()
         credentials, _ = RedditCredentials.objects.get_or_create(user = request.user)
         credentials.token_data = access_data
+        credentials.reddit_username = authenticated_user.name
         credentials.created_at = datetime.datetime.now()
         credentials.save()
         messages.info(request, "Reddit credentials saved successfully")

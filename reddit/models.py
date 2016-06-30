@@ -10,6 +10,7 @@ class RedditCredentials(models.Model):
     created_at = models.DateTimeField(auto_now_add = True)
     # token_data contains pickled data
     token_data= models.BinaryField()
+    reddit_username = models.CharField(max_length=50, null=True)
 
     def credentials(self):
         data = pickle.loads(self.token_data)

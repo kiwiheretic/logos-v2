@@ -206,6 +206,7 @@ MIDDLEWARE_CLASSES = (
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
 
+    'reddit.middleware.RedditMiddleware',
     'logos.timezone_middleware.TimezoneMiddleware',
     #'django.middleware.transaction.TransactionMiddleware',
     # Uncomment the next line for simple clickjacking protection:

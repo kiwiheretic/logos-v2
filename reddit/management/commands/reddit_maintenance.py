@@ -42,6 +42,9 @@ class Command(BaseCommand):
         if subcommand == "commentsonly":
             self.authenticate(port)
             self.get_comments()
+        elif subcommand == "fixusernames":
+            self.authenticate(port)
+            self.fix_reddit_usernames()
         elif subcommand == "submitonly":
             self.authenticate(port)
             self.post_pending()
@@ -82,6 +85,14 @@ class Command(BaseCommand):
             #psub.save()
 
 
+    def fix_reddit_usernames(self):
+        for redcred in RedditCredentials.objects.filter(reddit_username = None):
+            credentials = redcred.credentials()
+            self.r.set_access_credentials(**credentials)
+            authenticated_user = self.r.get_me()
+            redcred.reddit_username = authenticated_user.name
+            print (authenticated_user.name)
+            redcred.save()
 
 
     def get_submissions(self):

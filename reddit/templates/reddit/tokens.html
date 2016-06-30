@@ -68,6 +68,10 @@ label {
         <span class="value">.......{{ value|slice:"-6:" }}</span>
     </div>
     {% endfor %}
+    <div class="token-field" style="float:left; clear:left;">
+        <span class="label">Authenticated Reddit Username&nbsp;:&nbsp;</span>
+        <span style="padding-left:10px;" class="value">/u/{{credentials.reddit_username}}</span>
+    </div>
     <div class="clear-fix"></div>
 
 </div>

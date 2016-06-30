@@ -23,6 +23,8 @@
         <span>{% if tag_line %}{{tag_line}}{% else %}No tag line entered{% endif %}</span>
     </h1>
 </div> <!-- smart-green -->
+    {% block under_banner %}
+    {% endblock %}
     {% if not suppress_menu and request.user.is_authenticated or show_menu_regardless %}
     <div id="menu-title">
         <h2>{% block menu_title %}Main Menu{% endblock %}</h2>
