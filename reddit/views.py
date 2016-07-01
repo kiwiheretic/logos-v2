@@ -102,6 +102,10 @@ def authorise(request):
 def discard_tokens(request):
     try:
         RedditCredentials.objects.get(user = request.user).delete()
+        try:
+            del request.session['reddit_username']
+        except KeyError:
+            pass
         messages.success(request, 'Reddit tokens successfully discarded')
         return redirect(reverse('reddit:user_setup'))
     except RedditCredentials.DoesNotExist:
