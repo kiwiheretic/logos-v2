@@ -80,12 +80,15 @@ class Command(BaseCommand):
                 print "authenticated user = "+authenticated_user.name
                 subreddit = psub.subreddit.display_name
                 sig = "** submitted by logos bot: https://github.com/kiwiheretic/logos-v2"
-                submission = self.r.submit(subreddit, psub.title, 
-                    text=psub.body + "\n" + sig,
-                    raise_captcha_exception = False)
-                print ("submitted submission successfully")
-                psub.submitted=True
-                psub.save()
+                try:
+                    submission = self.r.submit(subreddit, psub.title, 
+                        text=psub.body + "\n" + sig,
+                        raise_captcha_exception = False)
+                    print ("submitted submission successfully")
+                    psub.submitted=True
+                    psub.save()
+                except praw.errors.RateLimitExceeded:
+                    pass
             luser = psub.user
             #psub.submitted = True
             #psub.save()

@@ -30,6 +30,8 @@ class Subreddits(models.Model):
     # unsubscribes).  Hence "active" indicates if this subreddit
     # is currently in use.
     active = models.BooleanField(default=True)
+    class Meta:
+        ordering = ['display_name']
 
 class MySubreddits(models.Model):
     user = models.OneToOneField(settings.AUTH_USER_MODEL, unique=True)
@@ -54,7 +56,8 @@ class PendingSubmissions(models.Model):
     user = models.ForeignKey(settings.AUTH_USER_MODEL)
     subreddit = models.ForeignKey(Subreddits)
     title = models.CharField(max_length = 250)
-    body = models.TextField()
+    url = models.URLField(null=True)
+    body = models.TextField(null=True)
     # submitted to reddit yet?
     submitted = models.BooleanField(default=False)
 
