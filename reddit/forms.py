@@ -24,3 +24,16 @@ class RedditSubmitForm(forms.Form):
         if not (url or body) or (url and body):
             raise forms.ValidationError( _('One and only one of Url or Body may be specified'), code='BodyOrUrlRequired')
         return cleaned_data
+
+class NewSubredditFeedForm(forms.Form):
+    freq_choices = [(30, 'half hourly'),(60, 'hourly')]
+    subreddits = forms.MultipleChoiceField(label="Subreddits to monitor")
+    target = forms.ChoiceField()
+    frequency = forms.ChoiceField(choices = freq_choices)
+    active = forms.BooleanField(initial=True)
+
+    def __init__(self, *args, **kwargs):
+        mysubreddits = kwargs.pop('mysubreddits')
+        super(NewSubredditFeedForm, self).__init__(*args, **kwargs)
+        self.fields['subreddits'].choices = mysubreddits
+        self.fields['target'].choices = mysubreddits

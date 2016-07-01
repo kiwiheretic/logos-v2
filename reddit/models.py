@@ -70,4 +70,26 @@ class Comments(models.Model):
     body = models.TextField()
     score = models.IntegerField(db_index = True)
 
+class FeedSubredditSub(models.Model):
+    """ Feedi Subreddit tracking for a Subscription (FeedSub) """
+    subreddit = models.ForeignKey(Subreddits)
+    feed = models.ForeignKey('FeedSub')
+    # processed = keep track of datetime of last submission processed
+    processed = models.DateTimeField(null=True)
+
+class FeedSub(models.Model):
+    """ Feed Subscription """
+    user = models.ForeignKey(settings.AUTH_USER_MODEL)
+    frequency = models.IntegerField()
+    active = models.BooleanField(default = False)
+
+class IRCTarget(models.Model):
+    feed_sub = models.ForeignKey(FeedSub)
+    network = models.CharField(max_length=100)
+    room = models.CharField(max_length=50)
+
+class SubredditTarget(models.Model):
+    feed_sub = models.ForeignKey(FeedSub)
+    subreddit = models.ForeignKey(Subreddits)
+
 
