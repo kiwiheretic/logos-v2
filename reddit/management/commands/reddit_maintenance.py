@@ -78,8 +78,14 @@ class Command(BaseCommand):
                 self.r.set_access_credentials(**credentials)
                 authenticated_user = self.r.get_me()
                 print "authenticated user = "+authenticated_user.name
-                submission = self.r.submit('newsonreddit', 'Logos Bot Test', text="My lines of test text for my logos bot, https://github.com/kiwiheretic/logos-v2.  Admins feel free to delete this message.",
+                subreddit = psub.subreddit.display_name
+                sig = "** submitted by logos bot: https://github.com/kiwiheretic/logos-v2"
+                submission = self.r.submit(subreddit, psub.title, 
+                    text=psub.body + "\n" + sig,
                     raise_captcha_exception = False)
+                print ("submitted submission successfully")
+                psub.submitted=True
+                psub.save()
             luser = psub.user
             #psub.submitted = True
             #psub.save()
@@ -96,7 +102,7 @@ class Command(BaseCommand):
 
 
     def get_submissions(self):
-        for subr in Subreddits.objects.all():
+        for subr in Subreddits.objects.filter(active=True):
             sr = self.r.get_subreddit(subr.display_name)
             last_sub = Submission.objects.filter(subreddit = subr).order_by('-created_at').first()
             if last_sub:
@@ -133,6 +139,7 @@ class Command(BaseCommand):
                         import pdb; pdb.set_trace()
 
     def my_subreddits(self):
+        Subreddits.objects.all().update(active=False)
         for cred in RedditCredentials.objects.all():
             access = cred.credentials()
             self.r.set_access_credentials(**access)
@@ -151,6 +158,9 @@ class Command(BaseCommand):
                 obj, _ = Subreddits.objects.get_or_create(name = sub.name,
                         defaults = {'display_name':sub.display_name,
                             'url' : sub.url})
+                # Mark any subreddits subscribed as active
+                obj.active = True
+                obj.save()
                 mysub, _ = MySubreddits.objects.get_or_create(user = cred.user)
                 mysub.subreddits.add(obj)
 

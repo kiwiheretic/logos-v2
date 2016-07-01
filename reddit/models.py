@@ -24,6 +24,12 @@ class Subreddits(models.Model):
     name = models.CharField(max_length = 15, unique=True)
     display_name = models.CharField(max_length = 30)
     url = models.CharField(max_length=80)
+    # when a subreddit record is created its usually active.  However
+    # people may subsequently unsubscribe from subreddits but this
+    # doesn't mean we delete all records at this point (even if everyone 
+    # unsubscribes).  Hence "active" indicates if this subreddit
+    # is currently in use.
+    active = models.BooleanField(default=True)
 
 class MySubreddits(models.Model):
     user = models.OneToOneField(settings.AUTH_USER_MODEL, unique=True)
@@ -45,7 +51,7 @@ class PendingSubmissions(models.Model):
     """ Reddit submissions to be sent but dont yet have a thing ID.
     The record is to be deleted once this post has been successfully been
     verified to be on reddit"""
-    user = models.OneToOneField(settings.AUTH_USER_MODEL, unique=True)
+    user = models.ForeignKey(settings.AUTH_USER_MODEL)
     subreddit = models.ForeignKey(Subreddits)
     title = models.CharField(max_length = 250)
     body = models.TextField()
