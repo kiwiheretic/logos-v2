@@ -40,10 +40,15 @@ then
     mkdir "$base_dir/logs"
 fi
 
+if [ -e "/tmp/logos_$port.pid" ]
+then
+    rm "/tmp/logos_$port.pid"
+fi
+
 uwsgi --chdir=$base_dir \
     --module=logos.wsgi:application \
     --env DJANGO_SETTINGS_MODULE=logos.settings \
-    --master --pidfile="/tmp/logos.$$.pid" \
+    --master --pidfile="/tmp/logos_$port.pid" \
     --http=127.0.0.1:$port \
     --processes=1 \
     --static-map /static="$base_dir/assets" \
