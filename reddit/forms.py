@@ -1,6 +1,7 @@
 from __future__ import absolute_import
 from django import forms
 from django.utils.translation import ugettext as _
+from django.utils import timezone
 
 class SiteSetupForm(forms.Form):
     consumer_key = forms.CharField(max_length=200)
@@ -30,6 +31,7 @@ class NewSubredditFeedForm(forms.Form):
     subreddits = forms.MultipleChoiceField(label="Subreddits to monitor")
     target = forms.ChoiceField()
     frequency = forms.ChoiceField(choices = freq_choices)
+    start_date = forms.DateTimeField()
     active = forms.BooleanField(initial=True)
 
     def __init__(self, *args, **kwargs):
@@ -41,12 +43,24 @@ class NewSubredditFeedForm(forms.Form):
 class FeedForm(forms.Form):
     freq_choices = [(30, 'half hourly'),(60, 'hourly')]
     subreddits = forms.MultipleChoiceField(label="Subreddits to monitor")
-    target = forms.ChoiceField()
+    target_sub = forms.ChoiceField(required=False, label="Target Subreddit")
+    target_irc = forms.ChoiceField(required=False, label="Target IRC Room")
     frequency = forms.ChoiceField(choices = freq_choices)
+    start_date = forms.DateTimeField(initial=timezone.now())
     active = forms.BooleanField(initial=True)
 
     def __init__(self, *args, **kwargs):
         mysubreddits = kwargs.pop('mysubreddits')
+        subreddit_choices = list(mysubreddits)
         super(FeedForm, self).__init__(*args, **kwargs)
+        subreddit_choices.insert(0, (0,''))        
         self.fields['subreddits'].choices = mysubreddits
-        self.fields['target'].choices = mysubreddits
+        self.fields['target_sub'].choices = subreddit_choices
+
+    def clean(self):
+        cleaned_data = super(FeedForm, self).clean()
+        target_sub = int(cleaned_data.get("target_sub"))
+        target_irc = cleaned_data.get("target_irc")
+        if not (target_sub or target_irc) or (target_sub and target_irc):
+            raise forms.ValidationError( _('One and only one of target subreddit or IRC may be specified'), code='SubOrIRCRequired')
+        return cleaned_data

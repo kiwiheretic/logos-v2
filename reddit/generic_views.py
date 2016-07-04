@@ -25,13 +25,15 @@ class SubredditFeedFormView(FormView):
 
     def form_valid(self, form):
         subreddit_ids = form.cleaned_data['subreddits']
-        target = form.cleaned_data['target']
+        target_sub_id = form.cleaned_data['target_sub']
         frequency = form.cleaned_data['frequency']
+        start_date = form.cleaned_data['start_date']
         active = form.cleaned_data['active']
-        target_sub = Subreddits.objects.get(pk=target)
+        target_sub = Subreddits.objects.get(pk=target_sub_id)
         fsub = FeedSub(user = self.request.user,
                 frequency = frequency,
                 target_sub = target_sub,
+                start_date = start_date,
                 active = active)
         fsub.save()
         for subred_id in subreddit_ids:

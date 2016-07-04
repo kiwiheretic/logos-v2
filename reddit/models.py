@@ -75,7 +75,9 @@ class FeedSubredditSub(models.Model):
     subreddit = models.ForeignKey(Subreddits)
     feed = models.ForeignKey('FeedSub')
     # processed = keep track of datetime of last submission processed
-    processed = models.DateTimeField(null=True)
+    processed_to = models.DateTimeField()
+    # num posts processed
+    processed = models.IntegerField()
 
 class FeedSub(models.Model):
     """ Feed Subscription """
@@ -84,5 +86,6 @@ class FeedSub(models.Model):
     subreddits = models.ManyToManyField(Subreddits, related_name='feeds')
     target_sub = models.ForeignKey(Subreddits, null=True)
     target_irc = models.CharField(max_length = 200, null=True)
+    start_date = models.DateTimeField()
     active = models.BooleanField(default = False)
 

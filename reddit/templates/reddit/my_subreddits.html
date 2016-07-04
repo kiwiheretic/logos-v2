@@ -11,15 +11,40 @@
     margin-right: 10px;
     margin-bottom: 10px;
     background: gainsboro;
+    max-width: 250px;
 }
 
 .feed-box ul {
     list-style: none;
-    margin-left: -25px;
+    margin: 5px 0 5px -35px;
+}
+
+.feed-box ul li {
+    float:left;
+    background: lightblue;
+    border: 1px dotted green;
+    padding: 5px;
+    margin: 0 0 5px 5px;
+    border-radius: 5px;
+}
+
+.feed-box h4 {
+    margin: 0 0 0 -3px;
+    display: block;
+    width: 100%;
+    text-align: center;
+    background: darkgreen;
+    color: gainsboro;
+    padding: 3px;
+    border-radius: 5px;
+}
+
+.feed-box p {
+    height: 5px;
 }
 
 .feed-box input[type="submit"] {
-    padding: 0 10px 0 10px;
+    padding: 5px 10px 5px 10px;
     font-family: "Georgia, serif";
     font-size: 15px;
     background: firebrick;
@@ -38,8 +63,7 @@
     {% endfor %}
 </ul>    
 </div>
-<div style="float:left;">
 {% include "reddit/subreddit_feeds_snippets.html" %}
-</div>
+<div style="clear:both"></div>
 
 {% endblock %}

@@ -2,12 +2,14 @@
 {% if subfeed.target_sub %}
 <div class="feed-box">
 <h4>{{subfeed.target_sub.display_name}}</h4>
-
+<p>frequency: {{subfeed.frequency}} mins</p>
+<p>start date: {{subfeed.start_date}}</p>
 <ul>
 {% for subreddit in subfeed.subreddits.all %}
 
 <li>{{subreddit.display_name}}</li>
 {% endfor %}
+<div style="clear:both;float:none;"></div>
 </ul>
 {% endif %}
 <form action="{% url 'reddit:delete_feed' subfeed.id %}" method="post">

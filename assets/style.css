@@ -190,9 +190,9 @@ select {
 
 #form-errors {
     border: 1px solid brown;
-    background: yellow;
-    color: #C33;
-    padding-right: 15px;
+    background: khaki;
+    color: darkred;
+    padding: 10px 10px 10px 15px;
     border-radius: 10px;
     margin-top: 10px;
     margin-left: 10px;
