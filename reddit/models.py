@@ -81,15 +81,8 @@ class FeedSub(models.Model):
     """ Feed Subscription """
     user = models.ForeignKey(settings.AUTH_USER_MODEL)
     frequency = models.IntegerField()
+    subreddits = models.ManyToManyField(Subreddits, related_name='feeds')
+    target_sub = models.ForeignKey(Subreddits, null=True)
+    target_irc = models.CharField(max_length = 200, null=True)
     active = models.BooleanField(default = False)
-
-class IRCTarget(models.Model):
-    feed_sub = models.ForeignKey(FeedSub)
-    network = models.CharField(max_length=100)
-    room = models.CharField(max_length=50)
-
-class SubredditTarget(models.Model):
-    feed_sub = models.ForeignKey(FeedSub)
-    subreddit = models.ForeignKey(Subreddits)
-
 

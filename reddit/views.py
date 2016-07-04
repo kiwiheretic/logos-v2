@@ -17,7 +17,7 @@ import praw
 import pickle
 import datetime
 from .forms import SiteSetupForm, RedditSubmitForm
-from .models import RedditCredentials, MySubreddits, Submission, PendingSubmissions, Subreddits
+from .models import RedditCredentials, MySubreddits, Submission, PendingSubmissions, Subreddits, FeedSub
 
 REDDIT_BOT_DESCRIPTION = 'Heretical by /u/kiwiheretic ver 0.1'
 # Create your views here.
@@ -117,7 +117,9 @@ def my_subreddits(request):
         mysubs = MySubreddits.objects.get(user = request.user)
     except MySubreddits.DoesNotExist:
         mysubs = None
-    return render(request, 'reddit/my_subreddits.html', {'mysubs':mysubs})
+        
+    feeds = FeedSub.objects.filter(user=request.user)
+    return render(request, 'reddit/my_subreddits.html', {'mysubs':mysubs, 'feeds':feeds})
 
 @login_required
 def list_posts(request, subreddit):
@@ -180,5 +182,9 @@ def new_post(request):
     return render(request, 'reddit/new_post.html', {'form':form})
 
 @login_required
-def feeds(request):
-    return render(request, 'reddit/feeds_list.html', {})
+def delete_feed(request, feed_id):
+    feed = FeedSub.objects.get(pk = feed_id, user = request.user)
+    feed.delete()
+    return redirect(reverse('reddit:mysubreddits'))
+
+    pass

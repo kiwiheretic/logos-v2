@@ -3,16 +3,43 @@
 {% block style %}
 {{ block.super }}
 
+.feed-box {
+    border: 2px solid green;
+    padding: 5px;
+    border-radius: 10px;
+    float:left;
+    margin-right: 10px;
+    margin-bottom: 10px;
+    background: gainsboro;
+}
+
+.feed-box ul {
+    list-style: none;
+    margin-left: -25px;
+}
+
+.feed-box input[type="submit"] {
+    padding: 0 10px 0 10px;
+    font-family: "Georgia, serif";
+    font-size: 15px;
+    background: firebrick;
+    height: auto;
+    float: right;
+}
 {% endblock %}
 
 {% block content %}
 <h2>My Subreddits</h2>
 
+<div style="float:left;margin-right:10px;">
 <ul class="mysubreddits-list">
     {% for sub in mysubs.subreddits.all %}
     <li><a class="note-title" href="{% url 'reddit:list_posts' sub.display_name %}">{{sub.display_name}}</a>
     {% endfor %}
 </ul>    
-
+</div>
+<div style="float:left;">
+{% include "reddit/subreddit_feeds_snippets.html" %}
+</div>
 
 {% endblock %}

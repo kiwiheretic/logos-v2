@@ -37,3 +37,16 @@ class NewSubredditFeedForm(forms.Form):
         super(NewSubredditFeedForm, self).__init__(*args, **kwargs)
         self.fields['subreddits'].choices = mysubreddits
         self.fields['target'].choices = mysubreddits
+
+class FeedForm(forms.Form):
+    freq_choices = [(30, 'half hourly'),(60, 'hourly')]
+    subreddits = forms.MultipleChoiceField(label="Subreddits to monitor")
+    target = forms.ChoiceField()
+    frequency = forms.ChoiceField(choices = freq_choices)
+    active = forms.BooleanField(initial=True)
+
+    def __init__(self, *args, **kwargs):
+        mysubreddits = kwargs.pop('mysubreddits')
+        super(FeedForm, self).__init__(*args, **kwargs)
+        self.fields['subreddits'].choices = mysubreddits
+        self.fields['target'].choices = mysubreddits

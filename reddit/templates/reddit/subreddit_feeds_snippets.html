@@ -1,0 +1,18 @@
+{% for subfeed in feeds %}
+{% if subfeed.target_sub %}
+<div class="feed-box">
+<h4>{{subfeed.target_sub.display_name}}</h4>
+
+<ul>
+{% for subreddit in subfeed.subreddits.all %}
+
+<li>{{subreddit.display_name}}</li>
+{% endfor %}
+</ul>
+{% endif %}
+<form action="{% url 'reddit:delete_feed' subfeed.id %}" method="post">
+    {% csrf_token %}
+    <input type="submit" name="delete" value="delete" />
+</form>
+</div>
+{% endfor %}

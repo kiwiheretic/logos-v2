@@ -204,6 +204,23 @@ class Command(BaseCommand):
             print subobj.num_comments
             sub.num_comments = subobj.num_comments
             sub.save()
-            self._traverse_comments(sub,subobj, None)
+            subreddit_name = sub.subreddit.display_name
+            comments = self.r.get_comments(subreddit_name, params={'context':0, 'depth':1})
+            for comment in comments:
+                try:
+                    c = Comments(name = comment.name,
+                            submission = sub,
+                            parent_thing = sub.name,
+                            created_at = timezone.now(),
+                            author = comment.author,
+                            body = comment.body,
+                            score = comment.score)
+                    c.save()
+                except IntegrityError:
+                    pass
+
+
+            #self._traverse_comments(sub,subobj, None)
+
 
 
