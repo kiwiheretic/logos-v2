@@ -11,7 +11,7 @@ import pytz
 import praw
 
 import datetime
-from ...models import RedditCredentials, MySubreddits, Subreddits, Submission, Comments, PendingSubmissions
+from ...models import RedditCredentials, MySubreddits, Subreddits, Submission, Comments, PendingSubmissions, FeedSub
 from django.conf import settings
 import logging
 
@@ -42,6 +42,9 @@ class Command(BaseCommand):
         if subcommand == "commentsonly":
             self.authenticate(port)
             self.get_comments()
+        elif subcommand == "processfeeds":
+            self.authenticate(port)
+            self.process_feeds()
         elif subcommand == "fixusernames":
             self.authenticate(port)
             self.fix_reddit_usernames()
@@ -166,6 +169,52 @@ class Command(BaseCommand):
                 obj.save()
                 mysub, _ = MySubreddits.objects.get_or_create(user = cred.user)
                 mysub.subreddits.add(obj)
+
+    def process_feeds(self):
+        feeds = FeedSub.objects.all().order_by('user')
+        user = None
+        for feed in subs:
+            if feed.user != user:
+                # authenticate user
+                credentials = RedditCredentials.objects.get(user = feed.user).credentials()
+                self.r.set_access_credentials(**credentials)
+                # Now check subreddits for new posts we can poach
+                for sub in feed.subreddits.filter(target_sub__isnull=False):
+                    if not FeedProgress.objects.filter(feed = feed, 
+                    user = sub.user).exists():
+                        fp = FeedProgress(user = feed.user,
+                                feed = feed,
+                                subreddit = sub,
+                                processed_to = None,
+                                processed = 0)
+                        fp.save()
+                        self._process_subreddit_feeds(fp)
+            user = sub.user
+
+    def _process_subreddit_feeds(fp):
+        post_limit = fp.post_limit
+        if fp.processed_to:
+            subs = Submission.objects.filter(subreddit = fp.subreddit,
+                    id__gt = fp.processed_to).order_by('id')
+        else:
+            start_date = fp.feed.start_date
+            subs = Submission.objects.filter(subreddit = fp.subreddit,
+                    created_at__gt = start_date).order_by('id')
+        target_subreddit = fp.feed.target_sub.display_name
+        sig = "** submitted by logos bot: https://github.com/kiwiheretic/logos-v2"
+
+        for ii, sub in enumerate(subs):
+            try:
+                submission = self.r.submit(target_subreddit, sub.title, 
+                    text=sub.body + "\n" + sig,
+                    raise_captcha_exception = False)
+                print ("submitted submission successfully")
+            except praw.errors.RateLimitExceeded:
+                break
+            fp.processed_to = sub.id
+            fp.save()
+            if ii > post_limit:
+                break
 
     def _traverse_comments(self, submission, submission_obj, parent):
         if parent == None:

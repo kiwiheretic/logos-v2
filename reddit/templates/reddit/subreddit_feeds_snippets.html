@@ -1,7 +1,7 @@
 {% for subfeed in feeds %}
 {% if subfeed.target_sub %}
-<div class="feed-box">
-<h4>{{subfeed.target_sub.display_name}}</h4>
+<div class="feed-box {% if subfeed.active %}active-box{% else %}inactive-box{% endif %}">
+<a href="{% url 'reddit:feed-update' subfeed.id %}"><h4>{{subfeed.target_sub.display_name}}</h4></a>
 <p>frequency: {{subfeed.frequency}} mins</p>
 <p>start date: {{subfeed.start_date}}</p>
 <ul>

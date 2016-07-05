@@ -70,12 +70,13 @@ class Comments(models.Model):
     body = models.TextField()
     score = models.IntegerField(db_index = True)
 
-class FeedSubredditSub(models.Model):
+class FeedProgress(models.Model):
     """ Feedi Subreddit tracking for a Subscription (FeedSub) """
-    subreddit = models.ForeignKey(Subreddits)
     feed = models.ForeignKey('FeedSub')
-    # processed = keep track of datetime of last submission processed
-    processed_to = models.DateTimeField()
+    subreddit = models.ForeignKey('Subreddits')
+    # processed = keep track of last submission processed
+    # can be null if no subreddits process yet
+    processed_to = models.ForeignKey('Submission', null=True)
     # num posts processed
     processed = models.IntegerField()
 
@@ -86,6 +87,7 @@ class FeedSub(models.Model):
     subreddits = models.ManyToManyField(Subreddits, related_name='feeds')
     target_sub = models.ForeignKey(Subreddits, null=True)
     target_irc = models.CharField(max_length = 200, null=True)
+    post_limit = models.IntegerField(default=1)
     start_date = models.DateTimeField()
     active = models.BooleanField(default = False)
 

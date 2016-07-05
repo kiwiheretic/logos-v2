@@ -3,7 +3,7 @@ from __future__ import absolute_import
 
 from django.conf.urls import patterns, include, url
 from .views import site_setup
-from .generic_views import SubredditFeedFormView, IRCFeedFormView
+from .generic_views import FeedFormView, FeedUpdateFormView
 
 app_name = 'reddit'
 
@@ -16,9 +16,9 @@ urlpatterns = patterns('reddit.views',
     url(r'^oauth-callback/$', 'oauth_callback', name='oauth_callback'),
     url(r'^my-subreddits$', 'my_subreddits', name='mysubreddits'),
     url(r'^new-post/$', 'new_post', name='new_post'),
-    url(r'^subreddit-feed-add/$', SubredditFeedFormView.as_view(), name='subreddit-feed-add'),
+    url(r'^feed-add/$', FeedFormView.as_view(), name='feed-add'),
+    url(r'^feed-update/(\d+)/$', FeedUpdateFormView.as_view(), name='feed-update'),
     url(r'^subreddit-feed-delete/(\d+)/$', 'delete_feed', name='delete_feed'),
-    url(r'^irc-feed-add/$', IRCFeedFormView.as_view(), name='irc-feed-add'),
     url(r'^list-subreddit-posts/([^/]+)/$', 'list_posts', name='list_posts'),
     url(r'^post-detail/(\d+)/$', 'post_detail', name='post_detail'),
 )

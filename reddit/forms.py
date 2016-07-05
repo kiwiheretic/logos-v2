@@ -47,7 +47,8 @@ class FeedForm(forms.Form):
     target_irc = forms.ChoiceField(required=False, label="Target IRC Room")
     frequency = forms.ChoiceField(choices = freq_choices)
     start_date = forms.DateTimeField(initial=timezone.now())
-    active = forms.BooleanField(initial=True)
+    post_limit = forms.IntegerField(initial=1, min_value = 1, max_value = 20)
+    active = forms.BooleanField(required=False, initial=True)
 
     def __init__(self, *args, **kwargs):
         mysubreddits = kwargs.pop('mysubreddits')

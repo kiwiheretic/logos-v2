@@ -4,7 +4,6 @@
 {{ block.super }}
 
 .feed-box {
-    border: 2px solid green;
     padding: 5px;
     border-radius: 10px;
     float:left;
@@ -13,7 +12,13 @@
     background: gainsboro;
     max-width: 250px;
 }
+.active-box {
+    border: 2px solid green;
+}
 
+.inactive-box {
+    border: 2px solid grey;
+}
 .feed-box ul {
     list-style: none;
     margin: 5px 0 5px -35px;
@@ -33,10 +38,16 @@
     display: block;
     width: 100%;
     text-align: center;
-    background: darkgreen;
     color: gainsboro;
     padding: 3px;
     border-radius: 5px;
+}
+
+.active-box h4 {
+    background: darkgreen;
+}
+.inactive-box h4 {
+    background: grey;
 }
 
 .feed-box p {
