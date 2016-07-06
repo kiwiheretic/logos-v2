@@ -73,7 +73,7 @@ class Command(BaseCommand):
 
     def post_pending(self):
         """ Post pending submissions to reddit """
-        psubs = PendingSubmissions.objects.filter(submitted=False).order_by('user')
+        psubs = PendingSubmissions.objects.filter(uploaded_at__isnull=True).order_by('user')
         luser = None
         for psub in psubs:
             if luser == None or luser != psub.user:
@@ -85,10 +85,10 @@ class Command(BaseCommand):
                 sig = "** submitted by logos bot: https://github.com/kiwiheretic/logos-v2"
                 try:
                     submission = self.r.submit(subreddit, psub.title, 
-                        text=psub.body + "\n" + sig,
+                        text=psub.body + "  \n" + sig,
                         raise_captcha_exception = False)
                     print ("submitted submission successfully")
-                    psub.submitted=True
+                    psub.uploaded_at=timezone.now()
                     psub.save()
                 except praw.errors.RateLimitExceeded:
                     pass

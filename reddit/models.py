@@ -3,6 +3,7 @@ from django.conf import settings
 from django.contrib.auth.models import User
 import praw
 import pickle
+from logos.models import RoomPermissions
 
 # Create your models here.
 class RedditCredentials(models.Model):
@@ -58,8 +59,8 @@ class PendingSubmissions(models.Model):
     title = models.CharField(max_length = 250)
     url = models.URLField(null=True)
     body = models.TextField(null=True)
-    # submitted to reddit yet?
-    submitted = models.BooleanField(default=False)
+    created_at = models.DateTimeField(db_index=True)
+    uploaded_at = models.DateTimeField(null=True, db_index=True)
 
 class Comments(models.Model):
     name = models.CharField(max_length = 30, unique = True)
@@ -86,7 +87,7 @@ class FeedSub(models.Model):
     frequency = models.IntegerField()
     subreddits = models.ManyToManyField(Subreddits, related_name='feeds')
     target_sub = models.ForeignKey(Subreddits, null=True)
-    target_irc = models.CharField(max_length = 200, null=True)
+    target_irc = models.ForeignKey(RoomPermissions, null=True)
     post_limit = models.IntegerField(default=1)
     start_date = models.DateTimeField()
     active = models.BooleanField(default = False)

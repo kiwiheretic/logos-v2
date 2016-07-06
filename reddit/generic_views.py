@@ -9,9 +9,12 @@ from django.utils.decorators import method_decorator
 from django.contrib import messages
 from django.forms.models import model_to_dict
 from django.http import Http404
+from guardian.shortcuts import get_perms
 
 from .forms import FeedForm
 from .models import MySubreddits, Subreddits, FeedSub
+from logos.models import RoomPermissions
+
 # Using FormView here because CreateView seems to handle
 # only saving on model instance and not a parent-children model set.
 class FeedFormView(FormView):
@@ -28,19 +31,30 @@ class FeedFormView(FormView):
 
     def form_valid(self, form):
         subreddit_ids = form.cleaned_data['subreddits']
-        target_sub_id = form.cleaned_data['target_sub']
+        target_sub_id = int(form.cleaned_data['target_sub'])
+        target_irc_id = int(form.cleaned_data['target_irc'])
         frequency = form.cleaned_data['frequency']
         start_date = form.cleaned_data['start_date']
         post_limit = form.cleaned_data['post_limit']
         active = form.cleaned_data['active']
-        target_sub = Subreddits.objects.get(pk=target_sub_id)
-        fsub = FeedSub(user = self.request.user,
-                frequency = frequency,
-                target_sub = target_sub,
-                post_limit = post_limit,
-                start_date = start_date,
-                active = active)
-        fsub.save()
+        if target_sub_id:
+            target_sub = Subreddits.objects.get(pk=target_sub_id)
+            fsub = FeedSub(user = self.request.user,
+                    frequency = frequency,
+                    target_sub = target_sub,
+                    post_limit = post_limit,
+                    start_date = start_date,
+                    active = active)
+            fsub.save()
+        else: # Target is IRC
+            target_irc = RoomPermissions.objects.get(pk=target_irc_id)
+            fsub = FeedSub(user = self.request.user,
+                    frequency = frequency,
+                    target_irc = target_irc,
+                    post_limit = post_limit,
+                    start_date = start_date,
+                    active = active)
+            fsub.save()
         for subred_id in subreddit_ids:
             sub = Subreddits.objects.get(pk=subred_id)
             fsub.subreddits.add(sub)
@@ -57,7 +71,12 @@ class FeedFormView(FormView):
         kwargs = super(FeedFormView, self).get_form_kwargs()
         mysubs = MySubreddits.objects.get(user=self.request.user).subreddits
         choices = [(sub.pk, sub.display_name) for sub in mysubs.all()]
-        kwargs.update({'mysubreddits':choices})
+
+        irc_rooms = []
+        for rp in RoomPermissions.objects.all():
+            if 'room_admin' in get_perms(self.request.user, rp):
+                irc_rooms.append((rp.id, rp.network + "/" + rp.room))
+        kwargs.update({'mysubreddits':choices, 'myircrooms':irc_rooms})
         return kwargs
 
 
@@ -83,17 +102,23 @@ class FeedUpdateFormView(FeedFormView):
 
     def form_valid(self, form):
         subreddit_ids = form.cleaned_data['subreddits']
-        target_sub_id = form.cleaned_data['target_sub']
+        target_sub_id = int(form.cleaned_data['target_sub'])
+        target_irc_id = int(form.cleaned_data['target_irc'])
         frequency = form.cleaned_data['frequency']
         start_date = form.cleaned_data['start_date']
         post_limit = form.cleaned_data['post_limit']
         active = form.cleaned_data['active']
-        target_sub = Subreddits.objects.get(pk=target_sub_id)
 
         fsub = FeedSub.objects.get(pk=self.obj_id)
+        if target_sub_id:
+            target_sub = Subreddits.objects.get(pk=target_sub_id)
+            fsub.target_sub = target_sub
+        else:
+            target_irc = RoomPermissions.objects.get(pk=target_irc_id)
+            fsub.target_irc = target_irc
+
         fsub.subreddits.clear()
         fsub.frequency = frequency
-        fsub.target_sub = target_sub
         fsub.start_date = start_date
         fsub.post_limit = post_limit
         fsub.active = active

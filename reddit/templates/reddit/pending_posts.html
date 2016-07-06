@@ -1,0 +1,47 @@
+{% extends "reddit/reddit_base.html" %}
+
+{% block style %}
+{{ block.super }}
+.pending-post span {
+    display: inline-block;
+}
+.post-title {
+    width:150px;
+    border: 1px solid blue;
+}
+
+.post-created {
+    width: 200px;
+}
+
+.post-uploaded {
+    width: 200px;
+}
+{% endblock %}
+
+{% block content %}
+<h2>Pending Posts</h2>
+
+<div style="float:left; clear:left;">
+{% for post in posts %}
+<div class="pending-post">
+    <span class="post-title">{{post.title}}</span>
+    <span class="post-created">Created: {{post.created_at}}</span>
+    <span class="post-uploaded">Uploaded: {{post.uploaded_at|default_if_none:"not yet"}}</span>
+{% endfor %}
+</div>
+
+{% if posts.has_other_pages %}
+<div class="pagination">
+    <a href="?page=1" class="page gradient">first</a>
+    {% if posts.has_previous %}
+    <a href="?page={{posts.previous_page_number}}" class="page gradient">prev</a>
+    {% endif %}
+    <span class="page active">{{posts.number}}</span>
+    {% if posts.has_next %}
+    <a href="?page={{posts.next_page_number}}" class="page gradient">next</a>
+    {% endif %}
+    <a href="?page={{posts.paginator.num_pages}}" class="page gradient">last</a>
+</div> <!-- pagination -->        
+{% endif %}
+{% endblock %}

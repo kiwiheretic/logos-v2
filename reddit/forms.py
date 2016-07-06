@@ -52,16 +52,20 @@ class FeedForm(forms.Form):
 
     def __init__(self, *args, **kwargs):
         mysubreddits = kwargs.pop('mysubreddits')
+        myircrooms = kwargs.pop('myircrooms')
         subreddit_choices = list(mysubreddits)
+        irc_choices = list(myircrooms)
         super(FeedForm, self).__init__(*args, **kwargs)
         subreddit_choices.insert(0, (0,''))        
+        irc_choices.insert(0, (0,''))
         self.fields['subreddits'].choices = mysubreddits
         self.fields['target_sub'].choices = subreddit_choices
+        self.fields['target_irc'].choices = irc_choices
 
     def clean(self):
         cleaned_data = super(FeedForm, self).clean()
         target_sub = int(cleaned_data.get("target_sub"))
-        target_irc = cleaned_data.get("target_irc")
+        target_irc = int(cleaned_data.get("target_irc"))
         if not (target_sub or target_irc) or (target_sub and target_irc):
             raise forms.ValidationError( _('One and only one of target subreddit or IRC may be specified'), code='SubOrIRCRequired')
         return cleaned_data

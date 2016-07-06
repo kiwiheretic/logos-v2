@@ -1,6 +1,7 @@
 from __future__ import absolute_import
 from django.shortcuts import render, redirect, get_object_or_404
 from django.http import Http404
+from django.utils import timezone
 from logos.roomlib import get_global_option, set_global_option
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
@@ -148,7 +149,7 @@ def list_posts(request, subreddit):
 @login_required
 def post_detail(request, post_id):
     sub = get_object_or_404(Submission, pk = post_id)
-    comment_list = sub.comments_set.order_by('-created_at')
+    comment_list = sub.comments_set.order_by('created_at')
     paginator = Paginator(comment_list, 10) # Show 10 comments per page
 
     page = request.GET.get('page')
@@ -182,6 +183,7 @@ def new_post(request):
             psub.subreddit = subr
             psub.title = form.cleaned_data['title']
             psub.body = form.cleaned_data['body']
+            psub.created_at = timezone.now()
             psub.save()
             messages.add_message(request, messages.INFO, 'Submission successfully saved for upload')
             return redirect(reverse('reddit:mysubreddits'))
@@ -196,3 +198,20 @@ def delete_feed(request, feed_id):
     return redirect(reverse('reddit:mysubreddits'))
 
     pass
+
+@login_required
+def pending_posts(request):
+    posts = PendingSubmissions.objects.filter(user = request.user).order_by('created_at')
+    paginator = Paginator(posts, 10) # Show 10 comments per page
+
+    page = request.GET.get('page')
+    try:
+        objects = paginator.page(page)
+    except PageNotAnInteger:
+        # If page is not an integer, deliver first page.
+        objects = paginator.page(1)
+    except EmptyPage:
+        # If page is out of range (e.g. 9999), deliver last page of results.
+        objects = paginator.page(paginator.num_pages)
+
+    return render(request, 'reddit/pending_posts.html', {"posts":objects})

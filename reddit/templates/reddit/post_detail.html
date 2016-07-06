@@ -32,7 +32,7 @@
 
 <div style="float:left; clear:left;">
 <ul class="reddit-post">
-    <li><a class="reddit-title" href="">{{submission.title}}</a>
+    <li><h3>{{submission.title}}</h3>
     <div class="reddit-post-item">Thing ID: <a href="{{submission.url}}">{{submission.name}}</a></div>
     <div class="reddit-post-item">Author: {{submission.author}}</div>
     <div class="reddit-post-item">Title: {{submission.title}}</div>
@@ -41,22 +41,23 @@
 
 {% for comment in comments %}
 <div class="reddit-comment">
-<div>/u/{{comment.author}} [{{comment.score}}]</div>
-<div>{{comment.body|markdown|safe}}</div>
+    <div>/u/{{comment.author}} [{{comment.score}}]</div>
+    <div>{{comment.created_at}}</div>
+    <div>{{comment.body|urlizetrunc:40|markdown|safe}}</div>
 </div>
 {% endfor %}
 
 {% if comments.has_other_pages %}
 <div class="pagination">
-                <a href="?page=1" class="page gradient">first</a>
-                {% if comments.has_previous %}
-                <a href="?page={{comments.previous_page_number}}" class="page gradient">prev</a>
-                {% endif %}
-                <span class="page active">{{comments.number}}</span>
-                {% if comments.has_next %}
-                <a href="?page={{notes.next_page_number}}" class="page gradient">next</a>
-                {% endif %}
-                <a href="?page={{comments.paginator.num_pages}}" class="page gradient">last</a>
+        <a href="?page=1" class="page gradient">first</a>
+        {% if comments.has_previous %}
+        <a href="?page={{comments.previous_page_number}}" class="page gradient">prev</a>
+        {% endif %}
+        <span class="page active">{{comments.number}}</span>
+        {% if comments.has_next %}
+        <a href="?page={{comments.next_page_number}}" class="page gradient">next</a>
+        {% endif %}
+        <a href="?page={{comments.paginator.num_pages}}" class="page gradient">last</a>
 </div> <!-- pagination -->        
 {% endif %}
 {% endblock %}

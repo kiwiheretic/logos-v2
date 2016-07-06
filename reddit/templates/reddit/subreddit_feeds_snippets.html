@@ -1,16 +1,21 @@
 {% for subfeed in feeds %}
-{% if subfeed.target_sub %}
-<div class="feed-box {% if subfeed.active %}active-box{% else %}inactive-box{% endif %}">
-<a href="{% url 'reddit:feed-update' subfeed.id %}"><h4>{{subfeed.target_sub.display_name}}</h4></a>
-<p>frequency: {{subfeed.frequency}} mins</p>
-<p>start date: {{subfeed.start_date}}</p>
-<ul>
-{% for subreddit in subfeed.subreddits.all %}
+{% if subfeed.target_sub or subfeed.target_irc %}
+    <div class="feed-box {% if subfeed.active %}active-box{% else %}inactive-box{% endif %}">
+        <a href="{% url 'reddit:feed-update' subfeed.id %}">
+        <h4>{% if subfeed.target_sub %}
+                {{subfeed.target_sub.display_name}}
+            {% else %}
+                {{subfeed.target_irc.room}}
+            {% endif %}</h4></a>
+    <p>frequency: {{subfeed.frequency}} mins</p>
+    <p>start date: {{subfeed.start_date}}</p>
+    <ul>
+        {% for subreddit in subfeed.subreddits.all %}
 
-<li>{{subreddit.display_name}}</li>
-{% endfor %}
-<div style="clear:both;float:none;"></div>
-</ul>
+        <li>{{subreddit.display_name}}</li>
+        {% endfor %}
+    <div style="clear:both;float:none;"></div>
+    </ul>
 {% endif %}
 <form action="{% url 'reddit:delete_feed' subfeed.id %}" method="post">
     {% csrf_token %}
