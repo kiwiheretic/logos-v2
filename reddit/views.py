@@ -16,10 +16,13 @@ logging.config.dictConfig(settings.LOGGING)
 import praw
 import pickle
 import datetime
+import socket
 from .forms import SiteSetupForm, RedditSubmitForm
 from .models import RedditCredentials, MySubreddits, Submission, PendingSubmissions, Subreddits, FeedSub
 
 REDDIT_BOT_DESCRIPTION = 'Heretical by /u/kiwiheretic ver 0.1'
+UDP_IP = "127.0.0.1"
+UDP_PORT = 5011
 # Create your views here.
 
 @login_required
@@ -134,6 +137,11 @@ def list_posts(request, subreddit):
     except EmptyPage:
         # If page is out of range (e.g. 9999), deliver last page of results.
         posts = paginator.page(paginator.num_pages)
+    posts_list = ", ".join([str(p.id) for p in posts.object_list])
+    if posts_list:
+        sock = socket.socket(socket.AF_INET, # Internet
+            socket.SOCK_DGRAM) # UDP
+        sock.sendto("commentise "+posts_list, (UDP_IP, UDP_PORT))
     return render(request, 'reddit/list_posts.html', {'subreddit':subreddit, 'posts':posts})
 
 
