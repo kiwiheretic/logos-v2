@@ -7,6 +7,16 @@
   font-weight: 600;
   color: red;
 }
+form {
+    display: inline;
+}
+
+input[type="submit"] {
+    background: #272;
+    color: white;
+    height: auto;
+    font-size: 12px;
+}
 
 {% endblock %}
 
@@ -16,9 +26,18 @@
 <h3>Running Bots</h3>
 <p>There can only be one bot running on a given RPC port.
 When a bot claims an RPC port it purges old records with that RPC number. </p>
+<p><strong>Update Database</strong> updates the network and rooms database to include the rooms
+that the bot knows about.</p>
 <ul>
 {% for bot in bots %}
-  <li>{% if not bot.alive %}<span class="dead-bot">DEAD</span> {% endif %}PID: <a href="{% url 'logos.views.bot_view' bot.id %}">{{bot.pid}}</a> - RPC: {{bot.rpc}} {{bot.networks|join:" | "}}</li>
+  <li>{% if not bot.alive %}<span class="dead-bot">DEAD</span> {% endif %}Bot @ PID: <a href="{% url 'logos.views.bot_view' bot.id %}">{{bot.pid}}</a> - RPC: {{bot.rpc}} {{bot.networks|join:" | "}}
+<form action="." method="post">
+        {% csrf_token %}
+
+        <input type="submit" name="updatedb" 
+        value="Update Database" /> 
+</form>
+  </li>
 {% endfor %}
 </ul>
 {% endblock %}

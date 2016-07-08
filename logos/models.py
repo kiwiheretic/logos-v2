@@ -40,7 +40,7 @@ class Settings(models.Model):
     value = models.TextField(null=True, blank=True)
 
 class NetworkPermissions(models.Model):    
-    network = models.TextField()
+    network = models.TextField(unique=True)
     class Meta:
         permissions = (
             ('bot_admin', 'Create user logins and assign permissions'),
@@ -58,6 +58,7 @@ class RoomPermissions(models.Model):
     network = models.TextField()
     room = models.TextField()
     class Meta:
+        unique_together = ('network', 'room')
         permissions = (
             ('room_admin', 'Assign permissions to existing users of own room'),
             ('change_trigger', 'Change trigger'),

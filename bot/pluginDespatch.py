@@ -342,8 +342,8 @@ class PluginDespatcher(object):
                     with transaction.atomic():
                         plugin_name, descr = plugin_object.plugin
                         plugin, created = Plugins.objects.\
-                            get_or_create(name=plugin_name,
-                                          description=descr)
+                            get_or_create(name=plugin_name)
+                        plugin.description = descr
                         plugin.system = system
                         plugin.save()
                         net_plugin, created = NetworkPlugins.objects.\

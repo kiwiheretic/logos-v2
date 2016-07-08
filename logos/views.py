@@ -7,6 +7,8 @@ from django.http import HttpResponse, HttpResponseRedirect
 from django.contrib import messages
 from django.core.urlresolvers import reverse
 from django.core import serializers
+from django.db import IntegrityError
+
 
 from .forms import SettingsForm, UserSettingsForm
 from .models import Settings, BotsRunning, Plugins, NetworkPlugins, RoomPlugins, NetworkPermissions, RoomPermissions
@@ -78,21 +80,6 @@ def preferences(request):
         ctx = {'site_name':site_name, 'tag_line':tag_line}
     return set_timezone(request, ctx)
 
-#    if request.method == 'POST':
-#        tzfrm = TimeZoneForm(request.POST)
-#        if tzfrm.is_valid():
-#            zid = tzfrm.cleaned_data['timezone']
-#            set_user_option(request.user, 'timezone-id', zid)
-#            messages.add_message(request, messages.INFO, 'Preferences Saved')
-#            return HttpResponseRedirect(reverse('logos.views.profile'))
-#    else:
-#        zid = get_user_option(request.user, 'timezone-id')
-#        if zid:
-#            tzfrm = TimeZoneForm(initial={'timezone':zid})
-#        else:
-#            tzfrm = TimeZoneForm()
-#    forms = [(tzfrm, 'Time Zone')]
-#    return render(request, 'logos/preferences.html',{'forms':forms})
 
 @login_required()
 def user_settings(request):
@@ -126,6 +113,34 @@ def bots(request):
         dead = False
         try:
             networks = srv.get_networks()
+            if request.method == "POST":
+                rooms = srv.get_rooms()
+                netcnt = 0
+                rmcnt = 0
+                for net_room in rooms:
+                    network = net_room['network']
+                    rooms_list = net_room['rooms']
+                    try:
+                        np = NetworkPermissions(network=network)
+                        np.save()
+                    except IntegrityError:
+                        pass
+                    else:
+                        netcnt+=1
+
+                    for room_dict in rooms_list:
+                        try:
+                            room = room_dict['room']
+                            rp = RoomPermissions(network = network, room = room)
+                            rp.save()
+                        except IntegrityError:
+                            pass
+                        else:
+                            rmcnt+=1
+                messages.add_message(request, messages.INFO,
+                     'Updated {} networks and {} room records'.format(netcnt, rmcnt))
+
+
         except Exception as e:
             print e.errno
             # error 111 is connection refused
@@ -138,6 +153,7 @@ def bots(request):
         bots.append({'id': bot.id, 'pid':bot.pid, 'alive':not dead, 'rpc':bot.rpc, 'networks':networks})
     context = {'bots':bots}
     return render(request, 'logos/bots.html', context)
+
 def configure_plugins(plugins):
     for app in settings.INSTALLED_APPS:
         configure_app_plugins(app, plugins)

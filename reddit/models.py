@@ -49,6 +49,8 @@ class Submission(models.Model):
     score = models.IntegerField(db_index = True)
     link_flair_text = models.CharField(max_length = 50, null=True)
     num_comments = models.IntegerField()
+    class Meta:
+        ordering = ('created_at',)
 
 class PendingSubmissions(models.Model):
     """ Reddit submissions to be sent but dont yet have a thing ID.
@@ -73,13 +75,18 @@ class Comments(models.Model):
 
 class FeedProgress(models.Model):
     """ Feedi Subreddit tracking for a Subscription (FeedSub) """
+    # we use ForeignKey here rather than one to one field
+    # because we have a feed progress record for every subreddit
+    # that is part of the original feed subscription
     feed = models.ForeignKey('FeedSub')
     subreddit = models.ForeignKey('Subreddits')
     # processed = keep track of last submission processed
     # can be null if no subreddits process yet
     processed_to = models.ForeignKey('Submission', null=True)
     # num posts processed
-    processed = models.IntegerField()
+    processed = models.IntegerField(default=0)
+    class Meta:
+        unique_together = ('feed', 'subreddit')
 
 class FeedSub(models.Model):
     """ Feed Subscription """
@@ -90,5 +97,6 @@ class FeedSub(models.Model):
     target_irc = models.ForeignKey(RoomPermissions, null=True)
     post_limit = models.IntegerField(default=1)
     start_date = models.DateTimeField()
+    last_processed = models.DateTimeField(null=True)
     active = models.BooleanField(default = False)
 
