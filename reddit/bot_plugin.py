@@ -117,9 +117,9 @@ class RedditPlugin(Plugin):
     @irc_room_permission_required('room_admin')
     def reset_feeds(self, regex, chan, nick, **kwargs):
         room = chan.lower()
-        CacheViews.objects.filter(network=self.network,
-              room=room).delete()
-        self.say(chan, "Cache for room {} now reset".format(room))
+        FeedProgress.objects.filter(feed__target_irc__network=self.network,
+              feed__target_irc__room=room).delete()
+        self.say(chan, "Reddit feed for room {} now reset".format(room))
 
     @irc_room_permission_required('room_admin')
     def add_feed(self, regex, chan, nick, **kwargs):
@@ -201,7 +201,7 @@ class RedditPlugin(Plugin):
             feedsub = FeedSub.objects.get(pk = id, target_irc__isnull = False)
             subs = self._get_one_feed(feedsub)
             for sub in subs:
-                self.say(chan, "{} {} {} {}".format(sub.created_at,
+                self.say(chan, "{} {} {} {}".format(sub.created_at.strftime('%b %-d, %Y %-I:%M %p UTC'),
                     sub.author,
                     sub.title,
                     sub.url))
