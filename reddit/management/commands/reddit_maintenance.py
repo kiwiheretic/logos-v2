@@ -107,42 +107,67 @@ class Command(BaseCommand):
             redcred.save()
 
 
+    def _save_submission_to_db(self, subreddit, thing_paginator):
+        cnt = 0
+        sr = self.r.get_subreddit(subreddit.display_name)
+        if thing_paginator:
+            listing = sr.get_new(limit=None, params={'before':thing_paginator})
+        else:
+            listing = sr.get_new(limit=None)
+
+        for sub in listing:
+            # Don't save deleted posts (ie. author is blank)
+            # https://www.reddit.com/r/redditdev/comments/1630jj/praw_is_returning_postauthorname_errors/c7s8zx9
+            cnt += 1
+            if not sub.author: continue
+
+            cdate = datetime.datetime.fromtimestamp(
+                            int(sub.created_utc)
+                                )
+            udate = timezone.make_aware(cdate, timezone = pytz.utc)
+            try:
+                post = Submission(name = sub.name,
+                        created_at = udate,
+                        subreddit = subreddit,
+                        title = sub.title,
+                        author = sub.author,
+                        body = sub.selftext,
+                        url = sub.url,
+                        score = sub.score,
+                        link_flair_text = sub.link_flair_text,
+                        num_comments = sub.num_comments)
+                post.save()
+            except IntegrityError:
+                if Submission.objects.filter(name = sub.name).exists():
+                    print "{} already exists".format(sub.name)
+                else:
+                    print "Error: Could not insert {} {}".format(sub.name, sub.title)
+                    import pdb; pdb.set_trace()
+            else:
+                print sub.name, udate, sub.num_comments, repr(sub.title)
+        return cnt
+
+
     def get_submissions(self):
         for subr in Subreddits.objects.filter(active=True):
-            sr = self.r.get_subreddit(subr.display_name)
-            last_sub = Submission.objects.filter(subreddit = subr).order_by('-created_at').first()
-            if last_sub:
-                thing = last_sub.name
-            else:
-                thing = None
-            for sub in sr.get_new(limit='none', params={'before':thing}):
-                # Don't save deleted posts (ie. author is blank)
-                # https://www.reddit.com/r/redditdev/comments/1630jj/praw_is_returning_postauthorname_errors/c7s8zx9
-                if not sub.author: continue
-
-                cdate = datetime.datetime.fromtimestamp(
-                                int(sub.created_utc)
-                                    )
-                udate = timezone.make_aware(cdate, timezone = pytz.utc)
-                print sub.name, udate, sub.num_comments, repr(sub.title)
-                try:
-                    post = Submission(name = sub.name,
-                            created_at = udate,
-                            subreddit = subr,
-                            title = sub.title,
-                            author = sub.author,
-                            body = sub.selftext,
-                            url = sub.url,
-                            score = sub.score,
-                            link_flair_text = sub.link_flair_text,
-                            num_comments = sub.num_comments)
-                    post.save()
-                except IntegrityError:
-                    if Submission.objects.filter(name = sub.name).exists():
-                        print "{} already exists".format(sub.name)
-                    else:
-                        print "Error: Could not insert {} {}".format(sub.name, sub.title)
-                        import pdb; pdb.set_trace()
+            # Need to check more than last sub because last sub may have been 
+            # deleted and this silently fails with the current api
+            # https://www.reddit.com/r/redditdev/comments/4rwmh3/get_new_returning_no_posts_but_browser_equivalent/
+            last_subs = Submission.objects.filter(subreddit = subr).order_by('-created_at')[0:5]
+            for idx, last_sub in enumerate(last_subs):
+                if last_sub:
+                    thing = last_sub.name
+                else:
+                    thing = None
+                cnt = self._save_submission_to_db(subr, thing)
+                if cnt > 0:
+                    break
+            # if backtracking thru the last things in the database in our
+            # efforts to find a paginator then give up trying with the
+            # paginator and just get what we can.  (In other words it seems like
+            # a whole block of database records have been deleted from reddit).
+            if cnt == 0:
+                self._save_submission_to_db(subr, None)
 
     def my_subreddits(self):
         Subreddits.objects.all().update(active=False)
