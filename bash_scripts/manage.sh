@@ -31,4 +31,5 @@ base_dir=$(get_dir_part $(get_dir_part $(readlink -m $0)))
 
 # ${@:2} - all parameters expanded from the second one (excluding the first)
 # http://stackoverflow.com/questions/9057387/process-all-arguments-except-the-first-one
+# see also http://wiki.bash-hackers.org/scripting/posparams#range_of_positional_parameters
 python $base_dir/manage.py ${@:2}

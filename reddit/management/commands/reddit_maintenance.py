@@ -11,7 +11,7 @@ import pytz
 import praw
 
 import datetime
-from ...models import RedditCredentials, MySubreddits, Subreddits, Submission, Comments, PendingSubmissions, FeedSub
+from ...models import RedditCredentials, MySubreddits, Subreddits, Submission, Comments, PendingSubmissions, FeedSub, FeedProgress
 from django.conf import settings
 import logging
 
@@ -150,6 +150,11 @@ class Command(BaseCommand):
 
     def get_submissions(self):
         for subr in Subreddits.objects.filter(active=True):
+            # if a new subreddit has not yet any submissions
+            # in database then we need to set cnt = 0 to
+            # test for that also
+            cnt = 0
+            print subr.display_name
             # Need to check more than last sub because last sub may have been 
             # deleted and this silently fails with the current api
             # https://www.reddit.com/r/redditdev/comments/4rwmh3/get_new_returning_no_posts_but_browser_equivalent/
@@ -196,31 +201,32 @@ class Command(BaseCommand):
                 mysub.subreddits.add(obj)
 
     def process_feeds(self):
-        feeds = FeedSub.objects.all().order_by('user')
+        feeds = FeedSub.objects.filter(target_sub__isnull = False).order_by('user')
         user = None
-        for feed in subs:
+        for feed in feeds:
             if feed.user != user:
                 # authenticate user
                 credentials = RedditCredentials.objects.get(user = feed.user).credentials()
                 self.r.set_access_credentials(**credentials)
                 # Now check subreddits for new posts we can poach
-                for sub in feed.subreddits.filter(target_sub__isnull=False):
-                    if not FeedProgress.objects.filter(feed = feed, 
-                    user = sub.user).exists():
-                        fp = FeedProgress(user = feed.user,
+                for sub in feed.subreddits.all():
+                    try:
+                        fp = FeedProgress.objects.get(feed = feed, feed__user = feed.user)
+                    except FeedProgress.DoesNotExist:
+                        fp = FeedProgress( \
                                 feed = feed,
                                 subreddit = sub,
                                 processed_to = None,
                                 processed = 0)
                         fp.save()
-                        self._process_subreddit_feeds(fp)
-            user = sub.user
+                    self._process_subreddit_feeds(fp)
+            user = feed.user
 
-    def _process_subreddit_feeds(fp):
-        post_limit = fp.post_limit
+    def _process_subreddit_feeds(self, fp):
+        post_limit = fp.feed.post_limit
         if fp.processed_to:
             subs = Submission.objects.filter(subreddit = fp.subreddit,
-                    id__gt = fp.processed_to).order_by('id')
+                    id__gt = fp.processed_to.id).order_by('id')
         else:
             start_date = fp.feed.start_date
             subs = Submission.objects.filter(subreddit = fp.subreddit,
@@ -234,9 +240,10 @@ class Command(BaseCommand):
                     text=sub.body + "\n" + sig,
                     raise_captcha_exception = False)
                 print ("submitted submission successfully")
-            except praw.errors.RateLimitExceeded:
+            except praw.errors.RateLimitExceeded as e:
+                print ('RateLimit Exception - ban time = {} seconds'.format(e.sleep_time))
                 break
-            fp.processed_to = sub.id
+            fp.processed_to = sub
             fp.save()
             if ii > post_limit:
                 break
