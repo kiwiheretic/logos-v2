@@ -73,6 +73,19 @@ class Comments(models.Model):
     body = models.TextField()
     score = models.IntegerField(db_index = True)
 
+    def has_replies(self):
+        if Comments.objects.filter(parent_thing = self.name).exists():
+            return True
+        else:
+            return False
+
+    def num_replies(self):
+        cnt = 0
+        for comment in Comments.objects.filter(parent_thing = self.name):
+            cnt += 1
+            cnt += comment.num_replies()
+        return cnt
+
 class FeedProgress(models.Model):
     """ Feedi Subreddit tracking for a Subscription (FeedSub) """
     # we use ForeignKey here rather than one to one field

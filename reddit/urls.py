@@ -22,4 +22,5 @@ urlpatterns = patterns('reddit.views',
     url(r'^subreddit-feed-delete/(\d+)/$', 'delete_feed', name='delete_feed'),
     url(r'^list-subreddit-posts/([^/]+)/$', 'list_posts', name='list_posts'),
     url(r'^post-detail/(\d+)/$', 'post_detail', name='post_detail'),
+    url(r'^comment-replies/([^/]+)/$', 'comment_replies', name='comment_replies'),
 )

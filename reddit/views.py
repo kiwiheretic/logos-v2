@@ -19,7 +19,7 @@ import pickle
 import datetime
 import socket
 from .forms import SiteSetupForm, RedditSubmitForm
-from .models import RedditCredentials, MySubreddits, Submission, PendingSubmissions, Subreddits, FeedSub
+from .models import RedditCredentials, MySubreddits, Submission, Comments, PendingSubmissions, Subreddits, FeedSub
 
 REDDIT_BOT_DESCRIPTION = 'Heretical by /u/kiwiheretic ver 0.1'
 UDP_IP = "127.0.0.1"
@@ -149,7 +149,7 @@ def list_posts(request, subreddit):
 @login_required
 def post_detail(request, post_id):
     sub = get_object_or_404(Submission, pk = post_id)
-    comment_list = sub.comments_set.order_by('created_at')
+    comment_list = sub.comments_set.filter(parent_thing = sub.name).order_by('created_at')
     paginator = Paginator(comment_list, 10) # Show 10 comments per page
 
     page = request.GET.get('page')
@@ -163,6 +163,26 @@ def post_detail(request, post_id):
         comments = paginator.page(paginator.num_pages)
 
     return render(request, 'reddit/post_detail.html', {"submission":sub, "comments": comments})
+
+@login_required
+def comment_replies(request, comment_thing):
+    comment = get_object_or_404(Comments, name = comment_thing)
+    comment_list = Comments.objects.filter(parent_thing = comment_thing).order_by('created_at')
+    if not comment_list:
+        raise Http404("No replies exist for comment")
+    paginator = Paginator(comment_list, 10) # Show 10 comments per page
+
+    page = request.GET.get('page')
+    try:
+        comments = paginator.page(page)
+    except PageNotAnInteger:
+        # If page is not an integer, deliver first page.
+        comments = paginator.page(1)
+    except EmptyPage:
+        # If page is out of range (e.g. 9999), deliver last page of results.
+        comments = paginator.page(paginator.num_pages)
+
+    return render(request, 'reddit/post_detail.html', {"comment_head":comment, "comments": comments})
 
 
 @login_required
