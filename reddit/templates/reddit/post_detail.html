@@ -27,6 +27,12 @@
     padding: 5px;
     border-radius: 5px;
 }
+
+.reddit-comment div span:first-child {
+    width: 100px;
+    display: inline-block;
+    color: grey;
+}
 .odd-row {
     background: gainsboro;
 }
@@ -43,6 +49,9 @@
     <div class="reddit-post-item">Author: {{submission.author}}</div>
     <div class="reddit-post-item">Title: {{submission.title}}</div>
     <div class="reddit-post-item reddit-post-body">{{submission.body|markdown|safe|urlizetrunc:30|safe}}</div>
+    {% if not form %}
+    <div><a href="{% url 'reddit:submit_reply' submission.name %}">reply to this post</a></div>
+    {% endif %}
 </ul>    
 {% endif %}
 
@@ -51,9 +60,21 @@
     <div class="">Thing ID: {{comment_head.name}}</div>
     <div class="">Author: {{comment_head.author}}</div>
     <div class="">{{comment_head.body|markdown|safe|urlizetrunc:30|safe}}</div>
+    {% if not form %}
+    <div><a href="{% url 'reddit:submit_reply' comment_head.name %}">reply to this post</a></div>
+    {% endif %}
 </div>    
 {% endif %}
 
+{% if form %}
+<form action="." method="POST">
+    {% csrf_token %}
+    <ul>
+    {{ form.as_ul }}
+    </ul>
+    <input type="submit" value="Submit" />
+</form>
+{% endif %}
 {% for comment in comments %}
 <div class="reddit-comment {% cycle 'odd-row' 'even-row' %}">
     <div>/u/{{comment.author}} [{{comment.score}}] {{comment.name}}</div>
@@ -63,9 +84,13 @@
     of urlizetrunc gets escaped in its entirety (including <p> tags. 
     {% endcomment %}
     <div>{{comment.body|urlizetrunc:30|safe|markdown|safe}}</div>
+    <div><span>
     {% if comment.has_replies %}
-    <div><a href="{% url 'reddit:comment_replies' comment.name %}">Replies: {{comment.num_replies}}</a></div>
+    <a href="{% url 'reddit:comment_replies' comment.name %}">Replies: {{comment.num_replies}}</a>
+    {% else %}
+    No replies
     {% endif %}
+    </span><span><a href="{% url 'reddit:submit_reply' comment.name %}">reply to this comment</a></span></div>
 </div>
 {% endfor %}
 

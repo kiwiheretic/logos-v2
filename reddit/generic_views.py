@@ -1,7 +1,8 @@
 from __future__ import absolute_import
 from django.views.generic import DetailView
 #from django.views.generic.edit import CreateView, UpdateView, DeleteView
-from django.views.generic.edit import FormView, UpdateView
+from django.views.generic.edit import FormView, UpdateView, DeleteView
+from django.views.generic.list import ListView
 from django.views.generic.base import TemplateView
 from django.core.urlresolvers import reverse_lazy
 from django.contrib.auth.decorators import login_required
@@ -12,7 +13,7 @@ from django.http import Http404
 from guardian.shortcuts import get_perms
 
 from .forms import FeedForm
-from .models import MySubreddits, Subreddits, FeedSub
+from .models import MySubreddits, Subreddits, FeedSub, PendingComments, PendingSubmissions
 from logos.models import RoomPermissions
 
 # Using FormView here because CreateView seems to handle
@@ -82,7 +83,6 @@ class FeedFormView(FormView):
 
 
 class FeedUpdateFormView(FeedFormView):
-
     model_class = FeedSub
 
     success_url = reverse_lazy('reddit:mysubreddits')
@@ -129,3 +129,31 @@ class FeedUpdateFormView(FeedFormView):
         fsub.save()
         messages.add_message(self.request, messages.INFO, 'Feed record updated successfully')
         return super(FormView, self).form_valid(form)
+
+class RedditListView(ListView):
+
+    @method_decorator(login_required)
+    def dispatch(self, request, *args, **kwargs):
+        return super(RedditListView, self).dispatch(request, *args, **kwargs)
+
+    def get_queryset(self):
+        return self.model.objects.filter(user=self.request.user)
+
+    def get_context_data(self, **kwargs):
+        ctx = super(RedditListView, self).get_context_data(**kwargs)
+        ctx.update(self.context)
+        return ctx
+
+class CommentsListView(RedditListView):
+    model = PendingComments
+    template_name = "reddit/pending_comments.html"
+    context = {'title':'Pending Comments'}
+
+class CommentsDeleteView(DeleteView):
+    model = PendingComments
+    success_url = reverse_lazy('reddit:pending_comments')
+
+class SubmissionsListView(RedditListView):
+    model = PendingSubmissions
+    template_name = "reddit/pending_posts.html"
+    context = {'title':'Pending Submissions'}

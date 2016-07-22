@@ -189,7 +189,7 @@ class Command(BaseCommand):
             except MySubreddits.DoesNotExist:
                 pass
 
-            for sub in self.r.get_my_subreddits():
+            for sub in self.r.get_my_subreddits(limit=None):
                 print sub.name, sub.display_name, sub.url
                 obj, _ = Subreddits.objects.get_or_create(name = sub.name,
                         defaults = {'display_name':sub.display_name,

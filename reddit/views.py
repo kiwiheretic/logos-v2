@@ -1,6 +1,6 @@
 from __future__ import absolute_import
 from django.shortcuts import render, redirect, get_object_or_404
-from django.http import Http404
+from django.http import Http404, HttpResponse
 from django.utils import timezone
 from logos.roomlib import get_global_option, set_global_option
 from django.contrib.auth.decorators import login_required
@@ -18,8 +18,8 @@ import praw
 import pickle
 import datetime
 import socket
-from .forms import SiteSetupForm, RedditSubmitForm
-from .models import RedditCredentials, MySubreddits, Submission, Comments, PendingSubmissions, Subreddits, FeedSub
+from .forms import SiteSetupForm, RedditSubmitForm, CommentForm
+from .models import RedditCredentials, MySubreddits, Submission, Comments, PendingSubmissions, Subreddits, FeedSub, PendingComments
 
 REDDIT_BOT_DESCRIPTION = 'Heretical by /u/kiwiheretic ver 0.1'
 UDP_IP = "127.0.0.1"
@@ -219,19 +219,71 @@ def delete_feed(request, feed_id):
 
     pass
 
+#@login_required
+#def pending_posts(request):
+#    posts = PendingSubmissions.objects.filter(user = request.user).order_by('created_at')
+#    paginator = Paginator(posts, 10) # Show 10 comments per page
+#
+#    page = request.GET.get('page')
+#    try:
+#        objects = paginator.page(page)
+#    except PageNotAnInteger:
+#        # If page is not an integer, deliver first page.
+#        objects = paginator.page(1)
+#    except EmptyPage:
+#        # If page is out of range (e.g. 9999), deliver last page of results.
+#        objects = paginator.page(paginator.num_pages)
+#
+#    return render(request, 'reddit/pending_posts.html', {"posts":objects})
+#
+#@login_required
+#def pending_comments(request):
+#    comments = PendingComments.objects.filter(user = request.user).order_by('created_at')
+#    paginator = Paginator(comments, 10) # Show 10 comments per page
+#
+#    page = request.GET.get('page')
+#    try:
+#        objects = paginator.page(page)
+#    except PageNotAnInteger:
+#        # If page is not an integer, deliver first page.
+#        objects = paginator.page(1)
+#    except EmptyPage:
+#        # If page is out of range (e.g. 9999), deliver last page of results.
+#        objects = paginator.page(paginator.num_pages)
+#
+#    return render(request, 'reddit/pending_comments.html', {"comments":objects})
+#
 @login_required
-def pending_posts(request):
-    posts = PendingSubmissions.objects.filter(user = request.user).order_by('created_at')
-    paginator = Paginator(posts, 10) # Show 10 comments per page
+def submit_reply(request, thing_id):
+    if thing_id.startswith('t1_'): # comment
+        comment = get_object_or_404(Comments, name = thing_id)
+        sub = comment.submission
+        comment_list = Comments.objects.filter(parent_thing = thing_id).order_by('created_at')
+        ctx = {"comment_head":comment, "comments": comment_list}
+    # t4_ is message and t3_ is a link
+    elif thing_id.startswith('t4_') or \
+    thing_id.startswith('t3_'): 
+        sub = get_object_or_404(Submission, pk = post_id)
+        comment_list = sub.comments_set.filter(parent_thing = sub.name).order_by('created_at')
+        ctx = {"submission":sub, "comments": comment_list}
+    else:
+        return HttpResponse('Unexpected message type')
 
-    page = request.GET.get('page')
-    try:
-        objects = paginator.page(page)
-    except PageNotAnInteger:
-        # If page is not an integer, deliver first page.
-        objects = paginator.page(1)
-    except EmptyPage:
-        # If page is out of range (e.g. 9999), deliver last page of results.
-        objects = paginator.page(paginator.num_pages)
+    if request.method == "POST":
+        form = CommentForm(request.POST)
+        if form.is_valid():
+            comm = PendingComments(user = request.user,
+                    submission = sub,
+                    parent_thing = thing_id,
+                    body = form.cleaned_data['body'],
+                    created_at = timezone.now())
+            comm.save()
 
-    return render(request, 'reddit/pending_posts.html', {"posts":objects})
+            messages.info(request, 'Your comment was successfully queued for uploading')
+            return redirect(reverse('reddit:mysubreddits'))
+    else:
+        form = CommentForm()
+
+
+    ctx.update({"form":form})
+    return render(request, 'reddit/post_detail.html', ctx)

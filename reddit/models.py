@@ -55,12 +55,21 @@ class Submission(models.Model):
 class PendingSubmissions(models.Model):
     """ Reddit submissions to be sent but dont yet have a thing ID.
     The record is to be deleted once this post has been successfully been
-    verified to be on reddit"""
+    uploaded on to reddit and perhaps a month or so after that
+    (still deciding)  TODO: Review once decided"""
     user = models.ForeignKey(settings.AUTH_USER_MODEL)
     subreddit = models.ForeignKey(Subreddits)
     title = models.CharField(max_length = 250)
     url = models.URLField(null=True)
     body = models.TextField(null=True)
+    created_at = models.DateTimeField(db_index=True)
+    uploaded_at = models.DateTimeField(null=True, db_index=True)
+
+class PendingComments(models.Model):
+    user = models.ForeignKey(settings.AUTH_USER_MODEL)
+    submission = models.ForeignKey(Submission)
+    parent_thing = models.CharField(max_length = 30)
+    body = models.TextField()
     created_at = models.DateTimeField(db_index=True)
     uploaded_at = models.DateTimeField(null=True, db_index=True)
 

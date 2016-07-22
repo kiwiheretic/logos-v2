@@ -1,0 +1,49 @@
+{% extends "reddit/reddit_base.html" %}
+
+{% block style %}
+{{ block.super }}
+.pending-object span {
+    display: inline-block;
+}
+
+.pending-object.odd-row {
+    background: gainsboro;
+}
+.object-title {
+    width:150px;
+}
+
+.object-created {
+    width: 200px;
+}
+
+.object-uploaded {
+    width: 200px;
+}
+{% endblock %}
+
+{% block content %}
+<h2>{{title}}</h2>
+
+<div style="float:left; clear:left;"></div>
+{% for object in object_list %}
+<div class="pending-object {% cycle 'odd-row' 'even-row' %}">
+    {% block object_list %}
+    {% endblock %}
+</div>
+{% endfor %}
+
+{% if object_list.has_other_pages %}
+<div class="pagination">
+    <a href="?page=1" class="page gradient">first</a>
+    {% if object_list.has_previous %}
+    <a href="?page={{object_list.previous_page_number}}" class="page gradient">prev</a>
+    {% endif %}
+    <span class="page active">{{object_list.number}}</span>
+    {% if object_list.has_next %}
+    <a href="?page={{object_list.next_page_number}}" class="page gradient">next</a>
+    {% endif %}
+    <a href="?page={{object_list.paginator.num_pages}}" class="page gradient">last</a>
+</div> <!-- pagination -->        
+{% endif %}
+{% endblock %}

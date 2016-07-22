@@ -69,3 +69,6 @@ class FeedForm(forms.Form):
         if not (target_sub or target_irc) or (target_sub and target_irc):
             raise forms.ValidationError( _('One and only one of target subreddit or IRC may be specified'), code='SubOrIRCRequired')
         return cleaned_data
+
+class CommentForm(forms.Form):
+    body = forms.CharField(widget=forms.Textarea, max_length = 1024, required = True)
