@@ -6,6 +6,7 @@ import re
 import datetime
 import time
 import pytz
+import requests
 import logging
 from .models import Feed, FeedSubscription, Cache, CacheViews
 import feedparser
