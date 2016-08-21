@@ -127,10 +127,7 @@ class TestUrls(TestCase):
                     elif re.search(r'[\(\)]', fetch_url):
                         pass
                     else:
-                        try:
-                            resp = self.c.get(fetch_url)
-                        except KeyError:
-                            import pdb; pdb.set_trace()
+                        resp = self.c.get(fetch_url)
                         print resp.status_code
 
             elif type(url) == RegexURLResolver:

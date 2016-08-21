@@ -16,6 +16,10 @@ from .forms import FeedForm
 from .models import MySubreddits, Subreddits, FeedSub, PendingComments, PendingSubmissions
 from logos.models import RoomPermissions
 
+# READ: https://docs.djangoproject.com/en/1.9/topics/class-based-views/generic-display/#dynamic-filtering
+# Explains about self.request and self.args, self.kwargs
+
+
 # Using FormView here because CreateView seems to handle
 # only saving on model instance and not a parent-children model set.
 class FeedFormView(FormView):
@@ -70,14 +74,19 @@ class FeedFormView(FormView):
 
     def get_form_kwargs(self):
         kwargs = super(FeedFormView, self).get_form_kwargs()
-        mysubs = MySubreddits.objects.get(user=self.request.user).subreddits
-        choices = [(sub.pk, sub.display_name) for sub in mysubs.all()]
+        try:
+            mysubs = MySubreddits.objects.get(user=self.request.user).subreddits
+            choices = [(sub.pk, sub.display_name) for sub in mysubs.all()]
 
-        irc_rooms = []
-        for rp in RoomPermissions.objects.all():
-            if 'room_admin' in get_perms(self.request.user, rp):
-                irc_rooms.append((rp.id, rp.network + "/" + rp.room))
-        kwargs.update({'mysubreddits':choices, 'myircrooms':irc_rooms})
+            irc_rooms = []
+            for rp in RoomPermissions.objects.all():
+                if 'room_admin' in get_perms(self.request.user, rp):
+                    irc_rooms.append((rp.id, rp.network + "/" + rp.room))
+            kwargs.update({'mysubreddits':choices, 'myircrooms':irc_rooms})
+        except MySubreddits.DoesNotExist:
+            # This exception occurs while performing get url tests
+            # so ignore these
+            pass
         return kwargs
 
 
@@ -151,6 +160,7 @@ class CommentsListView(RedditListView):
 
 class CommentsDeleteView(DeleteView):
     model = PendingComments
+    template_name = "reddit/confirm_delete.html"
     success_url = reverse_lazy('reddit:pending_comments')
 
 class SubmissionsListView(RedditListView):

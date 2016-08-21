@@ -263,7 +263,7 @@ def submit_reply(request, thing_id):
     # t4_ is message and t3_ is a link
     elif thing_id.startswith('t4_') or \
     thing_id.startswith('t3_'): 
-        sub = get_object_or_404(Submission, pk = post_id)
+        sub = get_object_or_404(Submission, name = thing_id)
         comment_list = sub.comments_set.filter(parent_thing = sub.name).order_by('created_at')
         ctx = {"submission":sub, "comments": comment_list}
     else:

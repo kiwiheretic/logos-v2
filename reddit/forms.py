@@ -51,8 +51,8 @@ class FeedForm(forms.Form):
     active = forms.BooleanField(required=False, initial=True)
 
     def __init__(self, *args, **kwargs):
-        mysubreddits = kwargs.pop('mysubreddits')
-        myircrooms = kwargs.pop('myircrooms')
+        mysubreddits = kwargs.pop('mysubreddits', [])
+        myircrooms = kwargs.pop('myircrooms', [])
         subreddit_choices = list(mysubreddits)
         irc_choices = list(myircrooms)
         super(FeedForm, self).__init__(*args, **kwargs)
