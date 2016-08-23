@@ -85,6 +85,13 @@ class FakePlugin(object):
         print ("--------------------------------------------")
         return output
         
+    def send_method(self, method, *args, **kwargs):
+        """ Test method in plugin class"""
+        self.plugin_output=[]
+        getattr(self, method)(*args, **kwargs)
+        output = "\n".join(self.plugin_output)
+        return output
+
     def send_command(self, msg):
         self.plugin_output=[]
         orig_msg = self.act + msg
@@ -169,3 +176,4 @@ class LogosTestCase(unittest.TestCase):
         for auser in auth_users:
             users.append(auser['nick'])
         return users
+

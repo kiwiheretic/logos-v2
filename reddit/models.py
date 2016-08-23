@@ -113,7 +113,7 @@ class FeedProgress(models.Model):
 class FeedSub(models.Model):
     """ Feed Subscription """
     user = models.ForeignKey(settings.AUTH_USER_MODEL)
-    frequency = models.IntegerField()
+    frequency = models.IntegerField()  # in minutes
     subreddits = models.ManyToManyField(Subreddits, related_name='feeds')
     target_sub = models.ForeignKey(Subreddits, null=True)
     target_irc = models.ForeignKey(RoomPermissions, null=True)
