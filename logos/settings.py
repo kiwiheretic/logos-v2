@@ -266,6 +266,7 @@ INSTALLED_APPS = (
     'gcalendar',
     'urlcatcher',
     'twitterapp',
+    'prayers',
 
 
     'widget_tweaks',

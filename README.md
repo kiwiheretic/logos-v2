@@ -32,6 +32,7 @@ Bible Plugin:
   * Simple bible verse lookups
   * Fast concordance searches
   * Strongs number lookups
+  * Prayer requests plugin
 
 Memos Plugin
   * Works like MemoServ with a web interface.
