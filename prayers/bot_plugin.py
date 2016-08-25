@@ -39,6 +39,6 @@ class PrayerPlugin(Plugin):
         total = len(prayers)
 
         for prayer in prayers[:5]:
-            timestamp = str(prayer.timestamp)
+            timestamp = prayer.timestamp.strftime("%-d %b, %H:%M")
             self.say(nick, "{} {} -- {}".format(timestamp, prayer.nick, prayer.request))
 
