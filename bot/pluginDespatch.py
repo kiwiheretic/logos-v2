@@ -69,6 +69,8 @@ class AuthenticatedUsers(object):
                 break
         if not user:
             return False
+        if user.is_superuser:
+            return True
         
         
         # do a quick assert to make sure we have a valid permissions,
