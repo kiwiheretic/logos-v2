@@ -156,6 +156,10 @@ class LogosTestCase(unittest.TestCase):
         assignperm(self.plugin.network, \
                    room, username, permission)
     
+    def assign_network_permission(self, username, permission):
+        assignperm(self.plugin.network, \
+                   '#', username, permission)
+
     def login(self, password):
         host = self.plugin.get_host(self.plugin.nickname)
 
