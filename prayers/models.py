@@ -7,3 +7,6 @@ class Prayer(models.Model):
     timestamp = models.DateTimeField(auto_now_add=True)
     nick = models.CharField(max_length=90)
     request = models.CharField(max_length=200)
+
+    def __str__(self):
+        return "%s, %s" % (self.nick, self.request[:15])

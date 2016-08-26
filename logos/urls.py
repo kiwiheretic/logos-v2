@@ -40,6 +40,7 @@ urlpatterns = [
     url(r'^reddit/', include('reddit.urls', namespace = 'reddit', app_name = "reddit")),
     url(r'^room_manage/', include('room_manage.urls')),
     url(r'^bible/', include('bibleapp.urls')),
+    url(r'^prayer/', include('prayers.urls', namespace='prayers')),
     #url(r'^bots/approve/(\d+)', 'logos.views.bot_approval'),
     #url(r'^bots/deny/(\d+)', 'logos.views.bot_deny'),
     
