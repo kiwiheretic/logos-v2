@@ -4,7 +4,7 @@ from django.db import models
 class Prayer(models.Model):
     network = models.CharField(max_length=60)
     room = models.CharField(max_length=60)
-    timestamp = models.DateTimeField(auto_now_add=True)
+    timestamp = models.DateTimeField(auto_now_add=False)
     nick = models.CharField(max_length=90)
     request = models.CharField(max_length=200)
 

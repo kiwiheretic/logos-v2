@@ -45,10 +45,11 @@ class PrayerPlugin(Plugin):
         logger.info("Prayer expiration timer stopped")
 
     def on_timer(self):
+        logger.debug("Prayer timer invoked")
         expiry_days= int(get_global_option("prayer-expiry-days"))
         if not expiry_days: expiry_days = 7
 
-        Prayer.objects.filter(timestamp__lt = timezone.now() - timedelta(days=expiry_days))
+        Prayer.objects.filter(timestamp__lt = timezone.now() - timedelta(days=expiry_days)).delete()
 
     def privmsg(self, user, channel, message):
         logger.debug("note privmsg = " + str((user, channel, message)))
