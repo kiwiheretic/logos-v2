@@ -13,6 +13,7 @@ admin.autodiscover()
 urlpatterns = [
     # Examples:
     url(r'^$', 'logos.views.root_url'),
+    url(r'^bot-commands/$', 'logos.views.bot_commands'),
     url(r'^logos/user-settings/$', 'logos.views.user_settings'),
 
     # Uncomment the admin/doc line below to enable admin documentation:

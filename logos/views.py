@@ -16,6 +16,7 @@ from logos.roomlib import get_user_option, set_user_option, get_global_option, s
 from .pluginlib import configure_app_plugins
 
 import copy
+import re
 import pickle
 import socket
 import logging
@@ -153,6 +154,50 @@ def bots(request):
         bots.append({'id': bot.id, 'pid':bot.pid, 'alive':not dead, 'rpc':bot.rpc, 'networks':networks})
     context = {'bots':bots}
     return render(request, 'logos/bots.html', context)
+
+def bot_commands(request):
+    helps = []
+    for app in settings.INSTALLED_APPS:
+        #import pdb; pdb.set_trace()
+        try:
+            plugin_mod = __import__(app + ".bot_plugin").bot_plugin
+            for attr in dir(plugin_mod):
+                a1 = getattr(plugin_mod, attr)
+                # Check if the class is a class derived from 
+                # bot.PluginDespatch.Plugin
+                # but is not the base class only
+
+                if inspect.isclass(a1) and \
+                a1 != Plugin and \
+                issubclass(a1, Plugin) and \
+                hasattr(a1, 'plugin'):
+                    # make up a bogus irc_conn object
+                    class Fake_factory:
+                        reactor = None
+                        network = None
+                        channel = None
+
+                    class Fake_conn:
+                        def __init__(self):
+                            self.factory = Fake_factory()
+                    # instantiate the class to inspect it
+                    obj = a1(None, Fake_conn())
+                    cmd_list = []
+                    if obj.commands:
+                        for cmd_tuple in obj.commands:
+                            cmd_s = re.sub(r"\\s\+|\\s\*", ' ', cmd_tuple[0])
+                            cmd_s = re.sub(r"\$$", '', cmd_s)
+                            cmd_s = re.sub(r"\(\?P\<([^>]+)>[^)]+\)", r"<\1>", cmd_s)
+                            cmd_s = re.sub(r"\(\?\:([a-z]+\|[a-z]+)\)", r"\1", cmd_s)
+                            cmd_s = re.sub(r"\(\\d\+\)", r"<number>", cmd_s)
+                            cmd_s = re.sub(r"\(\.\*\)", r"...", cmd_s)
+                            descr = cmd_tuple[2]
+                            cmd_list.append((cmd_s, descr))
+                    helps.append(obj.plugin + (cmd_list,))
+
+        except ImportError:
+            pass
+    return render(request, "logos/commands_list.html", {'cmds':helps})
 
 def configure_plugins(plugins):
     for app in settings.INSTALLED_APPS:

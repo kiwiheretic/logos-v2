@@ -1,0 +1,21 @@
+{% extends 'logos/admin_base.html' %}
+
+{% block style %}
+{{block.super}}
+
+
+{% endblock %}
+
+{% block content %}
+
+
+<h2>Command List</h2>
+{% for short_name, long_name, commands in cmds %}
+<h3>{{short_name}} - {{long_name}}</h3>
+<ul>
+    {% for cmd_syntax, descr in commands %}
+    <li><em>{{cmd_syntax}}</em> - {{descr}}</li>
+    {% endfor %}
+</ul>
+{% endfor %}
+{% endblock %}
