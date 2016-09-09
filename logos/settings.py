@@ -307,7 +307,7 @@ LOGGING = {
             'format': ' %(asctime)s %(levelname)s %(module)s %(process)d %(thread)d %(message)s'
         },
         'timeLog': {
-            'format': ' %(asctime)s %(levelname)s %(module)s %(message)s'
+            'format': ' %(asctime)s %(levelname)s %(name)s %(module)s %(message)s'
         },
         'simple': {
             'format': '%(levelname)s %(message)s'
@@ -409,8 +409,8 @@ LOGGING = {
     },
     # the 'root' logger seems to cause things to
     # be logged twice.  Especially "manage.py import"
-    # 'root': {
-           # 'handlers': ['console', 'file'],
-           # 'level': 'DEBUG',
-    # },
+    'root': {
+           'handlers': ['file'],
+           'level': 'DEBUG',
+    },
 }

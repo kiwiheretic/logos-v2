@@ -46,8 +46,10 @@ class PrayerPlugin(Plugin):
 
     def on_timer(self):
         logger.debug("Prayer timer invoked")
-        expiry_days= int(get_global_option("prayer-expiry-days"))
-        if not expiry_days: expiry_days = 7
+        try:
+            expiry_days= int(get_global_option("prayer-expiry-days"))
+        except TypeError: # if option not set
+            expiry_days = 7
 
         Prayer.objects.filter(timestamp__lt = timezone.now() - timedelta(days=expiry_days)).delete()
 
@@ -113,7 +115,9 @@ class PrayerPlugin(Plugin):
 
     def prayer_list(self, regex, chan, nick, **kwargs):
         prayers = Prayer.objects.filter(network=self.network,).order_by('-timestamp')
+        self.say(nick, "List of prayer requests")
         for prayer in prayers[:30]:
             timestamp = prayer.timestamp.strftime("%-d %b, %H:%M")
             self.say(nick, "{} UTC {} -- {}".format(timestamp, prayer.nick, prayer.request))
+        self.say(nick, "----- end of prayer requests -----")
 
