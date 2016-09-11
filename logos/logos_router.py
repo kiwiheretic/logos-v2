@@ -63,7 +63,7 @@ class LogosRouter(object):
                 if hasattr(mod.models, 'DB_ROUTER'):
                     for k, models in mod.models.DB_ROUTER.iteritems():
                         for modelname in models:
-                            if model_name == modelname:
+                            if model_name == modelname.lower():
                                 if db == k:
                                     return True
                                 else:

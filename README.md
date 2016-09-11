@@ -65,8 +65,8 @@ put in valid settings for your email server.  If not, then just copy the file em
 ```
 $ cp logos/email_settings-dist.py logos/email_settings.py
 $ cp allowed_hosts-dist.txt allowed_hosts.txt
-$ python manage.py syncdb
-$ python manage.py syncdb --database=bibles
+$ python manage.py migrate
+$ python manage.py migrate --database=bibles
 $ python manage.py import
 ```
 
@@ -88,8 +88,8 @@ put in valid settings for your email server.  If not, then just copy the file em
 ```
 $ cp logos/email_settings-dist.py logos/email_settings.py
 $ cp allowed_hosts-dist.txt allowed_hosts.txt
-$ python manage.py syncdb
-$ python manage.py syncdb --database=bibles
+$ python manage.py migrate
+$ python manage.py migrate --database=bibles
 $ python manage.py import
 ```
 
@@ -112,8 +112,8 @@ If you want to use the email registration edit the email_settings.py file and
 put in valid settings for your email server.  If not, then just copy the file email_settings-dist.py to email_settings.py in order to suppress any errors.
 ```
 copy logos/email_settings-dist.py logos/email_settings.py
-manage.py syncdb
-manage.py syncdb --database=bibles
+manage.py migrate
+manage.py migrate --database=bibles
 manage.py import
 ```
 
