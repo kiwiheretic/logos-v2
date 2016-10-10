@@ -1,0 +1,110 @@
+{% extends "reddit/reddit_base.html" %}
+{% load markdown_filters %}
+
+{% block style %}
+{{ block.super }}
+
+.reddit-post {
+    list-style-type: none;
+    margin-left: -40px;
+}
+
+.reddit-post li {
+    border: 2px solid gainsboro;
+    max-width: 500px;
+    padding: 5px;
+    border-radius: 10px;
+    margin-bottom: 10px;
+    margin-right: 15px;
+}
+
+.reddit-post-body {
+    margin-top: 10px;
+}
+
+.reddit-comment {
+    margin-top: 10px;
+    padding: 5px;
+    border-radius: 5px;
+}
+
+.reddit-comment div span:first-child {
+    width: 100px;
+    display: inline-block;
+    color: grey;
+}
+.odd-row {
+    background: gainsboro;
+}
+{% endblock %}
+
+{% block content %}
+<h2>Subreddit: {{submission.subreddit.display_name}}</h2>
+
+<div style="float:left; clear:left;">
+{% if submission %}
+<ul class="reddit-post">
+    <li><h3>{{submission.title}}</h3>
+    <div class="reddit-post-item">Thing ID: <a href="{{submission.url}}">{{submission.name}}</a></div>
+    <div class="reddit-post-item">Author: {{submission.author}}</div>
+    <div class="reddit-post-item">Title: {{submission.title}}</div>
+    <div class="reddit-post-item reddit-post-body">{{submission.body|markdown|safe|urlizetrunc:30|safe}}</div>
+    {% if not form %}
+    <div><a href="{% url 'reddit:submit_reply' submission.name %}">reply to this post</a></div>
+    {% endif %}
+</ul>    
+{% endif %}
+
+{% if comment_head %}
+<div class="comment-post">
+    <div class="">Thing ID: {{comment_head.name}}</div>
+    <div class="">Author: {{comment_head.author}}</div>
+    <div class="">{{comment_head.body|markdown|safe|urlizetrunc:30|safe}}</div>
+    {% if not form %}
+    <div><a href="{% url 'reddit:submit_reply' comment_head.name %}">reply to this post</a></div>
+    {% endif %}
+</div>    
+{% endif %}
+
+{% if form %}
+<form action="." method="POST">
+    {% csrf_token %}
+    <ul>
+    {{ form.as_ul }}
+    </ul>
+    <input type="submit" value="Submit" />
+</form>
+{% endif %}
+{% for comment in comments %}
+<div class="reddit-comment {% cycle 'odd-row' 'even-row' %}">
+    <div>/u/{{comment.author}} [{{comment.score}}] {{comment.name}}</div>
+    <div>{{comment.created_at}}</div>
+    {% comment %}
+    We seem to need  two 'safe' otherwise the output
+    of urlizetrunc gets escaped in its entirety (including <p> tags. 
+    {% endcomment %}
+    <div>{{comment.body|urlizetrunc:30|safe|markdown|safe}}</div>
+    <div><span>
+    {% if comment.has_replies %}
+    <a href="{% url 'reddit:comment_replies' comment.name %}">Replies: {{comment.num_replies}}</a>
+    {% else %}
+    No replies
+    {% endif %}
+    </span><span><a href="{% url 'reddit:submit_reply' comment.name %}">reply to this comment</a></span></div>
+</div>
+{% endfor %}
+
+{% if comments.has_other_pages %}
+<div class="pagination">
+        <a href="?page=1" class="page gradient">first</a>
+        {% if comments.has_previous %}
+        <a href="?page={{comments.previous_page_number}}" class="page gradient">prev</a>
+        {% endif %}
+        <span class="page active">{{comments.number}}</span>
+        {% if comments.has_next %}
+        <a href="?page={{comments.next_page_number}}" class="page gradient">next</a>
+        {% endif %}
+        <a href="?page={{comments.paginator.num_pages}}" class="page gradient">last</a>
+</div> <!-- pagination -->        
+{% endif %}
+{% endblock %}

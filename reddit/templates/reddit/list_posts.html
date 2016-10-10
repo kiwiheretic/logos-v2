@@ -1,0 +1,57 @@
+{% extends "reddit/reddit_base.html" %}
+
+{% block style %}
+{{ block.super }}
+
+.reddit-post {
+    list-style-type: none;
+    //position: relative;
+    //left: -15px;
+    margin-left: -20px;
+}
+.reddit-post li {
+    max-width: 500px;
+    margin-bottom: 10px;
+    margin-right: 15px;
+}
+.reddit-post li:not(:last-child) {
+    //border: 1px solid blue;
+    border-bottom-color: darkgreen;
+    border-bottom-style: double;
+    padding-bottom: 5px;
+    //border-bottom-width: 1px;
+}
+{% endblock %}
+
+{% block content %}
+<h2>Subreddit: {{subreddit}}</h2>
+
+<div style="float:left; clear:left;">
+<ul class="reddit-post">
+    {% for post in posts %}
+    <li><a class="note-title" href="">{{note.title}}</a>
+    <div class="reddit-post-item">Thing ID: <a href="{% url 'reddit:post_detail' post.id %}">{{post.name}}</a></div>
+    <div class="reddit-post-item">Author: {{post.author}}</div>
+    <div class="reddit-post-item">Created: {{post.created_at}}</div>
+    <div class="reddit-post-item">Title: {{post.title}}</div>
+    <div class="reddit-post-item">Comments: {{post.comments_set.all|length}}</div>
+    {% empty %}
+    <li><span >Sorry, no posts found in this subreddit</span></li>
+    {% endfor %}
+</ul>    
+
+
+{% if posts.has_other_pages %}
+<div class="pagination">
+    <a href="?page=1" class="page gradient">first</a>
+    {% if posts.has_previous %}
+    <a href="?page={{posts.previous_page_number}}" class="page gradient">prev</a>
+    {% endif %}
+    <span class="page active">{{posts.number}}</span>
+    {% if posts.has_next %}
+    <a href="?page={{posts.next_page_number}}" class="page gradient">next</a>
+    {% endif %}
+    <a href="?page={{posts.paginator.num_pages}}" class="page gradient">last</a>
+</div> <!-- pagination -->        
+{% endif %}
+{% endblock %}

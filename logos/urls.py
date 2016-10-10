@@ -13,6 +13,7 @@ admin.autodiscover()
 urlpatterns = [
     # Examples:
     url(r'^$', 'logos.views.root_url'),
+    url(r'^bot-commands/$', 'logos.views.bot_commands'),
     url(r'^logos/user-settings/$', 'logos.views.user_settings'),
 
     # Uncomment the admin/doc line below to enable admin documentation:
@@ -37,9 +38,10 @@ urlpatterns = [
     url(r'^weather/', include('weather.urls')),
     url(r'^twitter/', include('twitterapp.urls')),
     url(r'^botnet/', include('botnet.urls')),
-    #url(r'^reddit/', include('reddit.urls')),
+    url(r'^reddit/', include('reddit.urls', namespace = 'reddit', app_name = "reddit")),
     url(r'^room_manage/', include('room_manage.urls')),
     url(r'^bible/', include('bibleapp.urls')),
+    url(r'^prayer/', include('prayers.urls', namespace='prayers')),
     #url(r'^bots/approve/(\d+)', 'logos.views.bot_approval'),
     #url(r'^bots/deny/(\d+)', 'logos.views.bot_deny'),
     

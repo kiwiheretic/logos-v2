@@ -1,0 +1,88 @@
+{% extends "prayers/prayers_base.html" %}
+
+{% block style %}
+{{ block.super }}
+
+div.small-button {
+  float:left;
+}
+
+.post {
+    list-style-type: none;
+    //position: relative;
+    //left: -15px;
+    margin-left: -20px;
+}
+.post li span:first-child {
+    clear: left;
+    display: inline-block;
+}
+.post li {
+    max-width: 500px;
+    margin-bottom: 10px;
+    margin-right: 15px;
+    float:left;
+    clear:left;
+    border: 2px dotted blue;
+    padding: 5px;
+}
+/*
+.post li:not(:last-child) {
+    //border: 1px solid blue;
+    border-bottom-color: darkgreen;
+    border-bottom-style: double;
+    padding-bottom: 5px;
+    //border-bottom-width: 1px;
+}
+*/
+{% endblock %}
+
+{% block content %}
+
+
+<div style="float:left; clear:left;">
+<ul class="post">
+    {% for prayer in object_list %}
+    <li>
+    <span class="prayer-item">{{prayer.nick}}</span>
+    <span class="prayer-item">on {{prayer.timestamp}}</span>
+    <span class="prayer-item">requests: {{prayer.request}}</span>
+    {% if request.user.is_superuser or 'bot_admin' in net_perms or 'room_admin' in room_perms %}
+    <span class="small-button">
+        <form action="" method="post">
+        {% csrf_token %}
+
+        <input type="submit" name="edit" class="button" style="display:block;"
+        value="Edit" />
+        </form>
+    </span>
+    <span class="small-button">
+        <form action="{% url 'prayers:delete' prayer.pk %}" method="post">
+        {% csrf_token %}
+
+        <input type="submit" name="delete" class="button" style="display:block;"
+        value="Delete" />
+        </form>
+    </span>
+    {% endif %}
+    </li>
+    {% empty %}
+    <li><span >No current prayer requests</span></li>
+    {% endfor %}
+</ul>    
+
+
+{% if object_list.has_other_pages %}
+<div class="pagination">
+    <a href="?page=1" class="page gradient">first</a>
+    {% if object_list.has_previous %}
+    <a href="?page={{object_list.previous_page_number}}" class="page gradient">prev</a>
+    {% endif %}
+    <span class="page active">{{object_list.number}}</span>
+    {% if object_list.has_next %}
+    <a href="?page={{object_list.next_page_number}}" class="page gradient">next</a>
+    {% endif %}
+    <a href="?page={{object_list.paginator.num_pages}}" class="page gradient">last</a>
+</div> <!-- pagination -->        
+{% endif %}
+{% endblock %}

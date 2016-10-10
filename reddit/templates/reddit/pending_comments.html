@@ -1,0 +1,12 @@
+{% extends "reddit/pending_objects.html" %}
+
+{% block object_list %}
+    <span class="object-title">{{object.submission.title}}</span>
+    <span class="object-created">Created: {{object.created_at}}</span>
+    <span class="object-uploaded">Uploaded: {{object.uploaded_at|default_if_none:"not yet"}}</span>
+    <span>
+    <form action="{% url 'reddit:delete_pending_comments' pk=object.id %}" method="GET">
+        <input type="submit" value="Delete" />
+    </form>
+    </span>
+{% endblock %}

@@ -3,6 +3,16 @@
 {% block style %}
 label {
     max-width:150px;
+    float:left;
+    clear:left;
+    text-align: right;
+    margin-top: 10px;
+    margin-right: 5px;
+}
+
+input[type="text"] {
+    float:left;
+    width: 500px;
 }
 
 form ul {
@@ -22,12 +32,19 @@ form ul li {
 
 <form action="." method="POST">
     {% csrf_token %}
-    <label for="timezone">Time zone:</label>
+    <label for="timezone">Time zone :</label>
     <select name="timezone">
         {% for tz in timezones %}
         <option value="{{ tz }}"{% if tz == TIME_ZONE %} selected="selected"{% endif %}>{{ tz }}</option>
         {% endfor %}
     </select>
+    {% if request.user.is_superuser or request.user.is_staff %}
+    <label for="site-name">Site Name :</label>
+    <input type="text" name="site-name" value="{{site_name}}" placeholder="Your website name here"/>
+    <label for="tag-line">Tag Line :</label>
+    <input type="text" name="tag-line" value="{{tag_line}}" placeholder="A tag line message can go here"/>
+    {% endif %}
+    <div style="float:none; clear: both;"></div>
     <input type="submit" value="save"/>
 
 </form>

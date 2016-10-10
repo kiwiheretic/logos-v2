@@ -7,13 +7,16 @@ from django.http import HttpResponse, HttpResponseRedirect
 from django.contrib import messages
 from django.core.urlresolvers import reverse
 from django.core import serializers
+from django.db import IntegrityError
+
 
 from .forms import SettingsForm, UserSettingsForm
 from .models import Settings, BotsRunning, Plugins, NetworkPlugins, RoomPlugins, NetworkPermissions, RoomPermissions
-from logos.roomlib import get_user_option, set_user_option
+from logos.roomlib import get_user_option, set_user_option, get_global_option, set_global_option
 from .pluginlib import configure_app_plugins
 
 import copy
+import re
 import pickle
 import socket
 import logging
@@ -52,34 +55,32 @@ def _get_rpc_url():
     return url
 
 @login_required
-def set_timezone(request):
+def set_timezone(request, extra_ctx):
     if request.method == 'POST':
         #request.session['django_timezone'] = request.POST['timezone']
         set_user_option(request.user, 'timezone', request.POST['timezone'])
         messages.add_message(request, messages.INFO, 'Time Zone Information Saved')
         return redirect('/accounts/profile/')
     else:
-        return render(request, 'logos/preferences.html', {'timezones': pytz.common_timezones})
+        ctx = {'timezones': pytz.common_timezones}
+        ctx.update(extra_ctx)
+        return render(request, 'logos/preferences.html', ctx)
     
 @login_required()
 def preferences(request):
-    return set_timezone(request)
+    ctx = {}
+    if request.method == 'POST':
+        set_global_option('site-name', request.POST['site-name'])
+        set_global_option('tag-line', request.POST['tag-line'])
+        messages.add_message(request, messages.INFO, 'Site information saved')
+    else:
+        site_name = get_global_option('site-name')
+        if not site_name: site_name = "Set this site name in preferences"
+        tag_line = get_global_option('tag-line')
+        if not tag_line: tag_line = "Tag line not set"
+        ctx = {'site_name':site_name, 'tag_line':tag_line}
+    return set_timezone(request, ctx)
 
-#    if request.method == 'POST':
-#        tzfrm = TimeZoneForm(request.POST)
-#        if tzfrm.is_valid():
-#            zid = tzfrm.cleaned_data['timezone']
-#            set_user_option(request.user, 'timezone-id', zid)
-#            messages.add_message(request, messages.INFO, 'Preferences Saved')
-#            return HttpResponseRedirect(reverse('logos.views.profile'))
-#    else:
-#        zid = get_user_option(request.user, 'timezone-id')
-#        if zid:
-#            tzfrm = TimeZoneForm(initial={'timezone':zid})
-#        else:
-#            tzfrm = TimeZoneForm()
-#    forms = [(tzfrm, 'Time Zone')]
-#    return render(request, 'logos/preferences.html',{'forms':forms})
 
 @login_required()
 def user_settings(request):
@@ -113,6 +114,34 @@ def bots(request):
         dead = False
         try:
             networks = srv.get_networks()
+            if request.method == "POST":
+                rooms = srv.get_rooms()
+                netcnt = 0
+                rmcnt = 0
+                for net_room in rooms:
+                    network = net_room['network']
+                    rooms_list = net_room['rooms']
+                    try:
+                        np = NetworkPermissions(network=network)
+                        np.save()
+                    except IntegrityError:
+                        pass
+                    else:
+                        netcnt+=1
+
+                    for room_dict in rooms_list:
+                        try:
+                            room = room_dict['room']
+                            rp = RoomPermissions(network = network, room = room)
+                            rp.save()
+                        except IntegrityError:
+                            pass
+                        else:
+                            rmcnt+=1
+                messages.add_message(request, messages.INFO,
+                     'Updated {} networks and {} room records'.format(netcnt, rmcnt))
+
+
         except Exception as e:
             print e.errno
             # error 111 is connection refused
@@ -125,6 +154,51 @@ def bots(request):
         bots.append({'id': bot.id, 'pid':bot.pid, 'alive':not dead, 'rpc':bot.rpc, 'networks':networks})
     context = {'bots':bots}
     return render(request, 'logos/bots.html', context)
+
+def bot_commands(request):
+    helps = []
+    for app in settings.INSTALLED_APPS:
+        #import pdb; pdb.set_trace()
+        try:
+            plugin_mod = __import__(app + ".bot_plugin").bot_plugin
+            for attr in dir(plugin_mod):
+                a1 = getattr(plugin_mod, attr)
+                # Check if the class is a class derived from 
+                # bot.PluginDespatch.Plugin
+                # but is not the base class only
+
+                if inspect.isclass(a1) and \
+                a1 != Plugin and \
+                issubclass(a1, Plugin) and \
+                hasattr(a1, 'plugin'):
+                    # make up a bogus irc_conn object
+                    class Fake_factory:
+                        reactor = None
+                        network = None
+                        channel = None
+
+                    class Fake_conn:
+                        def __init__(self):
+                            self.factory = Fake_factory()
+                    # instantiate the class to inspect it
+                    obj = a1(None, Fake_conn())
+                    cmd_list = []
+                    if obj.commands:
+                        for cmd_tuple in obj.commands:
+                            cmd_s = re.sub(r"\\s\+|\\s\*", ' ', cmd_tuple[0])
+                            cmd_s = re.sub(r"\$$", '', cmd_s)
+                            cmd_s = re.sub(r"\(\?P\<([^>]+)>[^)]+\)", r"<\1>", cmd_s)
+                            cmd_s = re.sub(r"\(\?\:([a-z]+\|[a-z]+)\)", r"\1", cmd_s)
+                            cmd_s = re.sub(r"\(\\d\+\)", r"<number>", cmd_s)
+                            cmd_s = re.sub(r"\(\.\*\)", r"...", cmd_s)
+                            descr = cmd_tuple[2]
+                            cmd_list.append((cmd_s, descr))
+                    helps.append(obj.plugin + (cmd_list,))
+
+        except ImportError:
+            pass
+    return render(request, "logos/commands_list.html", {'cmds':helps})
+
 def configure_plugins(plugins):
     for app in settings.INSTALLED_APPS:
         configure_app_plugins(app, plugins)

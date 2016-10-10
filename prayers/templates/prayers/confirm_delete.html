@@ -1,0 +1,20 @@
+{% extends "prayers/prayers_base.html" %}
+
+{% block style %}
+{{ block.super }}
+
+{% endblock %}
+
+{% block content %}
+<h2>Confirm Deletion</h2>
+
+<div style="float:left; clear:left;">
+
+<p>Are you sure you want to delete "{{ object }}"?</p>
+<form action="" method="post">{% csrf_token %}
+            <input type="submit" value="Confirm" />
+</form>
+<form action="" method="get">{% csrf_token %}
+            <input type="submit" value="Cancel" />
+</form>
+{% endblock %}

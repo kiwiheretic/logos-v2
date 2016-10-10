@@ -1,5 +1,9 @@
-VERSION = "0.99.5"
+VERSION = "0.99.6"
 
+REDDIT_UA = "Heretical 1.0 by /u/kiwiheretic"
+
+# Punctuation that is to be ignored when indexing words
+# for concordance
 PUNCTUATION = r"[\?`)(';:\*\[\],.\-\"|!\x7f]"
 
 # stop words are words that are so common that they

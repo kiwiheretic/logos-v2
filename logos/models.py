@@ -1,11 +1,3 @@
-# This is an auto-generated Django model module.
-# You'll have to do the following manually to clean this up:
-#     * Rearrange models' order
-#     * Make sure each model has one field with primary_key=True
-# Feel free to rename the models, but don't rename db_table values or field names.
-#
-# Also note: You'll have to insert the output of 'django-admin.py sqlcustom [appname]'
-# into your database.
 from __future__ import unicode_literals
 from django.core.urlresolvers import reverse
 from django.contrib.auth.models import User
@@ -48,7 +40,7 @@ class Settings(models.Model):
     value = models.TextField(null=True, blank=True)
 
 class NetworkPermissions(models.Model):    
-    network = models.TextField()
+    network = models.TextField(unique=True)
     class Meta:
         permissions = (
             ('bot_admin', 'Create user logins and assign permissions'),
@@ -66,6 +58,7 @@ class RoomPermissions(models.Model):
     network = models.TextField()
     room = models.TextField()
     class Meta:
+        unique_together = ('network', 'room')
         permissions = (
             ('room_admin', 'Assign permissions to existing users of own room'),
             ('change_trigger', 'Change trigger'),

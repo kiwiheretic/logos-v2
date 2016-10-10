@@ -3,7 +3,6 @@
 import sys
 import os
 import re
-import pdb
 import logging
 import bot.IRC as irc
 from datetime import datetime, timedelta

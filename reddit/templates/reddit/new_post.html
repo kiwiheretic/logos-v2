@@ -1,0 +1,19 @@
+{% extends "reddit/reddit_base.html" %}
+
+{% block style %}
+{{ block.super }}
+
+{% endblock %}
+
+{% block content %}
+<h2>New Post</h2>
+
+<form action="." method="POST">
+    {% csrf_token %}
+    <ul>
+        {{form.as_ul}}
+    </ul>
+    <input type="submit" value="Save"/>
+    </form>
+<div style="float:left; clear:left;">
+{% endblock %}

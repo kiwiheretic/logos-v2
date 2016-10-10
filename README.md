@@ -25,12 +25,14 @@ Plugins:
   * Atom+RSS Feed plugin for room news feed
   * Twitter Plugin for room news feed from Twitter
   * Google Calendar access
-  * Symbolic Computations from IRC (uses SymPy)  (**coming soon**)
+  * Symbolic Computations from IRC (uses [SymPy](https://www.sympy.org)  (**experimental**)
+  * Reddit news feed to IRC or another subreddit (**experimental**)
 
 Bible Plugin:
   * Simple bible verse lookups
   * Fast concordance searches
   * Strongs number lookups
+  * Prayer requests plugin
 
 Memos Plugin
   * Works like MemoServ with a web interface.

@@ -33,6 +33,8 @@ class TwitterPlugin(Plugin):
     def __init__(self, *args, **kwargs):
         super(TwitterPlugin, self).__init__(*args, **kwargs)
         self.commands = (\
+                         (r'list\s+follows$',
+                          self.list_follows, 'list all follows for room'),
                          (r'list\s+follows\s+(?P<room>#\S+)$',
                           self.list_follows, 'list all follows for room'),
                          (r'add\s+follow\s+(?P<room>#\S+)\s+(?P<follow>@\S+)', 
@@ -95,7 +97,10 @@ class TwitterPlugin(Plugin):
     
     @irc_room_permission_required('twitter_op')
     def list_follows(self, regex, chan, nick, **kwargs):
-        room = regex.group('room')
+        try:
+            room = regex.group('room')
+        except IndexError:
+            room = chan
         self.say(chan, "List of twitter follows for room "+room)
         follows = TwitterFollows.objects.filter(network=self.network,
                                          room=room.lower())

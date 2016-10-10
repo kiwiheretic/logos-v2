@@ -104,7 +104,7 @@ class SympyPlugin(Plugin):
 
     def calc(self, regex, chan, nick, **kwargs):
         expr = regex.group('expr')
-        # transport seems to be nyll if no connection
+        # transport seems to be null if no connection
         if self.protocol.transport:
             self.protocol.sendDatagram("sym "+expr)
             self.q.append((chan, expr))

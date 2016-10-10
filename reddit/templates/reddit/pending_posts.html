@@ -1,0 +1,10 @@
+{% extends "reddit/pending_objects.html" %}
+
+{% block object_list %}
+<div class="pending-post {% cycle 'odd-row' 'even-row' %}">
+    <span class="object-title">{{object.title}}</span>
+    <span class="object-created">Created: {{object.created_at}}</span>
+    <span class="object-uploaded">Uploaded: {{object.uploaded_at|default_if_none:"not yet"}}</span>
+    <span></span>
+</div>
+{% endblock %}

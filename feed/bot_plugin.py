@@ -6,6 +6,7 @@ import re
 import datetime
 import time
 import pytz
+import requests
 import logging
 from .models import Feed, FeedSubscription, Cache, CacheViews
 import feedparser
@@ -24,7 +25,7 @@ FEED_CHECK_TIME = 10*60 # in seconds
 class FeedPlugin(Plugin):
     plugin = ("feed", "Atom+RSS Module")
     def __init__(self, *args, **kwargs):
-        Plugin.__init__(self, *args, **kwargs)
+        super(FeedPlugin, self).__init__(*args, **kwargs)
         
         self.commands = (\
          (r'add feed (?P<url>https?://\S+) (?P<duration>\S+)$', self.add_feed, "Add a feed to feed list"),

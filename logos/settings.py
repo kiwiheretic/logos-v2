@@ -206,6 +206,7 @@ MIDDLEWARE_CLASSES = (
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
 
+    'reddit.middleware.RedditMiddleware',
     'logos.timezone_middleware.TimezoneMiddleware',
     #'django.middleware.transaction.TransactionMiddleware',
     # Uncomment the next line for simple clickjacking protection:
@@ -252,6 +253,7 @@ INSTALLED_APPS = (
     'guardian',
 
     'logos',
+    'reddit',
     'bibleapp',
     'feed',
     'weather',
@@ -264,6 +266,7 @@ INSTALLED_APPS = (
     'gcalendar',
     'urlcatcher',
     'twitterapp',
+    'prayers',
 
 
     'widget_tweaks',
@@ -304,7 +307,7 @@ LOGGING = {
             'format': ' %(asctime)s %(levelname)s %(module)s %(process)d %(thread)d %(message)s'
         },
         'timeLog': {
-            'format': ' %(asctime)s %(levelname)s %(module)s %(message)s'
+            'format': ' %(asctime)s %(levelname)s %(name)s %(module)s %(message)s'
         },
         'simple': {
             'format': '%(levelname)s %(message)s'
@@ -406,8 +409,8 @@ LOGGING = {
     },
     # the 'root' logger seems to cause things to
     # be logged twice.  Especially "manage.py import"
-    # 'root': {
-           # 'handlers': ['console', 'file'],
-           # 'level': 'DEBUG',
-    # },
+    'root': {
+           'handlers': ['file'],
+           'level': 'DEBUG',
+    },
 }

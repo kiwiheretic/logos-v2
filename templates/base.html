@@ -2,7 +2,7 @@
 <!DOCTYPE HTML>
 <html>
 <head>
-    <title>{% block title %}Splat Notes{% endblock %}</title>
+<title>{% block title %}{% if logos_site_name %}{{logos_site_name}}{% else %}No site title{% endif %}{% endblock %}</title>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
     <meta name="viewport" content="width=320, initial-scale=1.0">
 <!--    <meta name="viewport" content="width=320, initial-scale=1.0, minimum-scale=1.0, maximum-scale=4.0">-->
@@ -19,10 +19,12 @@
 <div id="container">
 
 <div class="smart-green">
-    <h1>Splat's Cloud NoteServ / MemoServ / Anything you like ;)
-        <span>without all the nonsence javascripts</span>
+    <h1>{% if logos_site_name %}{{logos_site_name}}{% else %}Site name not set{% endif %}
+        <span>{% if tag_line %}{{tag_line}}{% else %}No tag line entered{% endif %}</span>
     </h1>
 </div> <!-- smart-green -->
+    {% block under_banner %}
+    {% endblock %}
     {% if not suppress_menu and request.user.is_authenticated or show_menu_regardless %}
     <div id="menu-title">
         <h2>{% block menu_title %}Main Menu{% endblock %}</h2>
@@ -64,7 +66,7 @@
     </div>
     {% endif %}
 
-    <div id="container">
+    <div style="float:left; clear:left;" id="content-container">
         {% block content %}
         {% endblock %}
     </div>       

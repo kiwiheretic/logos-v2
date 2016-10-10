@@ -120,7 +120,11 @@ class TestUrls(TestCase):
                     print fetch_url
                     if fetch_url.startswith('/admin/') or \
                         fetch_url.startswith('/auth/') or \
-                        fetch_url.startswith('/sites/'):
+                        fetch_url.startswith('/sites/') or \
+                        fetch_url.startswith('/reddit/oauth-callback/') or \
+                        fetch_url.startswith('/reddit/authorise/'):
+                        pass
+                    elif re.search(r'[\(\)]', fetch_url):
                         pass
                     else:
                         resp = self.c.get(fetch_url)

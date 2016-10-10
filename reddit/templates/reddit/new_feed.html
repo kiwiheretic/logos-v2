@@ -1,0 +1,26 @@
+{% extends "reddit/reddit_base.html" %}
+
+{% block style %}
+{{ block.super }}
+
+#id_subreddits {
+    height: 200px;
+}
+#id_active {
+    width: auto;
+    height: auto;
+}
+{% endblock %}
+
+{% block content %}
+<h2>{{heading}}</h2>
+
+<form action="." method="POST">
+    {% csrf_token %}
+    <ul>
+        {{form.as_ul}}
+    </ul>
+    <input type="submit" value="Save"/>
+    </form>
+<div style="float:left; clear:left;">
+{% endblock %}

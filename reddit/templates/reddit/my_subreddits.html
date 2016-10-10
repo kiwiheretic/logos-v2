@@ -1,0 +1,80 @@
+{% extends "reddit/reddit_base.html" %}
+
+{% block style %}
+{{ block.super }}
+
+.feed-box {
+    padding: 5px;
+    border-radius: 10px;
+    float:left;
+    margin-right: 10px;
+    margin-bottom: 10px;
+    background: gainsboro;
+    max-width: 250px;
+}
+.active-box {
+    border: 2px solid green;
+}
+
+.inactive-box {
+    border: 2px solid grey;
+}
+.feed-box ul {
+    list-style: none;
+    margin: 5px 0 5px -35px;
+}
+
+.feed-box ul li {
+    float:left;
+    background: lightblue;
+    border: 1px dotted green;
+    padding: 5px;
+    margin: 0 0 5px 5px;
+    border-radius: 5px;
+}
+
+.feed-box h4 {
+    margin: 0 0 0 -3px;
+    display: block;
+    width: 100%;
+    text-align: center;
+    color: gainsboro;
+    padding: 3px;
+    border-radius: 5px;
+}
+
+.active-box h4 {
+    background: darkgreen;
+}
+.inactive-box h4 {
+    background: grey;
+}
+
+.feed-box p {
+    height: 5px;
+}
+
+.feed-box input[type="submit"] {
+    padding: 5px 10px 5px 10px;
+    font-family: "Georgia, serif";
+    font-size: 15px;
+    background: firebrick;
+    height: auto;
+    float: right;
+}
+{% endblock %}
+
+{% block content %}
+<h2>My Subreddits</h2>
+
+<div style="float:left;margin-right:10px;">
+<ul class="mysubreddits-list">
+    {% for sub in mysubs.subreddits.all %}
+    <li><a class="note-title" href="{% url 'reddit:list_posts' sub.display_name %}">{{sub.display_name}}</a>
+    {% endfor %}
+</ul>    
+</div>
+{% include "reddit/subreddit_feeds_snippets.html" %}
+<div style="clear:both"></div>
+
+{% endblock %}

@@ -1,0 +1,84 @@
+{% extends 'logos/admin_base.html' %}
+{% load guardian_tags %}
+
+{% block style %}
+{{block.super}}
+
+ul {
+   list-style-type: none; 
+}
+
+li {
+    margin-left: -40px;
+}
+
+label {
+    text-align: right;
+    margin-right:5px;
+}
+
+@media screen and (min-width: 400px) {
+    li {
+        margin-left: auto;
+    }
+
+    label {
+        text-align: right;
+        margin-right:5px;
+    }
+}
+
+#token-container .label {
+    width: 150px;
+    text-align: right;
+    display: block;
+    float: left;
+    clear: left;
+}
+
+#token-container .value {
+    float: left;
+}
+
+
+#token-container .token-field {
+    border: 1px dotted blue;
+    background-color: #92D8D8;
+    margin-bottom: 5px;
+    padding: 5px;
+    border-radius: 5px;
+    width: 300px;
+    float:left;
+    clear:both;
+}
+
+.clear-fix {
+    float: none;
+    clear: both;
+}
+{% endblock %}
+
+{% block content %}
+<h2>Reddit User Tokens</h2>
+
+<div id="token-container">
+    {% for label, value in credentials.tokens %}
+    <div class="token-field">
+        <span class="label">{{ label }}&nbsp;:&nbsp;</span>
+        <span class="value">.......{{ value|slice:"-6:" }}</span>
+    </div>
+    {% endfor %}
+    <div class="token-field" style="float:left; clear:left;">
+        <span class="label">Authenticated Reddit Username&nbsp;:&nbsp;</span>
+        <span style="padding-left:10px;" class="value">/u/{{credentials.reddit_username}}</span>
+    </div>
+    <div class="clear-fix"></div>
+
+</div>
+<form action="{% url 'reddit:discard_tokens' %}" method="POST">
+    {% csrf_token %}
+    <p>Do you wish to discard your tokens?
+    <input type="submit" value="Discard"/>
+    </p>
+</form>
+{% endblock %}
