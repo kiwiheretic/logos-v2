@@ -43,6 +43,11 @@ class Command(BaseCommand):
             default=False,
             help="Import cross-references.txt file into database")
 
+        parser.add_argument('--list-translations',
+            action='store_true',
+            default = False,
+            help="List all translations in database")
+
         parser.add_argument('--remove-translation',
             action='store',
             help="Purge translation from database")
@@ -78,6 +83,11 @@ class Command(BaseCommand):
 
         if options['export']:
             dump_db()
+            return
+
+        if 'list_translations' in options:
+            trans = [tr.name for tr in BibleTranslations.objects.all()]
+            sys.stdout.write("Loaded Translations: {}\n".format(", ".join(trans)))
             return
 
         if 'remove_translation' in options:
