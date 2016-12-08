@@ -888,7 +888,11 @@ class BibleBot(Plugin):
         normal_colours.append(self._get_colour(chan, "normal-translation"))
         normal_colours.append(self._get_colour(chan, "normal-verse-ref"))
         normal_colours.append(self._get_colour(chan, "normal-verse-text"))
-        result = self._get_verses(chan, nick, user, msg)
+        try:
+            result = self._get_verses(chan, nick, user, msg)
+        except BibleBooks.DoesNotExist:
+            self.say(chan, "Book does not exist in this translation")
+            return
         signal_data = {'nick':nick, 'chan':chan, 'verses':result}
         self.signal("verse_lookup", signal_data)
         for resp in result:

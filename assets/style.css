@@ -348,6 +348,7 @@ select {
 
 a.button-link {
     background: rgba(34,117,34,1);
+    /*
     background: -moz-linear-gradient(-45deg, rgba(34,117,34,1) 0%, rgba(34,117,34,1) 27%, rgba(157,199,157,1) 46%, rgba(34,117,34,1) 79%, rgba(34,117,34,1) 100%);
     background: -webkit-gradient(left top, right bottom, color-stop(0%, rgba(34,117,34,1)), color-stop(27%, rgba(34,117,34,1)), color-stop(46%, rgba(157,199,157,1)), color-stop(79%, rgba(34,117,34,1)), color-stop(100%, rgba(34,117,34,1)));
     background: -webkit-linear-gradient(-45deg, rgba(34,117,34,1) 0%, rgba(34,117,34,1) 27%, rgba(157,199,157,1) 46%, rgba(34,117,34,1) 79%, rgba(34,117,34,1) 100%);
@@ -355,6 +356,7 @@ a.button-link {
     background: -ms-linear-gradient(-45deg, rgba(34,117,34,1) 0%, rgba(34,117,34,1) 27%, rgba(157,199,157,1) 46%, rgba(34,117,34,1) 79%, rgba(34,117,34,1) 100%);
     background: linear-gradient(135deg, rgba(34,117,34,1) 0%, rgba(34,117,34,1) 27%, rgba(157,199,157,1) 46%, rgba(34,117,34,1) 79%, rgba(34,117,34,1) 100%);
     filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#227522', endColorstr='#227522', GradientType=1 );
+    */
     //background: #272;
     color: #FFF;
     font-size: 15px;

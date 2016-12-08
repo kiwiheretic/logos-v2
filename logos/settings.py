@@ -15,10 +15,11 @@ FILE_DIR = os.path.dirname(os.path.realpath(__file__))
 # Probably best to leave DEBUG = False unless testing or debugging.  If set
 # to true this uses up an inordinate amount of RAM over a short period of time.
 # However CSS information doesn't show when running off the development server
-# if DEBUG == True.
+# unless DEBUG == True.
 
 DEBUG_HOSTS_PATH = os.path.join(BASE_DIR, "debug_hosts.txt")
 DEBUG = False
+# Lines below are buggy
 if os.path.isfile(DEBUG_HOSTS_PATH):
     f = open(DEBUG_HOSTS_PATH, "r")
     for line in f.readlines():

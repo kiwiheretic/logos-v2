@@ -13,7 +13,14 @@
         {% block style %}
         {% endblock %}
     </style>
-    
+<script type="text/javascript" src="{% static 'jquery-3.1.1.min.js' %}"></script>
+
+<!-- For some reason only the dist/ branch works (not the src/ branch) -->
+<link rel="stylesheet" href="{% static 'simplemde/dist/simplemde.min.css' %}">
+<script type="text/javascript" src="{% static 'simplemde/dist/simplemde.min.js' %}"></script>
+    {% block extrascripts %}
+    {% endblock %}
+
 </head>
 <body>
 <div id="container">
