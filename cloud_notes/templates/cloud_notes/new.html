@@ -23,6 +23,11 @@
     <br style="float: left; clear: left;"/>
     <hr/>
 <script>
-var simplemde = new SimpleMDE({ element: document.getElementById("note-text") });
+if (!mobilecheck()) {
+    var simplemde = new SimpleMDE(
+    { element: document.getElementById("note-text"),
+    autoDownloadFontAwesome: false }
+    );
+}
 </script>
 {% endblock %}
