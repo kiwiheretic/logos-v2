@@ -2,11 +2,11 @@
 from __future__ import absolute_import
 
 from django.conf.urls import patterns, include, url
-from .views import site_setup
+import weather.views
 
 # required to set an app name to resolve 'url' in templates with namespacing
 app_name = "weather"
 
-urlpatterns = patterns('weather.views',
-    url(r'^site-setup/$', 'site_setup'),
-)
+urlpatterns = [
+    url(r'^site-setup/$', weather.views.site_setup),
+]
