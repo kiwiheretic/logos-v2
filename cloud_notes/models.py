@@ -20,6 +20,14 @@ class Folder(models.Model):
     def __unicode__(self):
         return u"Folder %d" % (self.id, )
 
+    @staticmethod
+    def userChoices(user):
+        """ Get folder choices for use with ChooseFolderForm """
+        choices = []
+        for folder in Folder.objects.filter(user = user):
+            choices.append((folder.id, folder.name))
+        return choices
+
 class Note(models.Model):
     user = models.ForeignKey(User)
     folder = models.ForeignKey(Folder)

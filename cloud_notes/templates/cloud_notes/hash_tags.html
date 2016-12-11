@@ -3,13 +3,36 @@
 
 <h1>Hash Tags</h1>
 
+<h2>Folders</h2>
+
+<form style="margin-left:2px;" action="" method="post" >
+    {% csrf_token %}
+
+    <label>
+        <span>Select Folder</span><select name="folder" >
+        {% for folder_id, folder_name in choices %}
+            {% if folder_name == selected.name %}
+            <option selected value="{{folder_id}}">{{folder_name}}</option>
+            {% else %}
+            <option value="{{folder_id}}">{{folder_name}}</option>
+            {% endif %}
+        {% endfor %}
+        </select>
+    </label>    
+   
+   
+    <label>
+        <span>&nbsp;</span> 
+        <input type="submit" name="change_folder" class="button" value="Change Folder" /> 
+    </label>             
+</form>
 <div>
   <ul>
     {% for tag in tags%}
     <li>{{ tag.hash_tag }}</li>
 		<ul>
 		{% for note in tag.notes.all %}
-			{% if note.folder.name != 'Trash' %}
+			{% if note.folder == selected %}
 				<li>({{note.id}}) <a href="{% url 'cloud_notes.views.preview' note.id %}">{{note.title}}</a> [ {{note.folder.name}} ]</li>
 			{% endif %}
 		{% endfor %}
