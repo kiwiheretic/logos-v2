@@ -1,8 +1,24 @@
 #!/bin/bash
 
 # port is whatever port you want uwsgi to listen on.
-# If needed, change to suit
+# possibly changed by -p option
 port=8001
+
+while getopts "p:" opt; do
+  case $opt in
+    p)
+      echo "port set to $OPTARG" >&2
+      port=$OPTARG
+      ;;
+    \?)
+      echo "Invalid option: -$opt" >&2
+      ;;
+  esac
+done
+
+# shift the command line arguments so positional arguments start at $1
+shift $((OPTIND-1))
+
 
 # following function based on
 # http://stackoverflow.com/questions/13767252/ubuntu-bash-script-how-to-split-path-by-last-slash
