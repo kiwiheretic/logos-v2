@@ -59,13 +59,18 @@ def hash_tags(request):
     # putting an .exclude(notes__folder__name = 'Trash') will exclude
     # a tag that has *any* tagged note in Trash.  We want to
     # check for *all* !!  Hence the for loop.
-    
+    choices = Folder.userChoices(request.user)
+    if 'folder' in request.POST:
+        folder = Folder.objects.get(user = request.user, pk=request.POST['folder'])
+    else:
+        folder = Folder.objects.get(user = request.user, name = "Main")
+
     my_hash_tags = HashTags.objects.filter(user=request.user).order_by('hash_tag', 'notes__folder__name').distinct()
     tag_list = []
     for tag in my_hash_tags:
-        if tag.notes.exclude(folder__name = 'Trash').count() > 0:
+        if tag.notes.filter(folder = folder).count() > 0:
             if tag not in tag_list: tag_list.append(tag)
-    context = {'tags':tag_list}
+    context = {'tags':tag_list, 'choices':choices, 'selected':folder}
     return render(request, 'cloud_notes/hash_tags.html', context)
 
 @login_required()

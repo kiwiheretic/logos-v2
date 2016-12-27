@@ -1,5 +1,4 @@
 {% extends "cloud_notes/notes_base.html" %}
-
 {% block content %}
     <!-- Form based on http://www.sanwebe.com/2013/10/css-html-form-styles -->
     <form class="note-form" style="margin-left:2px;" action="" method="post" >
@@ -12,8 +11,8 @@
         
        
         <label>
-            <span>Contents :</span>
-            <textarea style="float:left; clear:left;" id="message" rows="20" name="note" placeholder="Type your note in here">{{form.data.note}}</textarea>
+            <div>Contents :</div>
+            <textarea style="float:left; clear:left;" id="note-text" rows="20" name="note" placeholder="Type your note in here">{{form.data.note}}</textarea>
         </label> 
         <div style="float:left; clear:left; width:100%">
             <input type="submit" name="save" class="button" style="float:left" value="Save" /> 
@@ -23,4 +22,12 @@
     <br style="float: left; clear: left;"/>
     <br style="float: left; clear: left;"/>
     <hr/>
+<script>
+if (!mobilecheck()) {
+    var simplemde = new SimpleMDE(
+    { element: document.getElementById("note-text"),
+    autoDownloadFontAwesome: false }
+    );
+}
+</script>
 {% endblock %}
