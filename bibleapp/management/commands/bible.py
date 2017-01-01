@@ -11,7 +11,6 @@ import codecs
 import logging
 from datetime import datetime, timedelta
 from decimal import Decimal
-from optparse import OptionParser, make_option
 
 from django.core.management.base import BaseCommand, CommandError
 from django.core.exceptions import ObjectDoesNotExist
@@ -36,27 +35,69 @@ logging.config.dictConfig(settings.LOGGING)
 class Command(BaseCommand):
     help = 'Import the translations'
 
-    extra_options = (
+    def add_arguments(self, parser):
 
-        make_option('--replace-version',action='store',
-                    help="Only replace the specified translation in the" + \
-                    "database.  Should be a folder name in bibles/"),
-        make_option('--use-more-ram',action='store_true',
-                    help="Try to speed up a sqlite3 database import by " + \
-                        "storing the journal in ram"),
+        # Named (optional) arguments
+        parser.add_argument('--xrefs',
+            action='store_true',
+            default=False,
+            help="Import cross-references.txt file into database")
 
-    )
-    option_list = BaseCommand.option_list + extra_options
+        parser.add_argument('--list-translations',
+            action='store_true',
+            default = False,
+            help="List all translations in database")
 
+        parser.add_argument('--remove-translation',
+            action='store',
+            help="Purge translation from database")
+
+        parser.add_argument('--replace-version',
+            action='store',
+            help="Only replace the specified translation in the" + \
+            "database.  Should be a folder name in bibles/")
+
+        parser.add_argument('--use-more-ram',
+            action='store_true',
+            default=False,
+            help="Try to speed up a sqlite3 database import by " + \
+                "storing the journal in ram")
+
+        parser.add_argument('--import',
+            action='store_true',
+            default=False,
+            help="Import the database to original plain text files")
+
+        parser.add_argument('--export',
+            action='store_true',
+            default=False,
+            help="Export the database to original plain text files")
 
     def handle(self, *args, **options):
         logger.debug ("args = "+str(args))
         logger.debug ("options = "+ str(options))
-        
-        if len(args) > 0:
-            if args[0] == "xrefs":
-                import_xrefs()
-                return
+
+        if options['xrefs']:
+            import_xrefs()
+            return
+
+        if options['export']:
+            dump_db()
+            return
+
+        if 'list_translations' in options:
+            trans = [tr.name for tr in BibleTranslations.objects.all()]
+            sys.stdout.write("Loaded Translations: {}\n".format(", ".join(trans)))
+            return
+
+        if 'remove_translation' in options:
+            trans = options['remove_translation']
+            result = purge_translation(trans)
+            if result == False:
+                print "Could not find translation {}".format(trans)
+            else:
+                print "Translation {} removed from database".format(trans)
+            return
 
         if options['use_more_ram'] and DATABASES['bibles']['ENGINE'].endswith('sqlite3'):
             logger.info("Allocating the SQLITE3 journal in RAM")
@@ -73,22 +114,44 @@ class Command(BaseCommand):
             print "cache_size = " + str(cache_size) + " pages"
 
         
-        if options['replace_version']:
-            version = options['replace_version']
-            biblepath = BIBLES_DIR + os.sep + version        
-            if not os.path.exists(biblepath):
-                print "Version %s does not exists in bibles/" % (version,)
-                return
+
+        if options['import'] or options['replace_version']:
+            if options['replace_version']:
+                version = options['replace_version']
+                biblepath = BIBLES_DIR + os.sep + version        
+                if not os.path.exists(biblepath):
+                    print "Version %s does not exists in bibles/" % (version,)
+                    return
+            else:
+                # don't bother repopulating the strongs tables if we are just
+                # replacing a single translation
+                try:
+                    import_strongs_tables() 
+                except IOError:
+                    # If dict folder doesn't exist then just carry on
+                    pass
+            import_trans(options)
+            import_concordance(options)
         else:
-            # don't bother repopulating the strongs tables if we are just
-            # replacing a single translation
-            try:
-                import_strongs_tables() 
-            except IOError:
-                # If dict folder doesn't exist then just carry on
-                pass
-        import_trans(options)
-        import_concordance(options)
+            print "Nothing to do"
+
+def dump_db():
+    biblepath = settings.BIBLES_DIR 
+    for trans in BibleTranslations.objects.all():
+        vers_path = os.path.join(biblepath, trans.name)
+            
+        if not os.path.exists(vers_path):
+            print vers_path
+            os.mkdir(vers_path)
+            for bk in trans.biblebooks_set.order_by('id'):
+                filepath = os.path.join(vers_path, bk.canonical+".txt")
+                f = codecs.open(filepath, 'wb', 'utf-8')
+                for vs in bk.bibleverses_set.order_by('chapter','verse'):
+                    f.write(u"{}:{} {}\n".format(vs.chapter, vs.verse, vs.verse_text))
+                
+                f.close()
+        else:
+            print "skipping " + trans.name + " (already exists)"
 
 def import_xrefs():
     file_path = os.path.join(BIBLES_DIR, 'dict', 'cross_references.txt')
@@ -391,10 +454,11 @@ def purge_translation(translation):
     try:
         trans = BibleTranslations.objects.get(name=translation)
     except ObjectDoesNotExist:
-        return
+        return False
     BibleVerses.objects.filter(trans = trans).delete()
     BibleBooks.objects.filter(trans = trans).delete()
     trans.delete()
+    return True
 
 
 @transaction.atomic
