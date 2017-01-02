@@ -2,13 +2,12 @@
 from __future__ import absolute_import
 
 from django.conf.urls import patterns, include, url
-from .views import site_setup
+import botnet.views
 
 # required to set an app name to resolve 'url' in templates with namespacing
 app_name = "botnet"
 
-urlpatterns = patterns('botnet.views',
-    url(r'^site-setup/$', 'site_setup'),
-    url(r'^site-setup/(?P<group>\d+)/$', 'site_setup', name='groups'),
-#    url(r'^user-setup/$', 'user_setup', name='user_setup'),
-)
+urlpatterns = [
+    url(r'^site-setup/$', botnet.views.site_setup),
+    url(r'^site-setup/(?P<group>\d+)/$', botnet.views.site_setup, name='groups'),
+]
