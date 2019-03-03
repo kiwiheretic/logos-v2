@@ -69,7 +69,7 @@ $ cp logos/email_settings-dist.py logos/email_settings.py
 $ cp allowed_hosts-dist.txt allowed_hosts.txt
 $ python manage.py migrate
 $ python manage.py migrate --database=bibles
-$ python manage.py import
+$ python manage.py bible --import
 ```
 
 #### Ubuntu ####
@@ -92,7 +92,7 @@ $ cp logos/email_settings-dist.py logos/email_settings.py
 $ cp allowed_hosts-dist.txt allowed_hosts.txt
 $ python manage.py migrate
 $ python manage.py migrate --database=bibles
-$ python manage.py import
+$ python manage.py bible --import
 ```
 
 ### Summary of set up for Microsoft Windows ###
@@ -116,7 +116,7 @@ put in valid settings for your email server.  If not, then just copy the file em
 copy logos/email_settings-dist.py logos/email_settings.py
 manage.py migrate
 manage.py migrate --database=bibles
-manage.py import
+manage.py bible --import
 ```
 
 ### Admin Permission System ###
@@ -152,8 +152,8 @@ See the [wiki](https://github.com/kiwiheretic/logos-v2/wiki) for more details.
 See the [wiki](https://github.com/kiwiheretic/logos-v2/wiki) for more details.
 
 # Using the Website #
-For working with the website you need to copy the file _allowed_hosts-dist.txt_ 
-to _allowed_hosts.txt_ and add in your domain name (or ip address) to the list.  
+For working with the website you need to copy the file *allowed_hosts-dist.txt* 
+to *allowed_hosts.txt* and add in your domain name (or ip address) to the list.  
 If you have more than one domain name add one per line.  If this step is missed
 or forgotten your web browser will receive a 400 error.
 

@@ -7,6 +7,7 @@
     <meta name="viewport" content="width=320, initial-scale=1.0">
 <!--    <meta name="viewport" content="width=320, initial-scale=1.0, minimum-scale=1.0, maximum-scale=4.0">-->
     <link href='http://fonts.googleapis.com/css?family=Montserrat' rel='stylesheet' type='text/css'>
+    <link rel="stylesheet" href="{% static 'font-awesome-4.7.0/css/font-awesome.css' %}">
     <link rel="stylesheet" type="text/css" href="{% static 'style.css' %}">    
     <link rel="stylesheet" type="text/css" href="{% static 'font-awesome-4.7.0/css/font-awesome.css' %}">    
     
@@ -18,7 +19,15 @@
         {% block style %}
         {% endblock %}
     </style>
-    
+<script type="text/javascript" src="{% static 'mobilecheck.js' %}"></script>
+<script type="text/javascript" src="{% static 'jquery-3.1.1.min.js' %}"></script>
+
+<!-- For some reason only the dist/ branch works (not the src/ branch) -->
+<link rel="stylesheet" href="{% static 'simplemde/dist/simplemde.min.css' %}">
+<script type="text/javascript" src="{% static 'simplemde/dist/simplemde.min.js' %}"></script>
+    {% block extrascripts %}
+    {% endblock %}
+
 </head>
 <body>
 <div id="container">
