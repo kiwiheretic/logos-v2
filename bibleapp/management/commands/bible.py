@@ -85,12 +85,12 @@ class Command(BaseCommand):
             dump_db()
             return
 
-        if 'list_translations' in options:
+        if options['list_translations']:
             trans = [tr.name for tr in BibleTranslations.objects.all()]
             sys.stdout.write("Loaded Translations: {}\n".format(", ".join(trans)))
             return
 
-        if 'remove_translation' in options:
+        if options['remove_translation']:
             trans = options['remove_translation']
             result = purge_translation(trans)
             if result == False:
