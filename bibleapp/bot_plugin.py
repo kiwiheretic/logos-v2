@@ -772,8 +772,11 @@ class BibleBot(Plugin):
                 
             self.pending_searches[chan.lower()][nick.lower()]['gen'] = gen
                 
-            delayed = self.reactor.callLater(3.5, self._search_long_time, chan, nick)    
-            self.pending_searches[chan.lower()][nick.lower()]['delayed'] = delayed
+            if chan == '%shell%':
+              self._search_long_time(chan, nick) 
+            else:
+              delayed = self.reactor.callLater(3.5, self._search_long_time, chan, nick)    
+              self.pending_searches[chan.lower()][nick.lower()]['delayed'] = delayed
             
             finished = self._format_search_results(chan, nick.lower())
             if finished:
@@ -968,11 +971,12 @@ class BibleBot(Plugin):
         logger.info("_search_long_time called with %s" % str((chan, nick)))
     
     def _search_results(self, chan, nick, results, finished):
-        delayed = self.pending_searches[chan.lower()][nick.lower()]['delayed'] 
-        try:
-            delayed.cancel()
-        except (AlreadyCalled, AlreadyCancelled) as e:
-            pass
+        if chan != '%shell%':
+          delayed = self.pending_searches[chan.lower()][nick.lower()]['delayed'] 
+          try:
+              delayed.cancel()
+          except (AlreadyCalled, AlreadyCancelled) as e:
+              pass
         
         start_time = self.pending_searches[chan.lower()][nick.lower()]['timestamp']
         elapsed = time.clock() - start_time 
@@ -1058,7 +1062,7 @@ class BibleBot(Plugin):
 #                self.say(chan, "*** No more search results")
                 finished = True
                 
-        if THREADED_SEARCH:
+        if chan != '%shell%' and THREADED_SEARCH:
             self.reactor.callFromThread(self._search_results, chan, nick, results, finished)
         else:
             self._search_results(chan, nick, results, finished)
@@ -1068,7 +1072,7 @@ class BibleBot(Plugin):
         start_time = time.clock()
         self.pending_searches[chan.lower()][nick.lower()]['timestamp'] = start_time
         gen = self.pending_searches[chan.lower()][nick.lower()]['gen']        
-        if THREADED_SEARCH:
+        if chan != '%shell%' and THREADED_SEARCH:
             self.reactor.callInThread(self._threaded_search_results, chan, nick, gen)
         else:
             results = self._threaded_search_results(chan, nick, gen)

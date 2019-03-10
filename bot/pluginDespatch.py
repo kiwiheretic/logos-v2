@@ -305,7 +305,7 @@ class PluginDespatcher(object):
     """ Handles method delegation to the .py files in the plugins
     folder. """
 
-    def __init__(self, irc_conn):
+    def __init__(self, irc_conn, shell=False):
         """ This imports all the .py files in
         the plugins folder (or INSTALLED_APPS folders) """
         
@@ -313,6 +313,7 @@ class PluginDespatcher(object):
         self._signal_data = [] # signals waiting to be processed
         self.irc_conn = irc_conn
         self.authenticated_users = AuthenticatedUsers(self.irc_conn.factory.network)
+        self.shell = shell
         NetworkPlugins.objects.filter(network=self.irc_conn.factory.network).update(loaded=False)
         
         for app in settings.INSTALLED_APPS:
@@ -341,40 +342,41 @@ class PluginDespatcher(object):
                         system = False
                     self._obj_list.append(plugin_object)
                     
-                    with transaction.atomic():
-                        plugin_name, descr = plugin_object.plugin
-                        plugin, created = Plugins.objects.\
-                            get_or_create(name=plugin_name)
-                        plugin.description = descr
-                        plugin.system = system
-                        plugin.save()
-                        net_plugin, created = NetworkPlugins.objects.\
-                            get_or_create(plugin=plugin,
-                                network=self.irc_conn.factory.network,
-                                defaults={'loaded': True})
-                        
-                    
-                        if hasattr(plugin_object,'system') and \
-                            plugin_object.system:
-                            net_plugin.enabled = True
-                        else:
-                            if created:
-                                net_plugin.enabled = False
+                    if not shell:
+                      with transaction.atomic():
+                          plugin_name, descr = plugin_object.plugin
+                          plugin, created = Plugins.objects.\
+                              get_or_create(name=plugin_name)
+                          plugin.description = descr
+                          plugin.system = system
+                          plugin.save()
+                          net_plugin, created = NetworkPlugins.objects.\
+                              get_or_create(plugin=plugin,
+                                  network=self.irc_conn.factory.network,
+                                  defaults={'loaded': True})
+                          
+                      
+                          if hasattr(plugin_object,'system') and \
+                              plugin_object.system:
+                              net_plugin.enabled = True
+                          else:
+                              if created:
+                                  net_plugin.enabled = False
 
-                        net_plugin.loaded = True
-                        net_plugin.save()    
-                    
-                    if net_plugin.enabled:
-                        if hasattr(plugin_object, "on_activate"):
-                            response = plugin_object.on_activate()
-                            if type(response) == types.TupleType:
-                                enabled, msg = response
-                            else:
-                                enabled = response
-                                msg = None
+                          net_plugin.loaded = True
+                          net_plugin.save()    
+                      
+                      if net_plugin.enabled:
+                          if hasattr(plugin_object, "on_activate"):
+                              response = plugin_object.on_activate()
+                              if type(response) == types.TupleType:
+                                  enabled, msg = response
+                              else:
+                                  enabled = response
+                                  msg = None
 
-                            net_plugin.enabled = enabled
-                            net_plugin.save()                                        
+                              net_plugin.enabled = enabled
+                              net_plugin.save()                                        
                     break
             
             
@@ -502,6 +504,7 @@ class PluginDespatcher(object):
                 room_plugin.save()
     
     def is_plugin_enabled(self, channel, plugin_module):
+        if self.shell: return True
         if channel[0]=='#':
             plugin_name, _ = plugin_module.plugin
             try:
@@ -659,7 +662,7 @@ class PluginDespatcher(object):
             # === Undernet Hack? ====
             # IRC servers seems to pass chan as nickname of bot's name
             # so we try to reverse this here.
-            if (self.irc_conn.nickname == chan) or \
+            if not self.shell and (self.irc_conn.nickname == chan) or \
                 (len(chan) == 12 and chan.lower() in self.irc_conn.nickname.lower()) :
                 adj_chan = nick
             else:
