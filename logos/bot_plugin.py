@@ -56,6 +56,9 @@ class SystemCoreCommands(Plugin):
                          (r'deactivate\s+plugin\s+(?P<plugin>[a-z0-9_-]+)',
                           self.deactivate_plugin, "Disable specified plugin for room"),
                          (r'list\s+(?:perms|permissions)', self.list_perms, "list all permissions available"),
+                         (r'add\s+user\s+(?P<username>\S+)\s+(?P<email>[a-zA-Z0-9-]+@[a-zA-Z0-9\.-]+)\s+(?P<password>\S+)$'),
+                         (r'delete\s+user\s+(?P<username>\S+)$',
+                          self.deluser, 'Delete user from system'),
                          (r'add\s+user\s+(?P<username>\S+)\s+(?P<email>[a-zA-Z0-9-]+@[a-zA-Z0-9\.-]+)\s+(?P<password>\S+)$',
                           self.adduser, 'Add user to system'),
                          (r'debug\s+users', self.debugusers, 'Debug list users in system'),
@@ -194,6 +197,19 @@ class SystemCoreCommands(Plugin):
             self.say(chan, "plugin could not be disabled")
 
     @irc_network_permission_required('bot_admin')            
+    def deluser(self, regex, chan, nick, **kwargs):
+        username = regex.group('username')
+        try:
+            user = User.objects.get(username__iexact = username.lower())
+        except User.DoesNotExist:
+            self.msg(chan, "User with that username could not be found")
+        else:
+            user.delete()
+            self.msg(chan, "User deleted from database ")
+    
+    
+    
+    @irc_network_permission_required('bot_admin')            
     def adduser(self, regex, chan, nick, **kwargs):
         username = regex.group('username')
         password = regex.group('password')
@@ -220,6 +236,7 @@ class SystemCoreCommands(Plugin):
         self.notice(nick, "List of users....")
         for user in User.objects.all():
             self.notice(nick, "{} {}".format(user.username, user.email))
+        self.notice(nick, "==== End of User List =====")
 
     
     def login(self, regex, chan, nick, **kwargs):
