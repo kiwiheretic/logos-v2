@@ -44,7 +44,7 @@ sympy==1.0
 Twisted==16.1.1
 update-checker==0.11
 uritemplate==0.6
-urllib3==1.24.1
+urllib3==1.24.2
 #Removed because not compatible with windows
 #uWSGI==2.0.13.1
 Whoosh==2.7.0
