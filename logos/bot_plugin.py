@@ -200,7 +200,7 @@ class SystemCoreCommands(Plugin):
     def deluser(self, regex, chan, nick, **kwargs):
         username = regex.group('username')
         try:
-            user = User.objects.get(username__iexact = username.lower())
+            user = User.objects.filter(username__iexact = username.lower())
         except User.DoesNotExist:
             self.msg(chan, "User with that username could not be found")
         else:
