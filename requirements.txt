@@ -12,7 +12,7 @@ facebook-sdk==1.0.0
 feedparser==5.2.1
 GitPython==0.3.6
 google-api-python-client==1.4.2
-lxml==3.4.2
+lxml==4.6.2
 Markdown==2.6.1
 oauth2client==1.5.2
 oauthlib==1.0.3
