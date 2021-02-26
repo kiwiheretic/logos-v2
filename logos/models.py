@@ -1,5 +1,5 @@
 from __future__ import unicode_literals
-from django.core.urlresolvers import reverse
+from django.urls import reverse
 from django.contrib.auth.models import User
 from django.db import models
 from django.conf import settings
@@ -22,7 +22,7 @@ class OptionLabels(models.Model):
 
 class UserOptions(models.Model):
     namespace = models.CharField(max_length=250)
-    user = models.ForeignKey(User)
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
     option = models.CharField(max_length=50)
     value = models.CharField(max_length=200, null=True, blank=True)
 
@@ -82,7 +82,7 @@ class Plugins(models.Model):
         return self.name
         
 class NetworkPlugins(models.Model):
-    plugin = models.ForeignKey('Plugins')
+    plugin = models.ForeignKey('Plugins', on_delete=models.CASCADE)
     # currently each bot instance handles exactly one IRC network
     network = models.TextField()
     loaded = models.BooleanField(default=False)
@@ -90,7 +90,7 @@ class NetworkPlugins(models.Model):
     enabled = models.BooleanField(default=True)
     
 class RoomPlugins(models.Model):
-    net = models.ForeignKey('NetworkPlugins')
+    net = models.ForeignKey('NetworkPlugins', on_delete=models.CASCADE)
     room = models.TextField()    
     enabled = models.BooleanField(default=False)
    

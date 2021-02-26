@@ -11,14 +11,14 @@ import socket
 from datetime import datetime
 from itertools import islice
 
-from simple_rpcserver import SimpleRPC
+from bot.simple_rpcserver import SimpleRPC
 import logos.utils
 
 from copy import copy
 from logos.roomlib import get_room_option, set_room_option, get_startup_rooms, \
     get_global_option, get_user_option
 
-from pluginDespatch import PluginDespatcher as Plugins
+from bot.pluginDespatch import PluginDespatcher as Plugins
 from twisted.internet import reactor, protocol
 from twisted.words.protocols import irc
 from twisted.internet import task
@@ -333,7 +333,7 @@ class IRCBot(irc.IRCClient):
         signal.signal(signal.SIGINT, self.handle_ctrl_c)
               
     def handle_ctrl_c(self, signum, frame):
-        print "closing file"
+        print ("closing file")
         pid = os.getpid()
         BotsRunning.objects.filter(pid = pid).delete()
         if self.irc_line_log:

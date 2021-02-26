@@ -3,7 +3,7 @@ import os
 import sys
 import socket
 import logging
-import email_settings
+from logos import email_settings
 
 
 logger = logging.getLogger(__name__)
@@ -269,19 +269,19 @@ INSTALLED_APPS = (
     'guardian',
 
     'logos',
-    'reddit',
+    #'reddit',
     'bibleapp',
-    'feed',
+    #'feed',
     'weather',
-    'cloud_notes',
-    'cloud_memos',
+    #'cloud_notes',
+    #'cloud_memos',
     'room_manage',
     'scripture_game',
-    'botnet',
-    'symbolics',
-    'gcalendar',
+    #'botnet',
+    #'symbolics',
+    #'gcalendar',
     'urlcatcher',
-    'twitterapp',
+    #'twitterapp',
     'prayers',
 
 
@@ -337,7 +337,7 @@ LOGGING = {
     'handlers': {
         'null': {
             'level': 'DEBUG',
-            'class': 'django.utils.log.NullHandler',
+            'class': 'logging.NullHandler',
         },
         'mail_admins': {
             'level': 'ERROR',
