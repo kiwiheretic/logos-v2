@@ -472,8 +472,11 @@ class IRCBot(irc.IRCClient):
         rooms = get_startup_rooms(self.factory.network)
         for rm in rooms:
             if rm != self.factory.channel.lower():
-                self.join(str(rm))
-                logger.info("Joining room "+ rm + " on network " + self.factory.network)
+                try:
+                    self.join(str(rm))
+                    logger.info("Joining room "+ rm + " on network " + self.factory.network)
+                except UnicodeEncodeError:
+                    pass
 
         if self.factory.extra_options['room_key']:
             room_key = self.factory.extra_options['room_key']
