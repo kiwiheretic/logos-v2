@@ -155,4 +155,4 @@ def aggregate_memos(memos):
             memo_dict['forwarded_by']  = None
         
         memo_list.append(memo_dict)
-    return memo_list
+    return (memo_list)

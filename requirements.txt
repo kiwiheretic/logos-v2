@@ -5,3 +5,5 @@ django-guardian~=2.3
 django-widget-tweaks~=1.4
 django-haystack~=3
 praw~=7.2
+markdown~=3.3
+bleach~=3.3

@@ -1,5 +1,5 @@
 from __future__ import absolute_import
-from django.conf.urls import patterns, include, url
+from django.conf.urls import include, url
 import logos.views
 
 # Uncomment the next two lines to enable the admin:
@@ -26,7 +26,7 @@ urlpatterns = [
     url(r'^logos/preferences/', logos.views.preferences),
     
     url(r'^logos-admin/$', logos.views.admin),
-    url(r'^logos-admin/bots/', logos.views.bots),
+#    url(r'^logos-admin/bots/', logos.views.bots),
     
     url(r'^logos-admin/plugins/$', logos.views.plugins, name='plugins'),
     url(r'^logos-admin/plugins/network/(\d+)', logos.views.networkplugins),
@@ -37,14 +37,13 @@ urlpatterns = [
     url(r'^scripture_game/', include('scripture_game.urls')),
     url(r'^notes/', include('cloud_notes.urls')),
     url(r'^memos/', include('cloud_memos.urls')),
-    url(r'^gcal/', include('gcalendar.urls')),
-    url(r'^weather/', include('weather.urls')),
-    url(r'^twitter/', include('twitterapp.urls')),
+    #url(r'^weather/', include('weather.urls')),
+    #url(r'^twitter/', include('twitterapp.urls')),
     url(r'^botnet/', include('botnet.urls')),
-    url(r'^reddit/', include('reddit.urls', namespace = 'reddit', app_name = "reddit")),
-    url(r'^room_manage/', include('room_manage.urls')),
+    #url(r'^reddit/', include('reddit.urls', namespace = 'reddit', app_name = "reddit")),
+    #url(r'^room_manage/', include('room_manage.urls')),
     url(r'^bible/', include('bibleapp.urls')),
-    url(r'^prayer/', include('prayers.urls', namespace='prayers')),
+    #url(r'^prayer/', include('prayers.urls', namespace='prayers')),
     #url(r'^bots/approve/(\d+)', 'logos.views.bot_approval'),
     #url(r'^bots/deny/(\d+)', 'logos.views.bot_deny'),
     
@@ -54,7 +53,7 @@ urlpatterns = [
     
     url(r'^web-views/nicks-css/', logos.views.nicks_css),
     # Uncomment the next line to enable the admin:
-    url(r'^admin/', include(admin.site.urls)),
+    #url(r'^admin/', include(admin.site.urls)),
     
-    url(r'^static/(?P<path>.*)$', django.contrib.staticfiles.views.serve),
+    #url(r'^static/(?P<path>.*)$', django.contrib.staticfiles.views.serve),
 ]

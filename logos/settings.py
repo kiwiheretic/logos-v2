@@ -215,19 +215,19 @@ TEMPLATES = [
 ##     'django.template.loaders.eggs.Loader',
 #)
 #
-MIDDLEWARE_CLASSES = (
+MIDDLEWARE = [
     'django.middleware.common.CommonMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
 
-    'reddit.middleware.RedditMiddleware',
+    #'reddit.middleware.RedditMiddleware',
     'logos.timezone_middleware.TimezoneMiddleware',
     #'django.middleware.transaction.TransactionMiddleware',
     # Uncomment the next line for simple clickjacking protection:
     # 'django.middleware.clickjacking.XFrameOptionsMiddleware',
-)
+]
 
 AUTHENTICATION_BACKENDS = (
     'logos.backends.CaseInsensitiveModelBackend', # this is default
@@ -272,17 +272,17 @@ INSTALLED_APPS = (
     #'reddit',
     'bibleapp',
     #'feed',
-    'weather',
-    #'cloud_notes',
-    #'cloud_memos',
-    'room_manage',
+    #'weather',
+    'cloud_notes',
+    'cloud_memos',
+    #'room_manage',
     'scripture_game',
-    #'botnet',
+    'botnet',
     #'symbolics',
     #'gcalendar',
     'urlcatcher',
     #'twitterapp',
-    'prayers',
+    #'prayers',
 
 
     'widget_tweaks',

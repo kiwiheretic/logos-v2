@@ -7,22 +7,22 @@ from django.dispatch import receiver
 # Create your models here.
 class Folder(models.Model):
     name = models.CharField(max_length=30)
-    user = models.ForeignKey(User, related_name='folder_user')
+    user = models.ForeignKey(User, related_name='folder_user', on_delete=models.CASCADE)
 
     def __unicode__(self):
         return self.name
 
 class Memo(models.Model):
     subject = models.CharField(max_length=30)
-    folder = models.ForeignKey('Folder')
+    folder = models.ForeignKey('Folder', on_delete=models.CASCADE)
 
-    from_user = models.ForeignKey(User, related_name='memo_from')
-    to_user = models.ForeignKey(User, related_name='memo_to')
+    from_user = models.ForeignKey(User, related_name='memo_from', on_delete=models.CASCADE)
+    to_user = models.ForeignKey(User, related_name='memo_to', on_delete=models.CASCADE)
     
     # where to check for read receipts
     corresponding  = models.ForeignKey('Memo', on_delete=models.SET_NULL,
         related_name='corresponding_to', null=True, blank=True, default = None)
-    forwarded_by  = models.ForeignKey('Memo', related_name='memo_forwarded_by', null=True, blank=True, default = None)
+    forwarded_by  = models.ForeignKey('Memo', on_delete=models.CASCADE, related_name='memo_forwarded_by', null=True, blank=True, default = None)
     
     # Has the memo been viewed by the recipient yet
     viewed_on = models.DateTimeField(null=True, blank=True)

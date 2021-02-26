@@ -15,12 +15,12 @@ import re
 
 from itertools import chain
 
-from forms import NoteForm
-from models import Note, Folder, HashTags
+from .forms import NoteForm
+from .models import Note, Folder, HashTags
 from django.contrib.auth.models import User
 # Create your views here.
 from datetime import datetime
-from forms import NewFolderForm, UploadFileForm
+from .forms import NewFolderForm, UploadFileForm
 
 import logging
 
@@ -184,7 +184,7 @@ def new_note(request):
                 
                 return redirect('cloud_notes.views.list')
             else:
-                print form.errors
+                print (form.errors)
                 return render(request, 'cloud_notes/new.html', context)
 
 @login_required()
@@ -197,7 +197,7 @@ def edit_note(request, note_id):
             note.modified_at = timezone.now()
             note.save()
         else:
-            print "note not saved"
+            print ("note not saved")
         return redirect('cloud_notes.views.preview', note_id)
     else: # GET
         note = Note.objects.get(pk=note_id)

@@ -2,7 +2,7 @@ from django.db import models
 from django.contrib.auth.models import User
 from django.dispatch import receiver
 from django.db.models.signals import post_save
-from django.core.urlresolvers import reverse
+from django.urls import reverse
 
 import re
 
@@ -16,7 +16,7 @@ logging.config.dictConfig(settings.LOGGING)
 class Folder(models.Model):
     name = models.CharField(max_length=30)
     # Folders really need to be specific to User (TO DO)
-    user = models.ForeignKey(User)
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
     def __unicode__(self):
         return u"Folder %d" % (self.id, )
 
@@ -29,8 +29,8 @@ class Folder(models.Model):
         return choices
 
 class Note(models.Model):
-    user = models.ForeignKey(User)
-    folder = models.ForeignKey(Folder)
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    folder = models.ForeignKey(Folder, on_delete=models.CASCADE)
     title = models.CharField(max_length=120)
     # note_type is something like "memo", "web-page", ... etc
     note_type = models.CharField(blank=True, default="", max_length=15)
@@ -68,7 +68,7 @@ class Note(models.Model):
         
         
 class HashTags(models.Model):
-    user = models.ForeignKey(User)
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
     hash_tag = models.CharField(max_length=30, db_index = True)
     created_at = models.DateTimeField(auto_now_add = True)
     notes = models.ManyToManyField(Note)

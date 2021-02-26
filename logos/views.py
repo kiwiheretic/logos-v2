@@ -5,7 +5,7 @@ from django.contrib.auth.decorators import login_required
 from django.shortcuts import render, redirect, get_object_or_404
 from django.http import HttpResponse, HttpResponseRedirect
 from django.contrib import messages
-from django.core.urlresolvers import reverse
+from django.urls import reverse
 from django.core import serializers
 from django.db import IntegrityError
 
@@ -23,7 +23,7 @@ import logging
 import inspect
 
 import pytz
-import xmlrpclib
+#import xmlrpclib
 from bot.pluginDespatch import Plugin
 
 from django.conf import settings 
@@ -104,56 +104,56 @@ def user_settings(request):
 def admin(request):
     return HttpResponseRedirect(reverse('logos.views.bots'))
 
-@login_required()
-def bots(request):
-    bots_running = BotsRunning.objects.all()
-    bots = []
-    for bot in bots_running:
-        url = "http://localhost:{}/".format(bot.rpc)
-        srv = xmlrpclib.Server(url)
-        dead = False
-        try:
-            networks = srv.get_networks()
-            if request.method == "POST":
-                rooms = srv.get_rooms()
-                netcnt = 0
-                rmcnt = 0
-                for net_room in rooms:
-                    network = net_room['network']
-                    rooms_list = net_room['rooms']
-                    try:
-                        np = NetworkPermissions(network=network)
-                        np.save()
-                    except IntegrityError:
-                        pass
-                    else:
-                        netcnt+=1
-
-                    for room_dict in rooms_list:
-                        try:
-                            room = room_dict['room']
-                            rp = RoomPermissions(network = network, room = room)
-                            rp.save()
-                        except IntegrityError:
-                            pass
-                        else:
-                            rmcnt+=1
-                messages.add_message(request, messages.INFO,
-                     'Updated {} networks and {} room records'.format(netcnt, rmcnt))
-
-
-        except Exception as e:
-            print e.errno
-            # error 111 is connection refused
-            if e.errno == 10061 or e.errno == 111:
-                dead = True
-            else:
-                raise
-            networks = []
-        print networks
-        bots.append({'id': bot.id, 'pid':bot.pid, 'alive':not dead, 'rpc':bot.rpc, 'networks':networks})
-    context = {'bots':bots}
-    return render(request, 'logos/bots.html', context)
+#@login_required()
+#def bots(request):
+#    bots_running = BotsRunning.objects.all()
+#    bots = []
+#    for bot in bots_running:
+#        url = "http://localhost:{}/".format(bot.rpc)
+#        srv = xmlrpclib.Server(url)
+#        dead = False
+#        try:
+#            networks = srv.get_networks()
+#            if request.method == "POST":
+#                rooms = srv.get_rooms()
+#                netcnt = 0
+#                rmcnt = 0
+#                for net_room in rooms:
+#                    network = net_room['network']
+#                    rooms_list = net_room['rooms']
+#                    try:
+#                        np = NetworkPermissions(network=network)
+#                        np.save()
+#                    except IntegrityError:
+#                        pass
+#                    else:
+#                        netcnt+=1
+#
+#                    for room_dict in rooms_list:
+#                        try:
+#                            room = room_dict['room']
+#                            rp = RoomPermissions(network = network, room = room)
+#                            rp.save()
+#                        except IntegrityError:
+#                            pass
+#                        else:
+#                            rmcnt+=1
+#                messages.add_message(request, messages.INFO,
+#                     'Updated {} networks and {} room records'.format(netcnt, rmcnt))
+#
+#
+#        except Exception as e:
+#            print (e.errno)
+#            # error 111 is connection refused
+#            if e.errno == 10061 or e.errno == 111:
+#                dead = True
+#            else:
+#                raise
+#            networks = []
+#        print (networks)
+#        bots.append({'id': bot.id, 'pid':bot.pid, 'alive':not dead, 'rpc':bot.rpc, 'networks':networks})
+#    context = {'bots':bots}
+#    return render(request, 'logos/bots.html', context)
 
 def bot_commands(request):
     helps = []
