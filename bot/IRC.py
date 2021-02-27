@@ -506,7 +506,7 @@ class IRCBot(irc.IRCClient):
     def lineReceived(self, line):
         if self.irc_line_log:
            self.irc_line_log.write("<< " + repr(line) +"\n") 
-        irc.IRCClient.lineReceived(self, line)
+        irc.IRCClient.lineReceived(self, line.decode('utf-8','replace'))
         
     def userJoined(self, user, channel):
         """
