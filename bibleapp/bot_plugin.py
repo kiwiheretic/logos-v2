@@ -151,24 +151,26 @@ class BibleBot(Plugin):
     def _get_verselimit(self,channel):
         """ Get maximum number of verses that may be shown in room at one
         bot command """
+        return 4
 
-        res = get_room_option(self.network, channel, "verselimit")
-
-        if not res:
-            res = 4 # default verselimit
-        return res
+#        res = get_room_option(self.network, channel, "verselimit")
+#
+#        if not res:
+#            res = 4 # default verselimit
+#        return res
 
     def _get_searchlimit(self, channel):
         """ Get the maximum numbers of verses to be shown while
         doing a search in this room """
-        res = get_room_option(self.network, channel, "searchlimit")
-        if not res:
-            res = 5 # default search limit setting
-        return int(res)
-
+        return 5
+#        res = get_room_option(self.network, channel, "searchlimit")
+#        if not res:
+#            res = 5 # default search limit setting
+#        return int(res)
+#
     def _get_verses(self, chan, nick, user, passage_ref):
         """ Retrieve the passage using the passage lookup supplied.
-        This will look something like "nasb john 3:3-5"
+        This will look something like 'nasb john 3:3-5'
         """
         
         # Get the maximum number of verses to display in one
@@ -818,12 +820,13 @@ class BibleBot(Plugin):
     
     
     def _get_colour(self, chan, elmt):
-        try:
-            clr = BibleColours.objects.get(network=self.network, room=chan,
-                                    element=elmt)
-            return clr.mirc_colour
-        except BibleColours.DoesNotExist:
-            return None
+        return None
+#        try:
+#            clr = BibleColours.objects.get(network=self.network, room=chan,
+#                                    element=elmt)
+#            return clr.mirc_colour
+#        except BibleColours.DoesNotExist:
+#            return None
 
     def xref(self, regex, chan, nick, **kwargs):
         passage_ref = regex.group(1).lower().strip()
