@@ -24,10 +24,9 @@ class CommandException(Exception):
     def __str__(self):
         return repr(self.user + ':' + self.chan + ':' + self.msg)
 
-class AuthenticatedUsers(object):
-    def __init__(self, network):
+class AuthenticatedUsers:
+    def __init__(self):
         self.users = []
-        self.network = network
     
     def set_password(self, nick, pw):
         user = None
@@ -161,15 +160,11 @@ class AuthenticatedUsers(object):
         
 
 
-class Plugin(object):
+class Plugin:
     """ Base Class for all plugins """
     def __init__(self, despatcher, irc_conn):
         self.irc_conn = irc_conn
         self.despatcher = despatcher
-        self.factory = irc_conn.factory
-        self.reactor = self.factory.reactor
-        self.network = irc_conn.factory.network
-        self.control_room = irc_conn.factory.channel
         
     def get_nickname(self):
         return self.irc_conn.nickname
@@ -311,16 +306,16 @@ class PluginDespatcher(object):
         
         self._obj_list = []  # the plugin object list of all loaded plugins
         self._signal_data = [] # signals waiting to be processed
-        self.irc_conn = irc_conn
-        self.authenticated_users = AuthenticatedUsers(self.irc_conn.factory.network)
+        self.authenticated_users = AuthenticatedUsers()
         self.shell = shell
-        NetworkPlugins.objects.filter(network=self.irc_conn.factory.network).update(loaded=False)
+        self.irc_conn =  irc_conn
         
         for app in settings.INSTALLED_APPS:
             pth = os.path.join(settings.BASE_DIR, app)
             
             plugin_file_path = os.path.join(pth, "bot_plugin.py")
             if not os.path.exists(plugin_file_path): continue
+            print (app)
             m1 = __import__(app+".bot_plugin")
             mod = getattr(m1, 'bot_plugin')
 
@@ -342,42 +337,6 @@ class PluginDespatcher(object):
                         system = False
                     self._obj_list.append(plugin_object)
                     
-                    if not shell:
-                      with transaction.atomic():
-                          plugin_name, descr = plugin_object.plugin
-                          plugin, created = Plugins.objects.\
-                              get_or_create(name=plugin_name)
-                          plugin.description = descr
-                          plugin.system = system
-                          plugin.save()
-                          net_plugin, created = NetworkPlugins.objects.\
-                              get_or_create(plugin=plugin,
-                                  network=self.irc_conn.factory.network,
-                                  defaults={'loaded': True})
-                          
-                      
-                          if hasattr(plugin_object,'system') and \
-                              plugin_object.system:
-                              net_plugin.enabled = True
-                          else:
-                              if created:
-                                  net_plugin.enabled = False
-
-                          net_plugin.loaded = True
-                          net_plugin.save()    
-                      
-                      if net_plugin.enabled:
-                          if hasattr(plugin_object, "on_activate"):
-                              response = plugin_object.on_activate()
-                              if type(response) == types.TupleType:
-                                  enabled, msg = response
-                              else:
-                                  enabled = response
-                                  msg = None
-
-                              net_plugin.enabled = enabled
-                              net_plugin.save()                                        
-                    break
             
             
         logger.debug(str(self._obj_list))
@@ -435,57 +394,13 @@ class PluginDespatcher(object):
             return False            
     
     def activate_plugin(self, plugin_name):
-        try:
-            net_plugin = NetworkPlugins.objects.get(\
-                plugin__name=plugin_name,
-                network = self.irc_conn.factory.network,
-                )
-            # Don't bother enabling plugin if its already enabled, nothing to 
-            # gain and it would only lead to potential confusion!!
-            if not net_plugin.enabled:
-                net_plugin.enabled = True
-                net_plugin.save()
-                for m in self._obj_list:
-                    if m.plugin[0] == plugin_name:
-                        if hasattr(m, 'on_activate'):
-                             result, reason = m.on_activate()
-                             return (result, reason)
-            return True
+        return True
 
-        except NetworkPlugins.DoesNotExist:
-            return False
-
-        
     def deactivate_plugin(self, plugin_name):
-        try:
-            net_plugin = NetworkPlugins.objects.get(\
-                plugin__name=plugin_name,
-                network = self.irc_conn.factory.network,
-                )
-            net_plugin.enabled = False
-            net_plugin.save()
-            for m in self._obj_list:
-                if m.plugin[0] == plugin_name:
-                    if hasattr(m, 'on_deactivate'):
-                        m.on_deactivate()                    
-            return True
-
-        except NetworkPlugins.DoesNotExist:
-            return False   
-            
+        return True
                                        
     def is_plugin_activated(self, plugin_name):
-        try:
-            net_plugin = NetworkPlugins.objects.get(\
-                plugin__name=plugin_name,
-                network = self.irc_conn.factory.network,
-                )
-
-            if net_plugin.enabled:
-                return True
-
-        except NetworkPlugins.DoesNotExist:
-            return False
+        return True
          
     def install_plugin(self, channel, plugin_name, enabled=False):
         if channel[0] =='#':
@@ -504,38 +419,7 @@ class PluginDespatcher(object):
                 room_plugin.save()
     
     def is_plugin_enabled(self, channel, plugin_module):
-        if self.shell: return True
-        if channel[0]=='#':
-            plugin_name, _ = plugin_module.plugin
-            try:
-                # Make sure the plugin is not disabled at the network plugin
-                # level
-                try:
-                    net_obj = NetworkPlugins.objects.get(\
-                                    network=self.irc_conn.factory.network,
-                                    plugin__name = plugin_name)
-                    if net_obj.enabled == False:
-                        return False
-                except NetworkPlugins.DoesNotExist:
-                    return False
-                
-                obj = RoomPlugins.\
-                    objects.get(net__network = self.irc_conn.factory.network,
-                                room = channel.lower(),
-                                net__plugin__name = plugin_name)
-                        
-                # system plugins are always enabled
-                if obj.enabled or \
-                    (hasattr(plugin_module, 'system') and plugin_module.system):
-                    return True
-                else:
-                    return False
-            except RoomPlugins.DoesNotExist:
-                return False
-        else:
-            # currently all loaded modules are enabled in pm
-            return True
-
+        return True
 
     def signal(self, source, signal_id, data):
         for m in self._obj_list:
@@ -662,8 +546,8 @@ class PluginDespatcher(object):
             # === Undernet Hack? ====
             # IRC servers seems to pass chan as nickname of bot's name
             # so we try to reverse this here.
-            if not self.shell and (self.irc_conn.nickname == chan) or \
-                (len(chan) == 12 and chan.lower() in self.irc_conn.nickname.lower()) :
+            if not self.shell and (self.irc_conn.botName == chan) or \
+                (len(chan) == 12 and chan.lower() in self.irc_conn.botName.lower()) :
                 adj_chan = nick
             else:
                 adj_chan = chan

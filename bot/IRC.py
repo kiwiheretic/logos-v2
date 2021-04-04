@@ -1,4 +1,3 @@
-# SkeletonIRC
 import sys
 import logging
 import string
@@ -11,7 +10,9 @@ import socket
 from datetime import datetime
 from itertools import islice
 
-from bot.simple_rpcserver import SimpleRPC
+import asyncio
+from vendor.irctk import irctk
+
 import logos.utils
 
 from copy import copy
@@ -19,9 +20,6 @@ from logos.roomlib import get_room_option, set_room_option, get_startup_rooms, \
     get_global_option, get_user_option
 
 from bot.pluginDespatch import PluginDespatcher as Plugins
-from twisted.internet import reactor, protocol
-from twisted.words.protocols import irc
-from twisted.internet import task
 
 from django.conf import settings
 from logos.models import BotsRunning
@@ -179,7 +177,7 @@ class NicksDB:
                     return True
         return False
     def bot_in_room(self, channel):
-        if self.nicks_in_room.has_key(channel):
+        if channel in self.nicks_in_room:
             return True
         else:
             return False
@@ -301,24 +299,26 @@ class NicksDB:
         self.nicks_info[user.lower()]['nickserv_approved'] = approved
 
 
-class IRCBot(irc.IRCClient):
+class IRCBot():
     """ The class decodes all the IRC events"""
 
     def __init__(self, *args, **kwargs):
-        irc.IRCClient(*args, **kwargs)
         self.plugins = None 
         self.nicks_db = NicksDB()
         self.expecting_nickserv = None
         self.actual_host = None
 
-        self.timer = task.LoopingCall(self.onTimer)
-        self.idle_check_timer = task.LoopingCall(self.onIdleCheckTimer)
-        self.log_flush_timer = task.LoopingCall(self.onLogFlushTimer)
-        self.log_flush_timer.start(30)
+        self.loop = asyncio.get_event_loop()
+        #self.timer = task.LoopingCall(self.onTimer)
+        #self.idle_check_timer = task.LoopingCall(self.onIdleCheckTimer)
+        #self.log_flush_timer = task.LoopingCall(self.onLogFlushTimer)
+        #self.log_flush_timer.start(30)
         self.channel_queues = {}
         self.check_these_for_idle_times = None
         self.userhost_in_progress = []
 
+        self.loop.create_task(self.aiotimer())
+        self.loop.create_task(self.onTimer())
         
         # Some IRC servers seem to require username and realname
         # (notably some Undernet servers)
@@ -332,15 +332,57 @@ class IRCBot(irc.IRCClient):
         
         signal.signal(signal.SIGINT, self.handle_ctrl_c)
               
+    async def connect(self, hostname, port=6697, secure=True):
+        client = irctk.Client()
+        client.delegate = self
+        await client.connect(hostname, port, secure)
+        self.client = client
+
+    async def aiotimer(self):
+        i = 1
+        while  True:
+            i += 1
+            #print ("aiotimer {}".format(i))
+            await asyncio.sleep(5)
+
+    def irc_registered(self, client):
+        self.plugins = Plugins(self)
+        client.send('NICK', "logos-irctk")
+        client.send('MODE', "logos-irctk", '+B')
+        client.send('JOIN', '#bottest')
+        self.client = client
+
+    def irc_private_message(self, client, nick, message):
+        if message == 'ping':
+            client.send('PRIVMSG', nick, 'pong')
+
+    def irc_channel_message(self, client, nick, channel, message):
+        print ("{} {} {}".format(nick, channel, message))
+
+        if message == 'ping':
+            client.send('PRIVMSG', channel, f'{nick}: pong')
+        elif message == 'quit':
+            client.quit()
+            self.loop.stop()
+            self.loop.close()
+        else:
+            self.privmsg(nick, channel, message)
+
     def handle_ctrl_c(self, signum, frame):
         print ("closing file")
         pid = os.getpid()
         BotsRunning.objects.filter(pid = pid).delete()
         if self.irc_line_log:
             self.irc_line_log.close()
-        self.factory.reactor.stop()
-        self.factory.shutting_down = True
             
+        self.client.quit()
+        self.loop.stop()
+        #self.loop.close()
+
+
+    def irc_raw(self, client, line):
+        print ("raw {}".format(line))
+
     def queue_message(self, msg_type, channel,  *args):
         chan = channel.lower()
         l = [msg_type, channel]
@@ -392,22 +434,19 @@ class IRCBot(irc.IRCClient):
         line = 'whois {} {} '.format(nick,nick)
         self.sendLine(line)  
     
-    def onTimer(self):
-        for chan in self.channel_queues:
-            # If the bot is in the channel or if the message
-            # is not to a channel but a private message to
-            # an individual nick then proceed and send the message
+    async def onTimer(self):
+        while True:
+            for chan in self.channel_queues.keys():
+                # If the bot is in the channel or if the message
+                # is not to a channel but a private message to
+                # an individual nick then proceed and send the message
 
-            if self.nicks_db.bot_in_room(chan) or chan[0] != '#': 
                 msg_list = []
                 if len(self.channel_queues[chan]) == 0:
                     continue
                 chan_q = self.channel_queues[chan].pop(0)
                 for elmt in chan_q:
-                    if type(elmt) == types.UnicodeType:
-                        msg_list.append(elmt.encode("utf-8","replace_spc"))
-                    else:
-                        msg_list.append(elmt)
+                    msg_list.append(elmt)
 
 #                logger.debug("timer: "+str((chan, msg_list)))
                 action = msg_list.pop(0)
@@ -416,14 +455,17 @@ class IRCBot(irc.IRCClient):
                     if action == "sendLine":
                         line = msg_list[1].strip()
                         logger.debug("Sending raw line : "+line)
-                        self.sendLine(line)
+                        self.client.sendLine(line)
                     else:
                         f = getattr(self, action)
                         args = msg_list
                         f(*args)
                 else:
                     logger.debug('action not found ' + str(action) )
+            await asyncio.sleep(1)
 
+    def say(self, channel, msg):
+        self.client.send_privmsg(channel, msg)
 
     def irc_RPL_YOURHOST(self, prefix, params):
         self.actual_host = prefix
@@ -677,8 +719,6 @@ class IRCBot(irc.IRCClient):
         """ This is the ideal place to process commands from the user. """
         logger.debug( "PRIVMSG %s on %s says %s " % ( user, channel, orig_msg))
 
-        irc.IRCClient.privmsg(self, user, channel, orig_msg)
-
         # Strip out the mIRC colour codes on incoming commands.
         # This makes the bot colour tolerant and won't reject commands
         # if they are not in only black.
@@ -693,7 +733,7 @@ class IRCBot(irc.IRCClient):
         # ... and make all lower case for easy pattern matching
         #msg = msg.lower()
 
-        nick = user.split('!')[0]
+        nick = user.nick
 
         # if we wish to return a self.msg(...) to an incoming command
         # we need to send it to a nickname if the message was private
@@ -704,17 +744,8 @@ class IRCBot(irc.IRCClient):
 
         user_obj = self.plugins.authenticated_users.get_user_obj(nick)
         act = get_user_option(user_obj, "trigger")
-        if channel == self.factory.nickname:
-            chan = user.split('!')[0]
-            # determine the trigger for private chat window
-            if not act: act = get_global_option('pvt-trigger')
-            
-        else:
-            chan = channel.lower()
-            # determine the trigger for this room
-            if not act: act = get_room_option(self.factory.network, channel, 'activation')
-        
-        if not act: act = '!'
+        chan = channel.name.lower()
+        if not act: act = '.'
 
 
         mch = re.match(re.escape(act)+ "(.*)", msg)
@@ -723,7 +754,7 @@ class IRCBot(irc.IRCClient):
             logger.debug("Received Command " + str((nick, user, chan, orig_msg, msg, act)))
             self.plugins.command(nick, user, chan, orig_msg, msg, act)
 
-        self.plugins.privmsg(user, channel, orig_msg)
+        self.plugins.privmsg(user, chan, orig_msg)
     
     def irc_RPL_NAMREPLY(self, prefix, params):
         # We use the RPL_NAMREPLY to get a list of all people currently
@@ -778,41 +809,6 @@ class IRCBot(irc.IRCClient):
 
 
 
-class IRCBotFactory(protocol.ClientFactory):
-    protocol = IRCBot
-
-    def __init__(self, factories, reactor, server, channel, nickname,  \
-                 nickserv_pw, extra_options):
-        
-        self.shutting_down = False
-        self.reactor = reactor
-        self.factories = factories
-        self.channel = channel
-        self.nickname = nickname
-        self.conn = None  # No IRC connection yet
-        self.network = server
-        self.nickserv_password = nickserv_pw
-        self.extra_options = extra_options
-        
- 
-    def doReconnect(self, connector):
-        logging.info("Attempting to reconect to server...")
-        connector.connect()
-        
-    def clientConnectionLost(self, connector, reason):
-        logging.info("Lost connection (%s)", (reason,))
-        # Taken from https://twistedmatrix.com/documents/13.1.0/core/howto/time.html
-        self.conn = None
-        if not self.shutting_down:
-            logging.info("Will reconnect shortly...")
-            self.reactor.callLater(3, self.doReconnect, connector)
-
-
-    def clientConnectionFailed(self, connector, reason):
-        logging.info("Could not connect: %s, will reconnect in 10 seconds" % (reason,))
-        logging.info("** Could not connect to %s port %d" % (connector.host, connector.port))
-        self.reactor.callLater(10, self.doReconnect, connector)
-
 
 ########################################################################
 
@@ -842,11 +838,11 @@ def instantiateIRCBot(networks, room, botName,
         control_room = params['control']
         nickserv = params['nickserv']
         logger.info ("connecting on "+str((network, port)))   
-        factory = IRCBotFactory(factories, reactor, network, control_room, nick,\
-                                     nickserv, \
-                                     extra_options)
-        reactor.connectTCP(network, port, factory )
-        factories.append(factory)
+        #factory = IRCBotFactory(factories, reactor, network, control_room, nick,\
+#                                     nickserv, \
+#                                     extra_options)
+        #reactor.connectTCP(network, port, factory )
+        #factories.append(factory)
 
     if rpc_port:
         logger.info('Starting RPC Server - port {}'.format(rpc_port))
@@ -856,7 +852,14 @@ def instantiateIRCBot(networks, room, botName,
         b = BotsRunning(pid = pid, rpc = rpc_port)
         b.save()
         
-    reactor.run()
+    logging.basicConfig(level='DEBUG')
+
+    bot = IRCBot()
+
+    loop = asyncio.get_event_loop()
+    bot.task = loop.create_task(bot.connect('irc.chatopia.net'))
+    bot.botName = botName
+    loop.run_forever()
 
 def main():
     instantiateIRCBot(IRC_NETWORK, 6667, IRC_ROOM_NAME, BOT_NAME, NICKSERV)

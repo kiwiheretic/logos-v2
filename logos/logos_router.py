@@ -17,7 +17,7 @@ class LogosRouter(object):
             mod = __import__(app)
             try:
                 if hasattr(mod.models, 'DB_ROUTER'):
-                    for k, models in mod.models.DB_ROUTER.iteritems():
+                    for k, models in mod.models.DB_ROUTER.items():
                         for model_name in models:
                             if model.__name__ == model_name:
                                 return k
@@ -36,7 +36,7 @@ class LogosRouter(object):
             mod = __import__(app)
             try:
                 if hasattr(mod.models, 'DB_ROUTER'):
-                    for k, models in mod.models.DB_ROUTER.iteritems():
+                    for k, models in mod.models.DB_ROUTER.items():
                         for model_name in models:
                             if model.__name__ == model_name:
                                 return k
@@ -61,7 +61,7 @@ class LogosRouter(object):
             mod = __import__(app)
             try:
                 if hasattr(mod.models, 'DB_ROUTER'):
-                    for k, models in mod.models.DB_ROUTER.iteritems():
+                    for k, models in mod.models.DB_ROUTER.items():
                         for modelname in models:
                             if model_name == modelname.lower():
                                 if db == k:

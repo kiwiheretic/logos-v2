@@ -146,17 +146,7 @@ class BibleBot(Plugin):
         return trans_list
     
     def _get_defaulttranslation(self, channel, nick):
-        user = self.get_auth().get_user_obj(nick)
-        res = get_user_option(user, "translation")
-        if not res:
-            if channel[0] == '#':
-                res = get_room_option(self.network, channel,'default_translation')
-            else:
-                res = get_global_option('pvt-translation')
-        if not res:
-            res = 'kjv' # default translation
-            
-        return str(res)
+        return "kjv"
 
     def _get_verselimit(self,channel):
         """ Get maximum number of verses that may be shown in room at one

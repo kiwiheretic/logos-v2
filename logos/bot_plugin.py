@@ -92,10 +92,10 @@ class SystemCoreCommands(Plugin):
         what_triggers_rgx = re.search("what are (?:the|your) triggers", message, re.I)
         if what_triggers_rgx:
             chan = channel.lower()
-            nick, _ = user.split('!')
+            nick = user.nick
             # determine the trigger for this room
-            room_trigger = get_room_option(self.factory.network, channel, 'activation')
-            pvt_trigger = get_global_option('pvt-trigger')
+            room_trigger = "."
+            pvt_trigger = "."
             if not pvt_trigger: pvt_trigger = "!"
             user = self.get_auth().get_user_obj(nick)
             user_trigger = get_user_option(user, "trigger")

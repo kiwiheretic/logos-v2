@@ -1,9 +1,2 @@
-Twisted==20.3.0
-Django~=2.2
-django-registration-redux~=2.9
-django-guardian~=2.3
-django-widget-tweaks~=1.4
-django-haystack~=3
-praw~=7.2
-markdown~=3.3
-bleach~=3.3
+gitpython==3.1.14
+python-dateutil==2.8.1

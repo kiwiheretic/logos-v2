@@ -17,12 +17,10 @@
 from __future__ import absolute_import
 VERSION = 0.95
 SCRIPTURE_COLOUR = ''
-from string import split
 import string
 # should be database agnostic - remove import
 #import sqlite3
 import random
-from types import TupleType, UnicodeType
 
 from time import clock
 from bot.pluginDespatch import Plugin
@@ -113,7 +111,6 @@ class ScriptureChallenge(Plugin):
             ('restart', self.restart, "Change this description"),
             ('hash', self.hash, "Change this description"),
             )
-        self.servername = self.irc_conn.factory.network
         self.rooms_hash = {}
         
     def write_log (self, text):
@@ -228,7 +225,7 @@ class ScriptureChallenge(Plugin):
     def privmsg(self, user, chan, msg):
         logger.debug("privmsg " + str((user, chan, msg)))
 
-        short_nick = split(user, '!')[0]
+        short_nick = user.nick
         if chan.lower() in self.rooms_hash:
             rooms_hash = self.rooms_hash[chan.lower()]
             #
