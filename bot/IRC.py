@@ -302,8 +302,9 @@ class NicksDB:
 class IRCBot():
     """ The class decodes all the IRC events"""
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, botName):
         self.plugins = None 
+        self.botName = botName
         self.nicks_db = NicksDB()
         self.expecting_nickserv = None
         self.actual_host = None
@@ -347,8 +348,8 @@ class IRCBot():
 
     def irc_registered(self, client):
         self.plugins = Plugins(self)
-        client.send('NICK', "logos-irctk")
-        client.send('MODE', "logos-irctk", '+B')
+        client.send('NICK', self.botName)
+        client.send('MODE', self.botName, '+B')
         client.send('JOIN', '#bottest')
         self.client = client
 
@@ -854,11 +855,10 @@ def instantiateIRCBot(networks, room, botName,
         
     logging.basicConfig(level='DEBUG')
 
-    bot = IRCBot()
+    bot = IRCBot(botName)
 
     loop = asyncio.get_event_loop()
     bot.task = loop.create_task(bot.connect('irc.chatopia.net'))
-    bot.botName = botName
     loop.run_forever()
 
 def main():

@@ -553,7 +553,7 @@ class PluginDespatcher(object):
                 adj_chan = chan
                 
             # === End Hack ===
-            
+
             # If we found the one and only regex
             if len(matched_fn) == 1:
                 logger.debug("** Invoking command of {} plugin for \"{}\"".\

@@ -14,6 +14,7 @@ else:
 
 import datetime
 import re
+import asyncio
 import time
 import copy
 from itertools import islice
@@ -764,12 +765,6 @@ class BibleBot(Plugin):
                 
             self.pending_searches[chan.lower()][nick.lower()]['gen'] = gen
                 
-            if chan == '%shell%':
-              self._search_long_time(chan, nick) 
-            else:
-              delayed = self.reactor.callLater(3.5, self._search_long_time, chan, nick)    
-              self.pending_searches[chan.lower()][nick.lower()]['delayed'] = delayed
-            
             finished = self._format_search_results(chan, nick.lower())
             if finished:
                 del self.pending_searches[chan.lower()][nick.lower()]
@@ -964,13 +959,6 @@ class BibleBot(Plugin):
         logger.info("_search_long_time called with %s" % str((chan, nick)))
     
     def _search_results(self, chan, nick, results, finished):
-        if chan != '%shell%':
-          delayed = self.pending_searches[chan.lower()][nick.lower()]['delayed'] 
-          try:
-              delayed.cancel()
-          except (AlreadyCalled, AlreadyCancelled) as e:
-              pass
-        
         start_time = self.pending_searches[chan.lower()][nick.lower()]['timestamp']
         elapsed = time.clock() - start_time 
         signal_data = {'chan': chan, 'nick': nick, 'verses':results }
@@ -992,7 +980,7 @@ class BibleBot(Plugin):
         srch_limit = self._get_searchlimit(chan)
         for ii in range(0,srch_limit):
             try:
-                res = gen.next()
+                res = gen.__next__()
                 trans = BibleTranslations.objects.get(pk=res['trans'])
                 book = BibleBooks.objects.get(pk=res['book'])
                 idx = res['index']
@@ -1055,21 +1043,20 @@ class BibleBot(Plugin):
 #                self.say(chan, "*** No more search results")
                 finished = True
                 
-        if chan != '%shell%' and THREADED_SEARCH:
-            self.reactor.callFromThread(self._search_results, chan, nick, results, finished)
-        else:
-            self._search_results(chan, nick, results, finished)
+        self._search_results(chan, nick, results, finished)
 
                     
     def _format_search_results(self, chan, nick):
         start_time = time.clock()
         self.pending_searches[chan.lower()][nick.lower()]['timestamp'] = start_time
         gen = self.pending_searches[chan.lower()][nick.lower()]['gen']        
-        if chan != '%shell%' and THREADED_SEARCH:
-            self.reactor.callInThread(self._threaded_search_results, chan, nick, gen)
-        else:
-            results = self._threaded_search_results(chan, nick, gen)
+        results = self._threaded_search_results(chan, nick, gen)
             
+#        if chan != '%shell%' and THREADED_SEARCH:
+#            results = await loop.run_in_executor(self._threaded_search_results, chan, nick, gen)
+#        else:
+#            results = self._threaded_search_results(chan, nick, gen)
+#            
 
     def _stringify_book_range(self, version, book_range):
         if book_range[0] == None:
