@@ -302,9 +302,11 @@ class NicksDB:
 class IRCBot():
     """ The class decodes all the IRC events"""
 
-    def __init__(self, botName):
+    def __init__(self, botName, rooms, ssl):
+        self.ssl = ssl
         self.plugins = None 
         self.botName = botName
+        self.rooms = rooms
         self.nicks_db = NicksDB()
         self.expecting_nickserv = None
         self.actual_host = None
@@ -333,10 +335,10 @@ class IRCBot():
         
         signal.signal(signal.SIGINT, self.handle_ctrl_c)
               
-    async def connect(self, hostname, port=6697, secure=True):
+    async def connect(self, hostname, port):
         client = irctk.Client()
         client.delegate = self
-        await client.connect(hostname, port, secure)
+        await client.connect(hostname, port, self.ssl)
         self.client = client
 
     async def aiotimer(self):
@@ -350,7 +352,8 @@ class IRCBot():
         self.plugins = Plugins(self)
         client.send('NICK', self.botName)
         client.send('MODE', self.botName, '+B')
-        client.send('JOIN', '#bottest')
+        for room in self.rooms:
+            client.send('JOIN', room)
         self.client = client
 
     def irc_private_message(self, client, nick, message):
@@ -466,6 +469,9 @@ class IRCBot():
             await asyncio.sleep(1)
 
     def say(self, channel, msg):
+        self.client.send_privmsg(channel, msg)
+
+    def msg(self, channel, msg):
         self.client.send_privmsg(channel, msg)
 
     def irc_RPL_YOURHOST(self, prefix, params):
@@ -813,56 +819,22 @@ class IRCBot():
 
 ########################################################################
 
-def instantiateIRCBot(networks, room, botName,  
-                      nickserv, rpc_port=None, 
-                      extra_options=None):
+def instantiateIRCBot(networks, port, botName, rooms, ssl, extra_options=None):
 
     
     socket.setdefaulttimeout(30)
     
 
-    # Start the IRC Bot
-    factories = []
-    
-    for netwrk in networks:
-        params = {'port':'6667', 'nick':botName, 'control':room, 'nickserv':None}
-        for param in netwrk.split('/'):
-            if ':' in param:
-                k, v = param.split(':')
-            else:
-                v = param
-                k = 'network'
-            params.update({k:v})
-        port = int(params['port'])
-        network = params['network']
-        nick = params['nick']
-        control_room = params['control']
-        nickserv = params['nickserv']
-        logger.info ("connecting on "+str((network, port)))   
-        #factory = IRCBotFactory(factories, reactor, network, control_room, nick,\
-#                                     nickserv, \
-#                                     extra_options)
-        #reactor.connectTCP(network, port, factory )
-        #factories.append(factory)
-
-    if rpc_port:
-        logger.info('Starting RPC Server - port {}'.format(rpc_port))
-        SimpleRPC(reactor, factories, rpc_port)
-        pid = os.getpid()
-        BotsRunning.objects.filter(rpc = rpc_port).delete()
-        b = BotsRunning(pid = pid, rpc = rpc_port)
-        b.save()
-        
     logging.basicConfig(level='DEBUG')
 
-    bot = IRCBot(botName)
+    bot = IRCBot(botName, rooms, ssl)
 
     loop = asyncio.get_event_loop()
-    bot.task = loop.create_task(bot.connect('irc.chatopia.net'))
+    bot.task = loop.create_task(bot.connect('irc.chatopia.net', port))
     loop.run_forever()
 
 def main():
-    instantiateIRCBot(IRC_NETWORK, 6667, IRC_ROOM_NAME, BOT_NAME, NICKSERV)
+    instantiateIRCBot(IRC_NETWORK, 6667, bot_name, rooms)
 
 # this only runs if the module was *not* imported
 if __name__ == '__main__':

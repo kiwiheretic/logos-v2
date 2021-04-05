@@ -594,10 +594,10 @@ class BibleBot(Plugin):
         self.notice(nick, str(book_names)) 
               
     def versions(self, regex, chan, nick, **kwargs):
- 
         translations = self._get_translations()
         tr_str = ",".join(translations)
         self.msg(chan, "Supported translations are %s " % (tr_str,))     
+
     def view_xrefs(self, regex, chan, nick, **kwargs):
         if nick.lower() not in self.xref_views:
             self.say(chan, "*** You need to find xrefs first ***")

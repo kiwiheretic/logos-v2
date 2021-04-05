@@ -27,14 +27,17 @@ class Command(BaseCommand):
         
         parser.add_argument('-s','--server', action='append',
                     help="IRC server to connect to."),
-        # parser.add_argument('--port', action='store',
+        parser.add_argument('--port', action='store', default=6667, type=int),
                     # help="Server port to connect to.  Defaults to 6667."),
+        parser.add_argument('--ssl', action='store_true', 
+                    help="whether to connect via SSL"),
         parser.add_argument('--rpc-port', action='store',
                     help="RPC Port to listen on.  Defaults to None."),                    
-        parser.add_argument('--engine-room', action='store',
-                    help="IRC engine room name to join.  Defaults to #engineroom"),
-        parser.add_argument('-n', '--nickname', action='store',
+        parser.add_argument('-n', '--botname', action='store',
                     help="The IRC nickname the bot assumes.  Defaults to MyBible"),
+        parser.add_argument('--rooms', action='store',
+                    help="The rooms to join on startup"),
+
         parser.add_argument('--nick-password', '-p', action='store',
                     help="The bot nickserv password.  Defaults to 'qwerty'"),
         parser.add_argument('--no-services', action='store_true',
@@ -54,10 +57,10 @@ class Command(BaseCommand):
         else:
             server = ['127.0.0.1']
 
-        if options['nickname']:
-            nickname = options['nickname']
+        if options['botname']:
+            botname = options['botname']
         else:
-            nickname = 'bot'
+            botname = 'irctk-bot'
 
         if options['nick_password']:
             nick_password = options['nick_password']
@@ -69,10 +72,14 @@ class Command(BaseCommand):
         else:
             rpc_port = None     
                     
-        if options['engine_room']:
-            engine_room = options['engine_room']
+        if options['rooms']:
+            roomstr = options['rooms']
+            if "," in roomstr:
+                rooms = roomstr.split(",")
+            else:   
+                rooms = [ roomstr ]
         else:
-            engine_room = '#engineroom'
+            rooms = ['#bottest']
         
         extra_options = {}
 
@@ -83,7 +90,5 @@ class Command(BaseCommand):
         extra_options['monitor_idle_times'] = options['monitor_idle_times']
 
         print ("Starting Logos Bot, Please Wait...")
-        irc.instantiateIRCBot(server, engine_room, nickname, \
-                              nick_password, rpc_port, \
-                              extra_options)
+        irc.instantiateIRCBot(server, options['port'], botname, rooms, options['ssl'], extra_options)
 
