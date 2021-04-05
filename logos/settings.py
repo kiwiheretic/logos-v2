@@ -295,7 +295,7 @@ INSTALLED_APPS = (
     # Add admin interface permission widget
     # http://permissions-widget.readthedocs.org/en/latest/
     'permissions_widget',
-    'haystack',
+    #'haystack',
 )
 
 

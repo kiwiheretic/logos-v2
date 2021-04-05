@@ -10,7 +10,6 @@ from logos.models import NetworkPlugins, RoomPlugins
 from django.contrib.auth import authenticate
 from guardian.shortcuts import assign_perm, get_perms, remove_perm
 
-import twisted
 from git import Repo
 import sys
 import types

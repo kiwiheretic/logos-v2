@@ -25,7 +25,6 @@ from logos.utils import replace_spc_error_handler
 from bot.logos_decorators import irc_room_permission_required, \
     irc_network_permission_required
     
-from twisted.internet.error import AlreadyCalled, AlreadyCancelled
 from django.db.models import Min, Max
 
 from bot.pluginDespatch import Plugin, CommandException

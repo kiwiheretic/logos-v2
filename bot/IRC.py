@@ -368,7 +368,6 @@ class IRCBot():
         elif message == 'quit':
             client.quit()
             self.loop.stop()
-            self.loop.close()
         else:
             self.privmsg(nick, channel, message)
 
@@ -818,6 +817,12 @@ class IRCBot():
 
 
 ########################################################################
+async def log_exceptions(awaitable):
+    try:
+        return await awaitable
+    except Exception as err:
+        logger.exception("Unhandled exception")
+        import pdb; pdb.set_trace()
 
 def instantiateIRCBot(networks, port, botName, rooms, ssl, extra_options=None):
 
@@ -830,7 +835,7 @@ def instantiateIRCBot(networks, port, botName, rooms, ssl, extra_options=None):
     bot = IRCBot(botName, rooms, ssl)
 
     loop = asyncio.get_event_loop()
-    bot.task = loop.create_task(bot.connect('irc.chatopia.net', port))
+    bot.task = loop.create_task(log_exceptions(bot.connect('irc.chatopia.net', port)))
     loop.run_forever()
 
 def main():

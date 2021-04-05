@@ -5,7 +5,7 @@ import inspect
 import logging
 import bot
 import types
-from twisted.internet import reactor
+import asyncio
 from django.conf import settings
 from django.db import transaction
 
@@ -422,6 +422,7 @@ class PluginDespatcher(object):
         return True
 
     def signal(self, source, signal_id, data):
+        loop = asyncio.get_event_loop()
         for m in self._obj_list:
             if source != m:
                 if hasattr(m, 'onSignal_'+signal_id):
@@ -429,7 +430,7 @@ class PluginDespatcher(object):
                     if self.is_plugin_activated(plugin_name):
                         fn = getattr(m, 'onSignal_'+signal_id)
                         self._signal_data.append([fn, source, data])
-                        reactor.callLater(0,  self.process_signals)
+                        loop.call_soon(self.process_signals)
 #                    fn(source, data)
                     
     def process_signals(self):
