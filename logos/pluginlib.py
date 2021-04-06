@@ -1,6 +1,5 @@
 from __future__ import absolute_import
 import inspect
-from .models import Plugins
 from bot.pluginDespatch import Plugin
 import logging
 from django.conf import settings 

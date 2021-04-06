@@ -9,8 +9,6 @@ import asyncio
 from django.conf import settings
 from django.db import transaction
 
-from logos.models import NetworkPermissions, RoomPermissions, \
-    Plugins, NetworkPlugins, RoomPlugins
 from guardian.shortcuts import get_objects_for_user
 
 logger = logging.getLogger(__name__)

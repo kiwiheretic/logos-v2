@@ -6,7 +6,6 @@ import types
 
 import django
 from django.contrib.auth.models import User
-from logos.models import NetworkPlugins, RoomPlugins
 from django.contrib.auth import authenticate
 from guardian.shortcuts import assign_perm, get_perms, remove_perm
 
@@ -26,7 +25,7 @@ from logos.roomlib import get_room_option, set_room_option, set_room_defaults,\
 
 import logging
 from django.conf import settings
-from logos.models import Settings, NetworkPermissions, RoomPermissions
+from logos.models import Settings
 
 logger = logging.getLogger(__name__)
 logging.config.dictConfig(settings.LOGGING)
