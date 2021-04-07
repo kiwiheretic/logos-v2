@@ -1,5 +1,4 @@
 #roomlib.py
-from logos.models import RoomOptions, UserOptions, Settings
 from django.core.exceptions import ObjectDoesNotExist
 
 def set_global_option(option, value):

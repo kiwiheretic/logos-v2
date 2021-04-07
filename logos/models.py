@@ -20,11 +20,6 @@ class OptionLabels(models.Model):
     label = models.CharField(max_length=40)
     option_name = models.CharField(max_length=15)
 
-class UserOptions(models.Model):
-    namespace = models.CharField(max_length=250)
-    user = models.ForeignKey(User, on_delete=models.CASCADE)
-    option = models.CharField(max_length=50)
-    value = models.CharField(max_length=200, null=True, blank=True)
 
 class RoomOptions(models.Model):
     network = models.TextField()
