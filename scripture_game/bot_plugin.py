@@ -22,7 +22,7 @@ import string
 #import sqlite3
 import random
 
-from time import clock
+#from time import clock
 from bot.pluginDespatch import Plugin
 from random import randint
 
