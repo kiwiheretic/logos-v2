@@ -16,8 +16,6 @@ from vendor.irctk import irctk
 import logos.utils
 
 from copy import copy
-from logos.roomlib import get_room_option, set_room_option, get_startup_rooms, \
-    get_global_option, get_user_option
 
 from bot.pluginDespatch import PluginDespatcher as Plugins
 
@@ -749,7 +747,7 @@ class IRCBot():
 
 
         user_obj = self.plugins.authenticated_users.get_user_obj(nick)
-        act = get_user_option(user_obj, "trigger")
+        act = "." # get_user_option(user_obj, "trigger")
         chan = channel.name.lower()
         if not act: act = '.'
 
