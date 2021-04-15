@@ -822,7 +822,7 @@ async def log_exceptions(awaitable):
         logger.exception("Unhandled exception")
         import pdb; pdb.set_trace()
 
-def instantiateIRCBot(networks, port, botName, rooms, ssl, extra_options=None):
+def instantiateIRCBot(network, port, botName, rooms, ssl, extra_options=None):
 
     
     socket.setdefaulttimeout(30)
@@ -837,7 +837,7 @@ def instantiateIRCBot(networks, port, botName, rooms, ssl, extra_options=None):
     loop.run_forever()
 
 def main():
-    instantiateIRCBot(IRC_NETWORK, 6667, bot_name, rooms)
+    instantiateIRCBot(network, 6667, bot_name, rooms)
 
 # this only runs if the module was *not* imported
 if __name__ == '__main__':
