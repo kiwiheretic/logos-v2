@@ -25,7 +25,7 @@ class Command(BaseCommand):
         "Defaults to APPDATA\\SplatsCreations\\bibleBot for windows " + \
         "and current directory for others."),
         
-        parser.add_argument('-s','--server', action='append',
+        parser.add_argument('-s','--server', action='store',
                     help="IRC server to connect to."),
         parser.add_argument('--port', action='store', default=6667, type=int),
                     # help="Server port to connect to.  Defaults to 6667."),

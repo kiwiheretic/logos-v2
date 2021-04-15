@@ -833,7 +833,7 @@ def instantiateIRCBot(network, port, botName, rooms, ssl, extra_options=None):
     bot = IRCBot(botName, rooms, ssl)
 
     loop = asyncio.get_event_loop()
-    bot.task = loop.create_task(log_exceptions(bot.connect('irc.chatopia.net', port)))
+    bot.task = loop.create_task(log_exceptions(bot.connect(network, port)))
     loop.run_forever()
 
 def main():
