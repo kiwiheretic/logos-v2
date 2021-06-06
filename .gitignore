@@ -3,6 +3,7 @@ __pycache__/
 *.py[cod~]
 *.*~
 *.swp
+vendor/
 bibles/
 logs/
 logos/email_settings.py
