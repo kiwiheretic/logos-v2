@@ -11,6 +11,7 @@ from datetime import datetime
 from itertools import islice
 
 import asyncio
+from aiohttp import web
 from vendor.irctk import irctk
 
 import logos.utils
@@ -376,9 +377,9 @@ class IRCBot():
         if self.irc_line_log:
             self.irc_line_log.close()
             
-        self.client.quit()
+        if hasattr(self, 'client'):
+            self.client.quit()
         self.loop.stop()
-        #self.loop.close()
 
 
     def irc_raw(self, client, line):
@@ -469,6 +470,9 @@ class IRCBot():
         self.client.send_privmsg(channel, msg)
 
     def msg(self, channel, msg):
+        self.client.send_privmsg(channel, msg)
+
+    def notice(self, channel, msg):
         self.client.send_privmsg(channel, msg)
 
     def irc_RPL_YOURHOST(self, prefix, params):
@@ -816,23 +820,32 @@ class IRCBot():
 
 ########################################################################
 async def log_exceptions(awaitable):
+    import traceback
     try:
         return await awaitable
     except Exception as err:
-        logger.exception("Unhandled exception")
-        import pdb; pdb.set_trace()
+        traceback.print_tb(err.__traceback__)
+        print (err.args)
+
+async def hello(request):
+    return web.Response(text="Hello World!")
 
 def instantiateIRCBot(network, port, botName, rooms, ssl, extra_options=None):
-
-    
     socket.setdefaulttimeout(30)
-    
+
+    loop = asyncio.get_event_loop()
 
     logging.basicConfig(level='DEBUG')
 
     bot = IRCBot(botName, rooms, ssl)
 
-    loop = asyncio.get_event_loop()
+    app = web.Application()
+    app.add_routes([web.get('/', hello)])
+    runner = web.AppRunner(app)
+    loop.run_until_complete(runner.setup())
+    site = web.TCPSite(runner, port=8000)  
+    loop.run_until_complete(site.start())
+
     bot.task = loop.create_task(log_exceptions(bot.connect(network, port)))
     loop.run_forever()
 

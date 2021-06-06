@@ -1,4 +1,4 @@
-VERSION = "0.99.6"
+VERSION = "0.99.8"
 
 REDDIT_UA = "Heretical 1.0 by /u/kiwiheretic"
 
