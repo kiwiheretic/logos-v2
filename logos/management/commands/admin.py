@@ -2,7 +2,7 @@ from django.core.management.base import BaseCommand, CommandError
 from django.contrib.auth.models import User
 from django.db import transaction
 
-from logos.models import NetworkPermissions, RoomPermissions
+#from logos.models import NetworkPermissions, RoomPermissions
 from django.contrib.auth.models import User
 from guardian.shortcuts import assign_perm, get_perms, remove_perm, \
     get_perms
@@ -25,7 +25,7 @@ class Command(BaseCommand):
             cmd = getattr(self, cmd_method)
             try:
                 cmd(*largs)
-            except TypeError, e:
+            except TypeError as e:
                 self.stdout.write("A type error occurred")
                 self.stdout.write(e.message)
         else:
