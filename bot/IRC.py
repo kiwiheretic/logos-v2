@@ -12,7 +12,8 @@ from itertools import islice
 
 import asyncio
 from aiohttp import web
-from vendor.irctk import irctk
+#from vendor.irctk import irctk
+import irctk
 
 import logos.utils
 
