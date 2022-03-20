@@ -4,9 +4,9 @@ from django.http import HttpResponse
 
 from .models import NickHistory
 from logos.models import BotsRunning
-import xmlrpclib
+#import xmlrpclib
 import logging
-import xmlrpclib
+#import xmlrpclib
 from bot.pluginDespatch import Plugin
 
 from django.conf import settings 
@@ -37,13 +37,13 @@ def user_setup(request):
     bots_running = BotsRunning.objects.all()
     bots = []
     rooms = []
-    for bot in bots_running:
-        url = "http://localhost:{}/".format(bot.rpc)
-        srv = xmlrpclib.Server(url)
-        dead = False
-        try:
-            rooms = srv.get_rooms()
-        except Exception as e:
-            logger.error("Errpr occurred when loading rooms - Contact Administrator")
+#    for bot in bots_running:
+#        url = "http://localhost:{}/".format(bot.rpc)
+#        srv = xmlrpclib.Server(url)
+#        dead = False
+#        try:
+#            rooms = srv.get_rooms()
+#        except Exception as e:
+#            logger.error("Errpr occurred when loading rooms - Contact Administrator")
     return render(request, 'room_manage/user_setup.html', {'rooms':rooms})
 

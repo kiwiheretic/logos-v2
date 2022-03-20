@@ -25,7 +25,7 @@ class Command(BaseCommand):
             cmd = getattr(self, cmd_method)
             try:
                 cmd(*largs)
-            except TypeError, e:
+            except TypeError as e:
                 self.stdout.write("A type error occurred")
                 self.stdout.write(e.message)
         else:

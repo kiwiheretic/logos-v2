@@ -5,7 +5,7 @@ from django.contrib.auth.decorators import login_required
 from django.shortcuts import render, redirect, get_object_or_404
 from django.http import HttpResponse, HttpResponseRedirect
 from django.contrib import messages
-from django.core.urlresolvers import reverse
+from django.urls import reverse
 from django.core import serializers
 from django.db import IntegrityError
 
@@ -23,7 +23,7 @@ import logging
 import inspect
 
 import pytz
-import xmlrpclib
+#import xmlrpclib
 from bot.pluginDespatch import Plugin
 
 from django.conf import settings 
@@ -143,14 +143,14 @@ def bots(request):
 
 
         except Exception as e:
-            print e.errno
+            print (e.errno)
             # error 111 is connection refused
             if e.errno == 10061 or e.errno == 111:
                 dead = True
             else:
                 raise
             networks = []
-        print networks
+        print (networks)
         bots.append({'id': bot.id, 'pid':bot.pid, 'alive':not dead, 'rpc':bot.rpc, 'networks':networks})
     context = {'bots':bots}
     return render(request, 'logos/bots.html', context)

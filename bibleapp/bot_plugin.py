@@ -14,7 +14,7 @@ else:
 
 import datetime
 import re
-import time
+from time import perf_counter as clock
 import copy
 from itertools import islice
 
@@ -979,7 +979,7 @@ class BibleBot(Plugin):
               pass
         
         start_time = self.pending_searches[chan.lower()][nick.lower()]['timestamp']
-        elapsed = time.clock() - start_time 
+        elapsed = clock() - start_time 
         signal_data = {'chan': chan, 'nick': nick, 'verses':results }
         self.signal("verse_search", signal_data)
         for result in results:
@@ -999,7 +999,7 @@ class BibleBot(Plugin):
         srch_limit = self._get_searchlimit(chan)
         for ii in range(0,srch_limit):
             try:
-                res = gen.next()
+                res = next(gen)
                 trans = BibleTranslations.objects.get(pk=res['trans'])
                 book = BibleBooks.objects.get(pk=res['book'])
                 idx = res['index']
@@ -1069,7 +1069,7 @@ class BibleBot(Plugin):
 
                     
     def _format_search_results(self, chan, nick):
-        start_time = time.clock()
+        start_time = clock()
         self.pending_searches[chan.lower()][nick.lower()]['timestamp'] = start_time
         gen = self.pending_searches[chan.lower()][nick.lower()]['gen']        
         if chan != '%shell%' and THREADED_SEARCH:

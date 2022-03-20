@@ -11,7 +11,6 @@ from django.contrib.auth import authenticate
 from guardian.shortcuts import assign_perm, get_perms, remove_perm
 
 import twisted
-from git import Repo
 import sys
 import types
 from logos.constants import VERSION
@@ -176,7 +175,7 @@ class SystemCoreCommands(Plugin):
     def activate_plugin(self, regex, chan, nick, **kwargs):
         plugin_name = re.sub('-','_',regex.group('plugin'))
         response = super(SystemCoreCommands, self).activate_plugin(plugin_name)
-        if type(response) == types.TupleType:
+        if type(response) == tuple:
             enabled, msg = response
         else:
             enabled = response
@@ -504,10 +503,10 @@ class SystemCoreCommands(Plugin):
         # f = open(os.path.join(ver_path, "version.json"),"r")
         # ver_obj = json.load(f)
         # f.close()
-        repo = Repo(settings.BASE_DIR)
-        sha = repo.head.ref.commit.hexsha
-        self.notice(nick, "\x0310SHA = {}\x03".format(sha[:8]))
-        self.notice(nick, "Repo: \x1f\x0312https://github.com/kiwiheretic/logos-v2/")        
+#        repo = Repo(settings.BASE_DIR)
+#        sha = repo.head.ref.commit.hexsha
+#        self.notice(nick, "\x0310SHA = {}\x03".format(sha[:8]))
+#        self.notice(nick, "Repo: \x1f\x0312https://github.com/kiwiheretic/logos-v2/")        
         
     def set_password(self, regex, chan, nick, **kwargs):
 

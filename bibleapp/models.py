@@ -1,6 +1,6 @@
 from django.db import models
 
-DB_ROUTER={"bibles":('BibleTranslations', 'BibleBooks', 
+DB_ROUTER={"bibles":('BibleTranslations', 'BibleBooks', 'BibleColours',
                   'BibleVerses', 'BibleConcordance', 
                   'BibleDict', 'XRefs')}
 
@@ -36,7 +36,7 @@ class BibleTranslations(models.Model):
         # app_label = 'logos'
 
 class BibleBooks(models.Model):
-    trans = models.ForeignKey('BibleTranslations')
+    trans = models.ForeignKey('BibleTranslations', on_delete = models.CASCADE)
     book_idx = models.IntegerField()
     long_book_name = models.TextField()
     canonical = models.TextField(blank=True)
@@ -45,8 +45,8 @@ class BibleBooks(models.Model):
         # app_label = 'logos'
 
 class BibleVerses(models.Model):
-    trans = models.ForeignKey('BibleTranslations')
-    book = models.ForeignKey('BibleBooks')
+    trans = models.ForeignKey('BibleTranslations', on_delete = models.CASCADE)
+    book = models.ForeignKey('BibleBooks', on_delete = models.CASCADE)
     chapter = models.IntegerField()
     verse = models.IntegerField()
     verse_text = models.TextField()
@@ -68,8 +68,8 @@ class BibleStats(models.Model):
         ]  
       
 class BibleConcordance(models.Model):
-    trans = models.ForeignKey('BibleTranslations')
-    book = models.ForeignKey('BibleBooks')
+    trans = models.ForeignKey('BibleTranslations', on_delete = models.CASCADE)
+    book = models.ForeignKey('BibleBooks', on_delete = models.CASCADE)
     chapter = models.IntegerField()
     verse = models.IntegerField()
     word_id = models.IntegerField()

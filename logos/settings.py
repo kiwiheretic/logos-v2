@@ -3,7 +3,7 @@ import os
 import sys
 import socket
 import logging
-import email_settings
+from . import email_settings
 
 
 logger = logging.getLogger(__name__)
@@ -215,7 +215,7 @@ TEMPLATES = [
 ##     'django.template.loaders.eggs.Loader',
 #)
 #
-MIDDLEWARE_CLASSES = (
+MIDDLEWARE = (
     'django.middleware.common.CommonMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -269,23 +269,23 @@ INSTALLED_APPS = (
     'guardian',
 
     'logos',
-    'reddit',
+#    'reddit',
     'bibleapp',
-    'feed',
+#    'feed',
     'weather',
-    'cloud_notes',
-    'cloud_memos',
+#    'cloud_notes',
+#    'cloud_memos',
     'room_manage',
     'scripture_game',
     'botnet',
-    'symbolics',
-    'gcalendar',
-    'urlcatcher',
-    'twitterapp',
-    'prayers',
+#    'symbolics',
+#    'gcalendar',
+#    'urlcatcher',
+#    'twitterapp',
+#    'prayers',
 
 
-    'widget_tweaks',
+    #'widget_tweaks',
 #    'simple_forums',
     # Uncomment the next line to enable the admin:
      'django.contrib.admin',
@@ -337,7 +337,7 @@ LOGGING = {
     'handlers': {
         'null': {
             'level': 'DEBUG',
-            'class': 'django.utils.log.NullHandler',
+            'class': 'logging.NullHandler',
         },
         'mail_admins': {
             'level': 'ERROR',

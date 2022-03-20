@@ -8,6 +8,6 @@ class BotNetGroups(models.Model):
     active = models.BooleanField(default=False)
 
 class BotNetRooms(models.Model):
-    group = models.ForeignKey('BotNetGroups')
+    group = models.ForeignKey('BotNetGroups', on_delete = models.CASCADE)
     network = models.CharField(max_length=100)
     room = models.CharField(max_length=100)

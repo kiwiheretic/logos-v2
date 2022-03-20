@@ -11,14 +11,14 @@ import socket
 from datetime import datetime
 from itertools import islice
 
-from simple_rpcserver import SimpleRPC
+#from simple_rpcserver import SimpleRPC
 import logos.utils
 
 from copy import copy
 from logos.roomlib import get_room_option, set_room_option, get_startup_rooms, \
     get_global_option, get_user_option
 
-from pluginDespatch import PluginDespatcher as Plugins
+from .pluginDespatch import PluginDespatcher as Plugins
 from twisted.internet import reactor, protocol
 from twisted.words.protocols import irc
 from twisted.internet import task
@@ -179,7 +179,7 @@ class NicksDB:
                     return True
         return False
     def bot_in_room(self, channel):
-        if self.nicks_in_room.has_key(channel):
+        if channel in self.nicks_in_room:
             return True
         else:
             return False
@@ -322,18 +322,19 @@ class IRCBot(irc.IRCClient):
         
         # Some IRC servers seem to require username and realname
         # (notably some Undernet servers)
-        self.username = "logos"
-        self.realname = "logos"
         
         if settings.DEBUG:
             self.irc_line_log = open(os.path.join(settings.LOG_DIR, "IRClinesReceived.txt"), "ab")
         else:
             self.irc_line_log = None
         
+        self.username = "logos2"
+        self.realname = "logos2"
+
         signal.signal(signal.SIGINT, self.handle_ctrl_c)
               
     def handle_ctrl_c(self, signum, frame):
-        print "closing file"
+        print ("closing file")
         pid = os.getpid()
         BotsRunning.objects.filter(pid = pid).delete()
         if self.irc_line_log:
@@ -351,9 +352,9 @@ class IRCBot(irc.IRCClient):
         else:
             self.channel_queues[chan] = [l]
             
+    @property
     def _get_nickname(self):
         return self.factory.nickname
-    nickname = property(_get_nickname)
 
 #    def do_whois(self, nick):
 #        logger.debug( "do_whois " + nick)
@@ -404,10 +405,7 @@ class IRCBot(irc.IRCClient):
                     continue
                 chan_q = self.channel_queues[chan].pop(0)
                 for elmt in chan_q:
-                    if type(elmt) == types.UnicodeType:
-                        msg_list.append(elmt.encode("utf-8","replace_spc"))
-                    else:
-                        msg_list.append(elmt)
+                    msg_list.append(str(elmt))
 
 #                logger.debug("timer: "+str((chan, msg_list)))
                 action = msg_list.pop(0)
@@ -848,13 +846,13 @@ def instantiateIRCBot(networks, room, botName,
         reactor.connectTCP(network, port, factory )
         factories.append(factory)
 
-    if rpc_port:
-        logger.info('Starting RPC Server - port {}'.format(rpc_port))
-        SimpleRPC(reactor, factories, rpc_port)
-        pid = os.getpid()
-        BotsRunning.objects.filter(rpc = rpc_port).delete()
-        b = BotsRunning(pid = pid, rpc = rpc_port)
-        b.save()
+#    if rpc_port:
+#        logger.info('Starting RPC Server - port {}'.format(rpc_port))
+#        SimpleRPC(reactor, factories, rpc_port)
+#        pid = os.getpid()
+#        BotsRunning.objects.filter(rpc = rpc_port).delete()
+#        b = BotsRunning(pid = pid, rpc = rpc_port)
+#        b.save()
         
     reactor.run()
 
