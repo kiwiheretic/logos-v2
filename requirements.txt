@@ -1,5 +1,5 @@
 #beautifulsoup4==4.3.2
-bleach==3.2.1
+bleach==3.3.0
 certifi==2018.11.29
 Django==1.8.13
 django-breadcrumbs===1.1.3-p1
