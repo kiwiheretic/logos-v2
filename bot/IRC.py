@@ -189,7 +189,9 @@ class NicksDB:
             for nick_info in self.nicks_in_room[room]:
                 if nick_info['nick'].lower() == oldname.lower():
                     nick_info['nick'] = newname
-        assert oldname.lower() in self.nicks_info
+        if oldname.lower() not in self.nicks_info:
+            print ("*** WARNING: {} not in NickDB".format(oldname))
+            return
         self.nicks_info[newname.lower()] = self.nicks_info[oldname.lower()]
         del self.nicks_info[oldname.lower()]
         
@@ -327,7 +329,6 @@ class IRCBot(irc.IRCClient):
             self.irc_line_log = open(os.path.join(settings.LOG_DIR, "IRClinesReceived.txt"), "ab")
         else:
             self.irc_line_log = None
-        
         self.username = "logos2"
         self.realname = "logos2"
 
@@ -450,6 +451,8 @@ class IRCBot(irc.IRCClient):
         self.channel = self.factory.channel.lower()
         logger.info("Target IRC server:  "+self.factory.network)
 
+        self.nickname = self.factory.nickname
+        self.setNick(self.nickname)
         self.lineRate = LINE_RATE
 
         # Set the Bot with mode B so that it complies with Ablazenet
@@ -786,8 +789,8 @@ class IRCBotFactory(protocol.ClientFactory):
         self.reactor = reactor
         self.factories = factories
         self.channel = channel
-        self.nickname = nickname
         self.conn = None  # No IRC connection yet
+        self.nickname = nickname
         self.network = server
         self.nickserv_password = nickserv_pw
         self.extra_options = extra_options
@@ -843,7 +846,7 @@ def instantiateIRCBot(networks, room, botName,
         factory = IRCBotFactory(factories, reactor, network, control_room, nick,\
                                      nickserv, \
                                      extra_options)
-        reactor.connectTCP(network, port, factory )
+        c = reactor.connectTCP(network, port, factory )
         factories.append(factory)
 
 #    if rpc_port:
