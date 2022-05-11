@@ -293,7 +293,7 @@ class BibleBot(Plugin):
         
         # Get the maximum number of verses to display in one
         # go for the current room
-        verselimit = self._get_verselimit(chan)
+        verselimit = int(self._get_verselimit(chan))
         
         resp = []
         qual_verses_next_pk = None
@@ -910,7 +910,7 @@ class BibleBot(Plugin):
                     clr_reply.append("\x03{},{} ".format(fg,bg)+elmt+" \x03")
             reply = ' '.join(clr_reply)
             logger.debug(repr(reply))
-            self.say(chan, reply.encode("utf-8", "replace_spc"))
+            self.say(chan, reply.encode("utf-8", "replace_spc").decode('utf-8'))
 
     def next(self, regex, chan, nick, **kwargs):
         
