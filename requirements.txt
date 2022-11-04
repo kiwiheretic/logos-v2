@@ -28,7 +28,7 @@ simplejson==3.8.1
 six==1.10.0
 smmap==0.9.0
 sympy==1.0
-Twisted==20.3.0
+Twisted==22.10.0
 #Removed because not compatible with windows
 #uWSGI==2.0.13.1
 Whoosh==2.7.0
