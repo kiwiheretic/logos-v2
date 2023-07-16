@@ -21,11 +21,12 @@ def get_global_option(option):
         return None
     
 def get_startup_rooms(network):
-    rooms = RoomOptions.objects.filter(network=network, option='active')
+    rooms = RoomOptions.objects.filter(option='active')
     room_list = []
     for rm in rooms:
         if rm.value == '1': # Active is true
-            room_list.append(rm.room)
+            if rm.room not in room_list:
+                room_list.append(rm.room)
     return room_list
 
 def set_room_defaults(network, room, defaults):

@@ -13,14 +13,14 @@ facebook-sdk==1.0.0
 GitPython==0.3.6
 google-api-python-client==1.4.2
 #lxml==3.4.2
-Markdown==2.6.1
+#Markdown==2.6.1
 oauth2client==1.5.2
 oauthlib==1.0.3
 praw==3.5.0
 psutil==5.7.3
 python-dateutil==2.4.0
 python-twitter==2.2
-pytz==2014.10
+pytz==2023.3
 requests==2.24.0
 requests-oauthlib==0.5.0
 rsa==3.3
