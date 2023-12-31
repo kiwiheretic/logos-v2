@@ -8,7 +8,7 @@ logger = logging.getLogger(__name__)
 logging.config.dictConfig(settings.LOGGING)
 
             
-class LogosRouter(object):
+class LogosRouter:
     def db_for_read(self, model, **hints):
         """
         Select DB to read from
@@ -17,10 +17,9 @@ class LogosRouter(object):
             mod = __import__(app)
             try:
                 if hasattr(mod.models, 'DB_ROUTER'):
-                    for k, models in mod.models.DB_ROUTER.iteritems():
-                        for model_name in models:
-                            if model.__name__ == model_name:
-                                return k
+                    for k, models in iter(mod.models.DB_ROUTER.items()):
+                        if model.__name__ in models:
+                            return k
             except AttributeError:
                 pass  # pass on missing models attribute
         return 'default'
@@ -36,7 +35,7 @@ class LogosRouter(object):
             mod = __import__(app)
             try:
                 if hasattr(mod.models, 'DB_ROUTER'):
-                    for k, models in mod.models.DB_ROUTER.iteritems():
+                    for k, models in iter(mod.models.DB_ROUTER.items()):
                         for model_name in models:
                             if model.__name__ == model_name:
                                 return k
@@ -61,7 +60,7 @@ class LogosRouter(object):
             mod = __import__(app)
             try:
                 if hasattr(mod.models, 'DB_ROUTER'):
-                    for k, models in mod.models.DB_ROUTER.iteritems():
+                    for k, models in iter(mod.models.DB_ROUTER.items()):
                         for modelname in models:
                             if model_name == modelname.lower():
                                 if db == k:

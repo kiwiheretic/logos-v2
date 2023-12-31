@@ -4,7 +4,7 @@ import re
 import datetime
 import logging
 import requests
-from urllib import quote
+from urllib.parse import quote
 import json
 from logos.roomlib import get_global_option
 

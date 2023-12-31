@@ -14,7 +14,7 @@ else:
 
 import datetime
 import re
-import time
+from time import perf_counter as clock
 import copy
 from itertools import islice
 
@@ -47,7 +47,7 @@ logging.config.dictConfig(LOGGING)
 # from http://stackoverflow.com/questions/3313590/check-for-presence-of-a-sublist-in-python
 def contains_sublist(lst, sublst):
     n = len(sublst)
-    return any((sublst == lst[i:i+n]) for i in xrange(len(lst)-n+1))
+    return any((sublst == lst[i:i+n]) for i in range(len(lst)-n+1))
 
 # Strip out unneeded punctuation (and other fluff) from a list of words    
 def strip_fluff_to_list(text):
@@ -293,7 +293,7 @@ class BibleBot(Plugin):
         
         # Get the maximum number of verses to display in one
         # go for the current room
-        verselimit = self._get_verselimit(chan)
+        verselimit = int(self._get_verselimit(chan))
         
         resp = []
         qual_verses_next_pk = None
@@ -910,7 +910,7 @@ class BibleBot(Plugin):
                     clr_reply.append("\x03{},{} ".format(fg,bg)+elmt+" \x03")
             reply = ' '.join(clr_reply)
             logger.debug(repr(reply))
-            self.say(chan, reply.encode("utf-8", "replace_spc"))
+            self.say(chan, reply.encode("utf-8", "replace_spc").decode('utf-8'))
 
     def next(self, regex, chan, nick, **kwargs):
         
@@ -979,7 +979,7 @@ class BibleBot(Plugin):
               pass
         
         start_time = self.pending_searches[chan.lower()][nick.lower()]['timestamp']
-        elapsed = time.clock() - start_time 
+        elapsed = clock() - start_time 
         signal_data = {'chan': chan, 'nick': nick, 'verses':results }
         self.signal("verse_search", signal_data)
         for result in results:
@@ -999,7 +999,7 @@ class BibleBot(Plugin):
         srch_limit = self._get_searchlimit(chan)
         for ii in range(0,srch_limit):
             try:
-                res = gen.next()
+                res = next(gen)
                 trans = BibleTranslations.objects.get(pk=res['trans'])
                 book = BibleBooks.objects.get(pk=res['book'])
                 idx = res['index']
@@ -1069,7 +1069,7 @@ class BibleBot(Plugin):
 
                     
     def _format_search_results(self, chan, nick):
-        start_time = time.clock()
+        start_time = clock()
         self.pending_searches[chan.lower()][nick.lower()]['timestamp'] = start_time
         gen = self.pending_searches[chan.lower()][nick.lower()]['gen']        
         if chan != '%shell%' and THREADED_SEARCH:

@@ -11,7 +11,6 @@ from django.contrib.auth import authenticate
 from guardian.shortcuts import assign_perm, get_perms, remove_perm
 
 import twisted
-from git import Repo
 import sys
 import types
 from logos.constants import VERSION
@@ -176,7 +175,7 @@ class SystemCoreCommands(Plugin):
     def activate_plugin(self, regex, chan, nick, **kwargs):
         plugin_name = re.sub('-','_',regex.group('plugin'))
         response = super(SystemCoreCommands, self).activate_plugin(plugin_name)
-        if type(response) == types.TupleType:
+        if type(response) == tuple:
             enabled, msg = response
         else:
             enabled = response

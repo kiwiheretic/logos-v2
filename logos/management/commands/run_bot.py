@@ -17,38 +17,36 @@ logger = logging.getLogger(__name__)
 class Command(BaseCommand):
     help = 'Run the IRC bot'
 
-    extra_options = (
+    def add_arguments(self, parser):
 
         # I think --db-path is no longer implemented, a relic
         # of logos v1.
-        make_option('--db-path', action='store',
+        parser.add_argument('--db-path', action='store',
         help="""File path to create the settings and user search databases.  """ + \
         "Defaults to APPDATA\\SplatsCreations\\bibleBot for windows " + \
         "and current directory for others."),
         
-        make_option('-s','--server', action='append',
+        parser.add_argument('-s','--server', action='append',
                     help="IRC server to connect to."),
-        # make_option('--port', action='store',
+        # parser.add_argument('--port', action='store',
                     # help="Server port to connect to.  Defaults to 6667."),
-        make_option('--rpc-port', action='store',
+        parser.add_argument('--rpc-port', action='store',
                     help="RPC Port to listen on.  Defaults to None."),                    
-        make_option('--engine-room', action='store',
+        parser.add_argument('--engine-room', action='store',
                     help="IRC engine room name to join.  Defaults to #engineroom"),
-        make_option('-n', '--nickname', action='store',
+        parser.add_argument('-n', '--nickname', action='store',
                     help="The IRC nickname the bot assumes.  Defaults to MyBible"),
-        make_option('--nick-password', '-p', action='store',
+        parser.add_argument('--nick-password', '-p', action='store',
                     help="The bot nickserv password.  Defaults to 'qwerty'"),
-        make_option('--no-services', action='store_true',
+        parser.add_argument('--no-services', action='store_true',
                     help="Don't try and use IRC services"),
-        make_option('--monitor-idle-times', action='store_true',
+        parser.add_argument('--monitor-idle-times', action='store_true',
                     help="Actively monitor the idle times of nicks"),
-        make_option('--startup-script', action='store',
+        parser.add_argument('--startup-script', action='store',
                     help="path to the startup script of IRC commands"),                    
-        make_option('--room-key', action='store',
+        parser.add_argument('--room-key', action='store',
                     help="The key used to join the control room (if needed)"),
 
-    )
-    option_list = BaseCommand.option_list + extra_options
 
     def handle(self, *args, **options):
 #        logger.debug( "options = "+ str(options))

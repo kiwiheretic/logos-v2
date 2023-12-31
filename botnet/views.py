@@ -1,6 +1,6 @@
 from __future__ import absolute_import
 from django.shortcuts import render, redirect
-from django.core.urlresolvers import reverse
+from django.urls import reverse
 from django.forms.models import model_to_dict
 from django.contrib import messages
 from django.contrib.sites.models import Site

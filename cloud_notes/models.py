@@ -2,7 +2,7 @@ from django.db import models
 from django.contrib.auth.models import User
 from django.dispatch import receiver
 from django.db.models.signals import post_save
-from django.core.urlresolvers import reverse
+from django.urls import reverse
 
 import re
 
@@ -16,7 +16,7 @@ logging.config.dictConfig(settings.LOGGING)
 class Folder(models.Model):
     name = models.CharField(max_length=30)
     # Folders really need to be specific to User (TO DO)
-    user = models.ForeignKey(User)
+    user = models.ForeignKey(User, on_delete = models.CASCADE)
     def __unicode__(self):
         return u"Folder %d" % (self.id, )
 

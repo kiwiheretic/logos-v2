@@ -24,7 +24,7 @@ from logos.settings import BIBLES_DIR, DATABASES
 from bibleapp.models import BibleTranslations, BibleBooks, BibleVerses, \
     BibleConcordance, BibleDict, XRefs
 
-from _booktbl import book_table, xref_books
+from ._booktbl import book_table, xref_books
 from logos.constants import PUNCTUATION, STOP_WORDS
 from logos.utils import *
 
@@ -94,9 +94,9 @@ class Command(BaseCommand):
             trans = options['remove_translation']
             result = purge_translation(trans)
             if result == False:
-                print "Could not find translation {}".format(trans)
+                print ("Could not find translation {}".format(trans))
             else:
-                print "Translation {} removed from database".format(trans)
+                print ("Translation {} removed from database".format(trans))
             return
 
         if options['use_more_ram'] and DATABASES['bibles']['ENGINE'].endswith('sqlite3'):
@@ -110,8 +110,8 @@ class Command(BaseCommand):
             # use 75% of available memory for cache
             cache_size = int(.75 * vm.available / page_size)
             cursor.execute("PRAGMA Cache_Size = "+str(cache_size))
-            print "page_size = " + str(page_size) + " bytes"
-            print "cache_size = " + str(cache_size) + " pages"
+            print ("page_size = " + str(page_size) + " bytes")
+            print ("cache_size = " + str(cache_size) + " pages")
 
         
 
@@ -120,7 +120,7 @@ class Command(BaseCommand):
                 version = options['replace_version']
                 biblepath = BIBLES_DIR + os.sep + version        
                 if not os.path.exists(biblepath):
-                    print "Version %s does not exists in bibles/" % (version,)
+                    print ("Version %s does not exists in bibles/" % (version,))
                     return
             else:
                 # don't bother repopulating the strongs tables if we are just
@@ -133,7 +133,7 @@ class Command(BaseCommand):
             import_trans(options)
             import_concordance(options)
         else:
-            print "Nothing to do"
+            print ("Nothing to do")
 
 def dump_db():
     biblepath = settings.BIBLES_DIR 
@@ -141,7 +141,7 @@ def dump_db():
         vers_path = os.path.join(biblepath, trans.name)
             
         if not os.path.exists(vers_path):
-            print vers_path
+            print (vers_path)
             os.mkdir(vers_path)
             for bk in trans.biblebooks_set.order_by('id'):
                 filepath = os.path.join(vers_path, bk.canonical+".txt")
@@ -151,7 +151,7 @@ def dump_db():
                 
                 f.close()
         else:
-            print "skipping " + trans.name + " (already exists)"
+            print ("skipping " + trans.name + " (already exists)")
 
 def import_xrefs():
     file_path = os.path.join(BIBLES_DIR, 'dict', 'cross_references.txt')
@@ -190,7 +190,7 @@ def import_xrefs():
             XRefs.objects.bulk_create(cache)
             cache = []
             # xrefs.save()
-            print ".",
+            print (".", end='')
 
     XRefs.objects.bulk_create(cache)
     
@@ -201,7 +201,7 @@ def import_strongs_tables():
 
     #BibleDict.objects.all().delete()
     for lang,prefix in (('grk', 'G'), ('heb', 'H')):
-        print lang, prefix
+        print (lang, prefix)
         file1 = os.path.join(BIBLES_DIR, 'dict', lang)
         f = open(file1, 'rb')
         for line in f.readlines():
@@ -219,7 +219,7 @@ def import_strongs_tables():
                     cache.append(dict_obj)
                 idx += 1
             else:
-                print "strange dict line : " + line
+                print ("strange dict line : " + line)
 
             # This horrible kludge is because the bulk_create
             # method fails somewhere in the middle when inserting
@@ -240,9 +240,9 @@ def import_strongs_tables():
             
             if  idx % modulus == 0:
                 if len(cache) ==0:
-                    print "#",
+                    print ("#", end='')
                 else:
-                    print "(%d, %s) " % (idx,cache[-1].strongs),
+                    print ("(%d, %s) " % (idx,cache[-1].strongs), end='')
                     BibleDict.objects.bulk_create(cache)
                     cache = []
                     gc.collect()
@@ -252,15 +252,14 @@ def import_strongs_tables():
         BibleDict.objects.bulk_create(cache)
 
 def import_trans(options):
-    print "importing translations..."
-    print BIBLES_DIR
+    print ("importing translations...")
+    print (BIBLES_DIR)
     valid_books = map(lambda x:x[0], book_table)
 
     def process_books(version):
         biblepath = BIBLES_DIR + os.sep + version
         trans_file = biblepath + os.sep + "trans_file.csv"
         map_file = biblepath + os.sep + "mappings.json"
-#        print biblepath
         for bk in valid_books:
             book_path = biblepath + os.sep + bk
             if os.path.exists(book_path):
@@ -268,7 +267,7 @@ def import_trans(options):
             elif os.path.exists(book_path + ".txt"):
                 book_path = book_path + ".txt"
             else:
-                print "Could not find book : " + book_path
+                print ("Could not find book : " + book_path)
                 continue
             translation = version
             add_book_to_db(translation, book_path)
@@ -307,26 +306,26 @@ def import_trans(options):
           
     if options['replace_version']:
         version = options['replace_version']
-        print "Purging translation " + version
+        print ("Purging translation " + version)
         purge_translation(version)
         process_books(version)
     else:
         for this_dir in os.listdir(BIBLES_DIR):
             if this_dir[0] != '_' and this_dir != 'dict':
                 biblepath = BIBLES_DIR + os.sep + this_dir
-                print biblepath
+                print (biblepath)
                 process_books(this_dir)
 
             
 def import_concordance(options):
-    print "Importing concordance ..."
+    print ("Importing concordance ...")
     if options['replace_version']:
         version = options['replace_version']
         purge_concordance(version)
     populate_concordance(options)
 
 def purge_concordance(version):
-    print "Purging concordance of " + version
+    print ("Purging concordance of " + version)
     try:
         trans = BibleTranslations.objects.get(name=version)
     except ObjectDoesNotExist:
@@ -360,7 +359,7 @@ def populate_concordance(options):
                                 verse=lverse).first().id
                 bv = BibleVerses.objects.filter(trans = trans, pk__gt = bv_id).iterator()  # iterator uses less memory
             else:
-                print "No records for this translation yet"
+                print ("No records for this translation yet")
                 bv = BibleVerses.objects.filter(trans = trans).iterator()
 
 
@@ -415,9 +414,9 @@ def populate_concordance(options):
                     idx+= 1
                     if  idx % 500 == 0:
                         if len(conc_cache) ==0:
-                            print "#",
+                            print ("#", end='')
                         else:
-                            print ".",
+                            print (".", end='')
                             BibleConcordance.objects.bulk_create(conc_cache)
                             conc_cache = []
                         iidx += 1
@@ -436,13 +435,13 @@ def populate_concordance(options):
     
     if options['replace_version']:
         version = options['replace_version']
-        print "populate concordance with " + version
+        print ("populate concordance with " + version)
         really_pop_concordance(version)
     else:    
         for trans in BibleTranslations.objects.all().iterator():
         
             trans_name = trans.name
-            print "Adding missing translation to concordance", trans.name
+            print ("Adding missing translation to concordance", trans.name)
 
             really_pop_concordance(trans.name)
 
@@ -489,7 +488,7 @@ def add_book_to_db(translation, book_path, long_name = None, cononical=None):
 
     if not BibleBooks.objects.\
         filter(trans = new_trans, canonical = cononical).exists():
-        print "adding book ", long_book
+        print ("adding book ", long_book)
         bib_book = BibleBooks(trans = new_trans,
                               long_book_name= long_book,
                               book_idx = int(idx),
@@ -498,7 +497,7 @@ def add_book_to_db(translation, book_path, long_name = None, cononical=None):
 
         populate_verses(new_trans, bib_book, book_path)
     else:
-        print "%s : %s book already exists - skipping" % (translation, cononical,)
+        print ("%s : %s book already exists - skipping" % (translation, cononical,))
 
     gc.collect()
 
@@ -547,7 +546,7 @@ def populate_verses(trans, book_id, filename):
             else:
                 try:
                     weird_line =  u"weird -> {} {} {}".format(filename, lineno, ln)
-                    print weird_line.encode("ascii", "replace_spc")
+                    print (weird_line.encode("ascii", "replace_spc"))
                 except UnicodeDecodeError:
                     pdb.set_trace()
 

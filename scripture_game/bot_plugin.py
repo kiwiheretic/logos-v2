@@ -17,14 +17,12 @@
 from __future__ import absolute_import
 VERSION = 0.95
 SCRIPTURE_COLOUR = ''
-from string import split
 import string
 # should be database agnostic - remove import
 #import sqlite3
 import random
-from types import TupleType, UnicodeType
 
-from time import clock
+from time import perf_counter as clock
 from bot.pluginDespatch import Plugin
 from random import randint
 
@@ -228,7 +226,7 @@ class ScriptureChallenge(Plugin):
     def privmsg(self, user, chan, msg):
         logger.debug("privmsg " + str((user, chan, msg)))
 
-        short_nick = split(user, '!')[0]
+        short_nick = user.split('!')[0]
         if chan.lower() in self.rooms_hash:
             rooms_hash = self.rooms_hash[chan.lower()]
             #
