@@ -6,7 +6,7 @@ import types
 
 import django
 from django.contrib.auth.models import User
-from logos.models import NetworkPlugins, RoomPlugins
+from logos.models import Plugins, RoomPlugins
 from django.contrib.auth import authenticate
 from guardian.shortcuts import assign_perm, get_perms, remove_perm
 
@@ -111,41 +111,29 @@ class SystemCoreCommands(Plugin):
     def actual_host(self, regex, chan, nick, **kwargs):
         self.say(chan, "Actual IRC server is {}".format(self.irc_conn.actual_host))
         
-    def list_plugins(self, regex, chan, nick, **kwargs):
-        self.notice(nick, "=== Plugins ===")
-        self.notice(nick, "   === Enabled ===")
-        for net_plugin in NetworkPlugins.objects.filter(network=self.network,\
-                                                        loaded=True):
-            plugin_name = net_plugin.plugin.name
-            descr = net_plugin.plugin.description
-            enabled = net_plugin.enabled
-            if enabled:
-                self.notice(nick, "    {0:.<15} {1:.<30}".format(plugin_name, descr))
-
-        self.notice(nick, "   === Disabled ===")
-        for net_plugin in NetworkPlugins.objects.filter(network=self.network,\
-                                                        loaded=True):
-            plugin_name = net_plugin.plugin.name
-            descr = net_plugin.plugin.description
-            enabled = net_plugin.enabled
-            if not enabled:
-                self.notice(nick, "    {0:.<15} {1:.<30}".format(plugin_name, descr))
                 
+    def list_plugins(self, regex, chan, nick, **kwargs):
+        self.notice(nick, "  === plugins ===")
+
+        for plugin in Plugins.objects.all():
+            name = plugin.name
+            descr = plugin.description
+            self.notice(nick, "      {0:.<15} {1}".format(name, descr))
+                 
+        self.notice(nick, "*** End of List ***")  
         
     def list_plugins_for_room(self, regex, chan, nick, **kwargs):
         room = regex.group('room')
         #room = chan.lower()
+
         if not self.get_auth().is_authorised(nick, room, 'enable_plugins'):
             self.notice(nick, "You are not authorised (or logged in) for this room.") 
             return
         self.notice(nick, "  === Enabled plugins for room {} ===".format(room))
 
-        for plugin in RoomPlugins.objects.filter(net__loaded = True,
-                                                 net__enabled = True, 
-                                                 room = chan.lower(),
-                                                 net__network=self.network):
-            name = plugin.net.plugin.name
-            descr = plugin.net.plugin.description
+        for plugin in RoomPlugins.objects.filter(room = chan.lower()):
+            name = plugin.plugin.name
+            descr = plugin.plugin.description
             enabled = plugin.enabled
             self.notice(nick, "      {0:.<15} {1}".format(name, enabled))
             last_room = room
@@ -503,10 +491,10 @@ class SystemCoreCommands(Plugin):
         # f = open(os.path.join(ver_path, "version.json"),"r")
         # ver_obj = json.load(f)
         # f.close()
-        repo = Repo(settings.BASE_DIR)
-        sha = repo.head.ref.commit.hexsha
-        self.notice(nick, "\x0310SHA = {}\x03".format(sha[:8]))
-        self.notice(nick, "Repo: \x1f\x0312https://github.com/kiwiheretic/logos-v2/")        
+#        repo = Repo(settings.BASE_DIR)
+#        sha = repo.head.ref.commit.hexsha
+#        self.notice(nick, "\x0310SHA = {}\x03".format(sha[:8]))
+#        self.notice(nick, "Repo: \x1f\x0312https://github.com/kiwiheretic/logos-v2/")        
         
     def set_password(self, regex, chan, nick, **kwargs):
 

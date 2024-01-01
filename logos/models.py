@@ -81,18 +81,16 @@ class Plugins(models.Model):
     def __str__(self):
         return self.name
         
-class NetworkPlugins(models.Model):
-    plugin = models.ForeignKey('Plugins', on_delete = models.CASCADE)
-    # currently each bot instance handles exactly one IRC network
-    network = models.TextField()
-    loaded = models.BooleanField(default=False)
-    # bot_admin disabling overrides room_admin enabling
-    enabled = models.BooleanField(default=True)
+#    # currently each bot instance handles exactly one IRC network
+#    network = models.TextField()
+#    loaded = models.BooleanField(default=False)
+#    # bot_admin disabling overrides room_admin enabling
+#    enabled = models.BooleanField(default=True)
     
 class RoomPlugins(models.Model):
-    net = models.ForeignKey('NetworkPlugins', on_delete = models.CASCADE)
+    plugin = models.ForeignKey('Plugins', on_delete = models.CASCADE)
     room = models.TextField()    
     enabled = models.BooleanField(default=False)
    
     def __str__(self):
-        return "{}:{}:{}".format(self.net.plugin.name, self.net.network, self.room)
+        return "{}:{}".format(self.plugin.name, self.room)

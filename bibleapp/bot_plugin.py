@@ -828,6 +828,7 @@ class BibleBot(Plugin):
     
     
     def _get_colour(self, chan, elmt):
+        return None
         try:
             clr = BibleColours.objects.get(network=self.network, room=chan,
                                     element=elmt)

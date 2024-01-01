@@ -11,7 +11,7 @@ from django.db import IntegrityError
 
 
 from .forms import SettingsForm, UserSettingsForm
-from .models import Settings, BotsRunning, Plugins, NetworkPlugins, RoomPlugins, NetworkPermissions, RoomPermissions
+from .models import Settings, BotsRunning, Plugins, RoomPlugins, NetworkPermissions, RoomPermissions
 from logos.roomlib import get_user_option, set_user_option, get_global_option, set_global_option
 from .pluginlib import configure_app_plugins
 

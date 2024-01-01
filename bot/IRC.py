@@ -189,7 +189,9 @@ class NicksDB:
             for nick_info in self.nicks_in_room[room]:
                 if nick_info['nick'].lower() == oldname.lower():
                     nick_info['nick'] = newname
-        assert oldname.lower() in self.nicks_info
+        if oldname.lower() not in self.nicks_info:
+            print ("*** WARNING: {} not in NickDB".format(oldname))
+            return
         self.nicks_info[newname.lower()] = self.nicks_info[oldname.lower()]
         del self.nicks_info[oldname.lower()]
         
@@ -327,8 +329,6 @@ class IRCBot(irc.IRCClient):
             self.irc_line_log = open(os.path.join(settings.LOG_DIR, "IRClinesReceived.txt"), "ab")
         else:
             self.irc_line_log = None
-        
-        self.username = "logos2"
         self.realname = "logos2"
 
         signal.signal(signal.SIGINT, self.handle_ctrl_c)
@@ -394,6 +394,13 @@ class IRCBot(irc.IRCClient):
         self.sendLine(line)  
     
     def onTimer(self):
+        pending = 0
+        for k, q in self.channel_queues.items():
+            pending += len(q)
+        if pending > 0:
+            pass
+            #import pdb; pdb.set_trace()
+
         for chan in self.channel_queues:
             # If the bot is in the channel or if the message
             # is not to a channel but a private message to
@@ -450,6 +457,8 @@ class IRCBot(irc.IRCClient):
         self.channel = self.factory.channel.lower()
         logger.info("Target IRC server:  "+self.factory.network)
 
+        self.nickname = self.factory.nickname
+        self.setNick(self.nickname)
         self.lineRate = LINE_RATE
 
         # Set the Bot with mode B so that it complies with Ablazenet
@@ -485,14 +494,22 @@ class IRCBot(irc.IRCClient):
         
         if self.factory.extra_options['startup_script']:
             try:
-                f = open(self.factory.extra_options['startup_script'])
-                for line in f.readlines():
-                    line_repl = string.replace(line, "%nick%", self.nickname)
-                    self.queue_message('sendLine', 'sendLine', line_repl)
-                f.close()
+                startupfile = self.factory.extra_options['startup_script']
+                if os.path.exists(startupfile):
+                    f = open(startupfile)
+                    for line in f.readlines():
+                        if line.strip() == "": continue
+                        line_repl = line.replace("%nick%", self.nickname)
+                        self.queue_message('sendLine', 'sendLine', line_repl)
+                        logger.info("Startup Script: sendLine " + line_repl)
+                    f.close()
+                else:
+                    logger.info("Startup Script {} does not exist".format(startupfile))
             except IOError:
                 pass
+        logger.info ("Starting Timer")
         self.timer.start(QUEUE_TIMER)
+
         if self.factory.extra_options['monitor_idle_times']:
             self.idle_check_timer.start(IDLE_CHECK_SECONDS)
 
@@ -577,6 +594,8 @@ class IRCBot(irc.IRCClient):
         # when we get a RPL_NAMREPLY response as to who is actually in room.
         self.nicks_db.add_room(channel)
 
+
+        
         self.plugins.joined(channel)
 
         line = "NAMES " + channel
@@ -700,6 +719,8 @@ class IRCBot(irc.IRCClient):
         # of a private message.  Hence the need to set the chan variable below.
 
 
+        if not self.plugins:
+            import pdb; pdb.set_trace()
         user_obj = self.plugins.authenticated_users.get_user_obj(nick)
         act = get_user_option(user_obj, "trigger")
         if channel == self.factory.nickname:
@@ -786,8 +807,8 @@ class IRCBotFactory(protocol.ClientFactory):
         self.reactor = reactor
         self.factories = factories
         self.channel = channel
-        self.nickname = nickname
         self.conn = None  # No IRC connection yet
+        self.nickname = nickname
         self.network = server
         self.nickserv_password = nickserv_pw
         self.extra_options = extra_options
@@ -843,7 +864,7 @@ def instantiateIRCBot(networks, room, botName,
         factory = IRCBotFactory(factories, reactor, network, control_room, nick,\
                                      nickserv, \
                                      extra_options)
-        reactor.connectTCP(network, port, factory )
+        c = reactor.connectTCP(network, port, factory )
         factories.append(factory)
 
 #    if rpc_port:
