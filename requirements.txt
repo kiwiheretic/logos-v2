@@ -23,7 +23,7 @@ python-twitter==2.2
 pytz==2023.3
 requests==2.24.0
 requests-oauthlib==0.5.0
-rsa==3.3
+rsa==4.7
 simplejson==3.8.1
 six==1.10.0
 sympy==1.0
