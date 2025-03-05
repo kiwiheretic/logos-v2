@@ -860,11 +860,17 @@ def instantiateIRCBot(networks, room, botName,
         nick = params['nick']
         control_room = params['control']
         nickserv = params['nickserv']
-        logger.info ("connecting on "+str((network, port)))   
+        refserver = params.get("refserver")
+        print (refserver)
         factory = IRCBotFactory(factories, reactor, network, control_room, nick,\
                                      nickserv, \
                                      extra_options)
-        c = reactor.connectTCP(network, port, factory )
+        if refserver:
+            logger.info ("connecting on "+str((refserver, port)))   
+            c = reactor.connectTCP(refserver, port, factory )
+        else:
+            logger.info ("connecting on "+str((server, port)))   
+            c = reactor.connectTCP(network, port, factory )
         factories.append(factory)
 
 #    if rpc_port:

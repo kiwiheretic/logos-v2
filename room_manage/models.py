@@ -8,7 +8,7 @@ class NickHistory(models.Model):
     network = models.TextField(db_index=True)
     room = models.TextField()
     nick = models.CharField(db_index=True, max_length=40)
-    host_mask = models.CharField(max_length=80)
+    host_mask = models.CharField(max_length=80, null=True, blank=True)
     time_seen = models.DateTimeField(default = timezone.now, db_index=True)
 
 class NickSummary(models.Model):
