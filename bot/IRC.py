@@ -869,7 +869,7 @@ def instantiateIRCBot(networks, room, botName,
             logger.info ("connecting on "+str((refserver, port)))   
             c = reactor.connectTCP(refserver, port, factory )
         else:
-            logger.info ("connecting on "+str((server, port)))   
+            logger.info ("connecting on "+str((network, port)))   
             c = reactor.connectTCP(network, port, factory )
         factories.append(factory)
 
